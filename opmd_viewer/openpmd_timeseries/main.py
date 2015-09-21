@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import constants
 from .utilities import mode_dict, slice_dict
+from .plotter import fontsize
 
 # Check wether the interactive interface can be loaded
 try:
@@ -54,8 +55,8 @@ class OpenPMDTimeSeries(parent_class) :
 
         # Check that there are HDF5 files in this directory
         if len(self.h5_files) == 0 :
-            print("Error : Found no HDF5 files in the specified directory. \n"
-                  "Please check that this is the path to the HDF5 files.")
+            print("Error: Found no HDF5 files in the specified directory.\n"
+                "Please check that this is the path to the HDF5 files.")
             return(None)
 
         # Go through the files of the series, check them and extract the time
@@ -113,9 +114,6 @@ class OpenPMDTimeSeries(parent_class) :
         else :
             self.has_particles = False
         f.close()
-
-        # Default potting parameters
-        self.fontsize = 18
         
     def get_particle( self, t, quantity1='z', quantity2=None,
                    species='electrons', output=True, plot=False,
@@ -186,9 +184,9 @@ class OpenPMDTimeSeries(parent_class) :
                 w = get_particle( filename, species, 'w')
                 # Do the plotting
                 plt.hist(q1, bins=nbins, weights=w, **kw )
-                plt.xlabel(quantity1, fontsize=self.fontsize)
+                plt.xlabel(quantity1, fontsize=fontsize)
                 plt.title("t =  %.0f fs    (iteration %d)" \
-                    %(time_fs, iteration), fontsize=self.fontsize)
+                    %(time_fs, iteration), fontsize=fontsize)
             # Output
             if output :
                 return(q1)
@@ -207,10 +205,10 @@ class OpenPMDTimeSeries(parent_class) :
                     vmin=vmin, vmax=vmax, weights=w, **kw )
                 plt.colorbar()
 
-                plt.xlabel(quantity1, fontsize=self.fontsize)
-                plt.ylabel(quantity2, fontsize=self.fontsize)
+                plt.xlabel(quantity1, fontsize=fontsize)
+                plt.ylabel(quantity2, fontsize=fontsize)
                 plt.title("t =  %.1f fs   (iteration %d)"  \
-                    %(time_fs, iteration ), fontsize=self.fontsize )
+                    %(time_fs, iteration ), fontsize=fontsize )
                     
             # Output
             if output :
@@ -297,29 +295,29 @@ class OpenPMDTimeSeries(parent_class) :
                 mode = mode_dict[str(m)]
                 plt.title("%s in the mode %s at %.1f fs   (iteration %d)" \
                             %(quantity, mode, time_fs, iteration ),
-                            fontsize=self.fontsize)
-                plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                plt.ylabel('$r \;(\mu m)$', fontsize=self.fontsize )
+                            fontsize=fontsize)
+                plt.xlabel('$z \;(\mu m)$', fontsize=fontsize )
+                plt.ylabel('$r \;(\mu m)$', fontsize=fontsize )
             # 2D Cartesian geometry
             elif self.geometry =="2dcartesian" :
                 plt.title("%s at %.1f fs   (iteration %d)" \
-                    %(quantity, time_fs, iteration ), fontsize=self.fontsize)
-                plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
+                    %(quantity, time_fs, iteration ), fontsize=fontsize)
+                plt.xlabel('$z \;(\mu m)$', fontsize=fontsize )
+                plt.ylabel('$x \;(\mu m)$', fontsize=fontsize )
             # 3D Cartesian geometry
             elif self.geometry=="3dcartesian":
                 plt.title("%s sliced across %s at %.1f fs  (iteration %d)" \
                     %(quantity, slicing_dir, time_fs, iteration ),
-                    fontsize=self.fontsize)
+                    fontsize=fontsize)
                 if slicing_dir=='x':
-                    plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                    plt.ylabel('$y \;(\mu m)$', fontsize=self.fontsize )
+                    plt.xlabel('$z \;(\mu m)$', fontsize=fontsize )
+                    plt.ylabel('$y \;(\mu m)$', fontsize=fontsize )
                 elif slicing_dir=='y':
-                    plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                    plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
+                    plt.xlabel('$z \;(\mu m)$', fontsize=fontsize )
+                    plt.ylabel('$x \;(\mu m)$', fontsize=fontsize )
                 elif slicing_dir=='z':
-                    plt.xlabel('$y \;(\mu m)$', fontsize=self.fontsize )
-                    plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
+                    plt.xlabel('$y \;(\mu m)$', fontsize=fontsize )
+                    plt.ylabel('$x \;(\mu m)$', fontsize=fontsize )
 
         # Get the fields
         return( get_field( filename, field, coord, m, slicing, slicing_dir,
@@ -365,7 +363,7 @@ def list_h5_files( path_to_dir ) :
     Returns
     -------
     A tuple with:
-    - a list of strings which correspond to the path of each file
+    - a list of strings which correspond to the absolute path of each file
     - a list of integers which correspond to the iteration of each file
     """
     # Find all the files in the provided directory
@@ -383,10 +381,11 @@ def list_h5_files( path_to_dir ) :
                       'with the iteration number, followed by ".h5"' %filename)
             else:
                 iteration = int( regex_match.groups()[-1] )
-                full_name = os.path.join( path_to_dir, filename)
+                full_name = os.path.join(
+                    os.path.abspath( path_to_dir ), filename)
                 # Create list of tuples (which can be sorted together)
                 iters_and_names.append( (iteration, full_name) )
-
+                
     # Sort the list of tuples according to the iteration
     iters_and_names.sort()
     # Extract the list of filenames and iterations
