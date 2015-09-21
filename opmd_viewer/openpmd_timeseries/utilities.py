@@ -1,7 +1,8 @@
 """
 This file is part of the OpenPMD viewer.
 
-It defines a set of helper functions which are used by the other files.
+It defines a set of helper data and functions which
+are used by the other files.
 """
 
 # General mode dictionary

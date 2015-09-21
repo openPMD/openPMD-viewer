@@ -1,34 +1,26 @@
-Opmd viewer
-=======
+# openPMD viewer
 
-Overview
--------
+
+## Overview
 
 This package contains a set of tools to load and visualize the contents of an
 [openPMD](http://www.openpmd.org/#/start) file simulation.
 
-Usage
------
-The `opmd_viewer` routines can be used in two ways :
+## Usage
 
-- Use the **Python API**, in order to write a script that loads the data and produces a set of
-pre-defined plots.  
-To do this, copy the file `examples/plotting_script.py` to your local
-directory, modify it to  suit your needs, and run it with Python:  
-```python plotting_script.py```
+The routines of openPMD viewer can be used in two ways :
+
+- Use the **Python API**, in order to write a script that loads the
+  data and produces a set of pre-defined plots.
 
 - Use the **interactive interface for IPython Notebook**, in order to interactively
-visualize the data.  
-To do this,  copy the file `examples/interactive_plotting.ipynb` to
-your local directory, and run it with the ipython notebook:  
-```ipython notebook interactive_plotting.ipynb```
+visualize the data.
 
-All the objects and functions are internally documented, and thus their documentation can be accessed through the attribute `.__doc__` or (in an ipython shell) by using `?`.
+All the objects and functions are internally documented, and thus
+their documentation can be accessed through the attribute `.__doc__`
+or (in an ipython shell) by using `?`.
 
-For testing purposes, 3 example sets of openPMD files can be found [here](https://bitbucket.org/berkeleylab/opmd_viewer/downloads).
-
-Installation
---------
+## Installation
 
 To install this package :
 
