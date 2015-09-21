@@ -4,36 +4,36 @@ This file is part of the OpenPMD viewer.
 It defines the main OpenPMDTimeSeries class.
 """
 import os
-from math import *
+import re
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import constants
+from .utilities import mode_dict, slice_dict
 
 # Check wether the interactive interface can be loaded
 try:
+    # If yes, use the InteractiveViewer as a parent class
     from .interactive import InteractiveViewer, mode_dict
     parent_class = InteractiveViewer
 except ImportError:
-    print(
-        '[opmd_viewer] Failed to import the interactive interface.\n'
+    # Otherwise, use the default parent class
+    print('[opmd_viewer] Failed to import the interactive interface.\n'
         '(Make sure that ipywidgets and IPython.display are installed.)\n'
         'The opmd_viewer API is nonetheless working.')
-    # Default parent class
     parent_class = object
 
-# General dictionaries
-mode_dict = { '0' : '0',
-            '1 (real)' : '1', '1 (imag.)' : '2',
-            '1' : '1 (real)', '2' : '1 (imag.)' }
-slice_dict = { 'x':0, 'y':1, 'z':2 }
-    
+# Define the OpenPMDTimeSeries class and have it inherit
+# from the parent class defined above
+
 class OpenPMDTimeSeries(parent_class) :
     """
-    Class that contains
-    - the name of the files of the simulation
-    - the list of iterations
-    - the list of the corresponding times
+    Main class for the exploration of an openPMD timeseries
+
+    For more details, see the docstring of the following methods:
+    - get_field
+    - get_particles
+    - slider
     """
 
     def __init__( self, path_to_dir ) :
@@ -43,23 +43,25 @@ class OpenPMDTimeSeries(parent_class) :
         Parameter
         ---------
         path_to_dir : string
-            The absoluter path to the directory where the hdf5 files are.
+            The path to the directory where the openPMD files are.
+            For the moment, only HDF5 files are supported. There should be
+            one file per iteration, and the name of the files should end
+            with the iteration number, followed by '.h5' (e.g. data0005000.h5)
         """
+        
         # Extract the files and the iterations
-        self.h5_files = list_h5_files( path_to_dir )
-        self.iterations = np.array(
-            [ int(filename[-10:-3]) for filename in self.h5_files ])
+        self.h5_files, self.iterations = list_h5_files( path_to_dir )
 
         # Check that there are HDF5 files in this directory
         if len(self.h5_files) == 0 :
             print("Error : Found no HDF5 files in the specified directory. \n"
-                  "Please check that this is the full path to the HDF5 files.")
+                  "Please check that this is the path to the HDF5 files.")
             return(None)
 
         # Go through the files of the series, check them and extract the time
         N_files = len(self.h5_files) 
         self.t = np.zeros( N_files )
-        for k in range( N_files ) :
+        for k in range( N_files ):
             # Open the file, and do a version check
             f = h5py.File( self.h5_files[k], 'r')
             version = f.attrs['openPMD'].decode()
@@ -352,31 +354,46 @@ class OpenPMDTimeSeries(parent_class) :
 
 def list_h5_files( path_to_dir ) :
     """
-    Return a list of the hdf5 files in this directory
+    Return a list of the hdf5 files in this directory,
+    and a list of the corresponding iterations
 
     Parameter
     ---------
     path_to_dir : string
-        The absoluter path to the directory where the hdf5 files are.
+        The path to the directory where the hdf5 files are.
 
     Returns
     -------
-    A list of strings, which correspond to the absolute path of each file.
-
+    A tuple with:
+    - a list of strings which correspond to the path of each file
+    - a list of integers which correspond to the iteration of each file
     """
     # Find all the files in the provided directory
     all_files = os.listdir( path_to_dir )
 
     # Select the hdf5 files
-    h5_files = []
+    iters_and_names = []
     for filename in all_files :
-        if filename[-3:] == '.h5' :
-            h5_files.append( os.path.join( path_to_dir, filename) )
+        # Use only the name that end with .h5 or .hdf5
+        if filename[-3:] == '.h5' or filename[-5:] == '.hdf5':
+            # Extract the iteration, using regular expressions (regex)
+            regex_match = re.search('(\d+).h[df]*5', filename)
+            if regex_match is None:
+                print('Ill-formated HDF5 file: %s\n File names should end '
+                      'with the iteration number, followed by ".h5"' %filename)
+            else:
+                iteration = int( regex_match.groups()[-1] )
+                full_name = os.path.join( path_to_dir, filename)
+                # Create list of tuples (which can be sorted together)
+                iters_and_names.append( (iteration, full_name) )
 
-    # Sort them
-    h5_files.sort()
+    # Sort the list of tuples according to the iteration
+    iters_and_names.sort()
+    # Extract the list of filenames and iterations
+    filenames = [ name for (iteration, name) in iters_and_names ]
+    iterations = [ iteration for (iteration, name) in iters_and_names ]
 
-    return( h5_files )
+    return( filenames, iterations )
 
 
 def get_particle( filename, species, quantity ) :
