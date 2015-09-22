@@ -40,7 +40,10 @@ class OpenPMDTimeSeries(parent_class) :
 
     def __init__( self, path_to_dir ) :
         """
-        Initialize an OpenPMD time series
+        Initialize an openPMD time series
+        
+        More precisely, scan the directory and extract the openPMD files,
+        as well as some useful openPMD parameters
 
         Parameter
         ---------
@@ -70,6 +73,7 @@ class OpenPMDTimeSeries(parent_class) :
         self.geometry = params0['geometry']
         self.extension = params0['extension']
         self.avail_species = params0['avail_species']
+        self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
         self.avail_fields = params0['avail_fields']
 
         # - Check that the other files have the same parameters
@@ -139,7 +143,7 @@ class OpenPMDTimeSeries(parent_class) :
         A 1darray if only one quantity is requested by the user.
         A tuple of two 1darrays if two quantities are requested.
         """
-        # Check that the species required is present
+        # Check that the species and quantity required are present
         if self.avail_species is None:
             print('No particle data in this time series')
             return(None)
@@ -148,7 +152,13 @@ class OpenPMDTimeSeries(parent_class) :
             print("The requested species '%s' is not available.\nThe "
                 "available species are: \n - %s" %(species, species_list))
             return(None)
-            
+        if (quantity1 in self.avail_ptcl_quantities)==False or \
+            (quantity2 in self.avail_ptcl_quantities + [None, 'None'])==False:
+            quantity_list = '\n - '.join( self.avail_ptcl_quantities )
+            print("One of the requested quantities is not available.\nThe "
+                  "available quantities are: \n - %s" %quantity_list )
+            return(None)
+
         # The requested time may not correspond exactly to an available
         # iteration. Therefore, find the last available iteration before
         # this time (modify self.current_i accordingly)
@@ -245,15 +255,22 @@ class OpenPMDTimeSeries(parent_class) :
         if self.avail_fields is None:
             print('No field data in this time series')
             return(None)
+        # - Check field type
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
             print("The requested field '%s' is not available.\nThe "
                 "available fields are: \n - %s" %(field, field_list))
             return(None)
-
-
-        # CHECK IF QUANTITY IS PRESENT IN THE FILE AND WHETHER
-        # IT IS VECTOR OR SCALAR
+        # - Check coordinate
+        if self.avail_fields[field]=='vector':
+            coord_available = False
+            if coord in ['x', 'y', 'z']:
+                coord_available = True
+            elif self.geometry=='thetaMode' and (coord in ['r', 't']):
+                coord_available = True
+            if coord_available==False:
+                print("The requested coordinate '%s' is not available." %coord)
+                return(None)
 
         # The requested time may not correspond exactly to an available
         # iteration. Therefore, find the last available iteration before
@@ -262,8 +279,16 @@ class OpenPMDTimeSeries(parent_class) :
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
 
+        # Find the proper path for vector or scalar fields
+        if self.avail_fields[field] == 'scalar':
+            field_path = field
+            field_label = field
+        elif self.avail_fields[field] == 'vector':
+            field_path = os.path.join( field, coord )
+            field_label = field + coord
+
         # Get the field data
-        F, extent = read_field( filename, field, coord, m, slicing,
+        F, extent = read_field( filename, field_path, m, slicing,
                         slicing_dir, geometry=self.geometry )
 
         # Plot the resulting field
@@ -271,11 +296,6 @@ class OpenPMDTimeSeries(parent_class) :
         if (self.geometry=="3dcartesian") and (slicing is None):
             plot = False
         if plot==True:
-            # Get the correct quantity (for the labeling purpose)
-            field_label = field
-            if field != 'rho' :
-                field_label = field_label+coord
-            # Call the plotter
             self.plotter.show_field( F, extent, slicing_dir, m,
                         field_label, self.geometry, self.current_i, **kw )
 

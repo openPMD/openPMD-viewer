@@ -59,7 +59,6 @@ def read_particle( filename, species, quantity ) :
     dfile.close()
     return( data )
 
-
 def get_data( dset ) :
     """
     Extract the data from a (possibly constant) dataset

@@ -7,7 +7,7 @@ import os
 import h5py
 import numpy as np
 
-def read_field( filename, field, coord, m=0, slicing=0.,
+def read_field( filename, field_path, m=0, slicing=0.,
                slicing_dir='y', geometry="thetaMode" ) :
     """
     Extract a given field from an HDF5 file in the OpenPMD format.
@@ -17,10 +17,10 @@ def read_field( filename, field, coord, m=0, slicing=0.,
     filename : string
        The absolute path to the HDF5 file
        
-    field : string, optional
-        Which field to extract
-        Either 'rho', 'E', 'B' or 'J'
-
+    field_path : string
+       The relative path to the requested field, from the openPMD meshes path
+       (e.g. 'rho', 'E/r', 'B/x')
+    
     coord : string, optional
        Which component of the field to extract
        Either 'x', 'y' or 'z' in '2dcartesian' or '3dcartesian' geometry
@@ -59,29 +59,15 @@ def read_field( filename, field, coord, m=0, slicing=0.,
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     base_path = dfile.attrs["basePath"].decode()
-    relative_fields_path = dfile.attrs["meshesPath"].decode()
-
-    # Get the group of data and the corresponding information
-    field_path = os.path.join( base_path, relative_fields_path, field )
-    group = dfile[ field_path ]
-    # Check the geometry
-    if geometry=="thetaMode" :
-        coords = ['r', 't', 'z']
-        if coord==None : coord='r'
-    elif geometry in ["2dcartesian", "3dcartesian"] :
-        coords = ['x', 'y', 'z']
-        if coord==None : coord='x'
+    relative_meshes_path = dfile.attrs["meshesPath"].decode()
 
     # Get the proper dataset
-    if field == 'rho' :
-        dset = dfile[ field_path ]
-    elif field in ['E', 'B', 'J'] :
-        if coord in coords :
-            dset = dfile[ os.path.join( field_path, coord ) ]
-        else :
-            raise ValueError('Invalid `coord` : %s' %coord)
-    else :
-        raise ValueError('Invalid `field` : %s' %field)
+    full_field_path = os.path.join(base_path, relative_meshes_path, field_path)
+    dset = dfile[ full_field_path ]
+    # Get the proper group
+    group_path = field_path.split('/')[0]
+    full_group_path = os.path.join(base_path, relative_meshes_path, group_path)
+    group = dfile[ full_group_path ]
 
     # Extract the data in cylindrical
     if geometry=="thetaMode" :
