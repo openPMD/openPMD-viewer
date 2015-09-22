@@ -54,12 +54,12 @@ def read_openPMD_params( filename ):
     else :
         params['has_fields'] = False
 
-    # Find out whether particles are present
+    # Find out whether particles are present, and if yes of which species
     particle_path = f.attrs['particlesPath'].decode().strip('/')
     if particle_path in bpath.keys():
-        params['has_particles'] = True
+        params['avail_species'] = bpath[particle_path].keys()
     else :
-        params['has_particles'] = False
+        params['avail_species'] = None
     
     # Close the file and return the parameters
     f.close()

@@ -69,7 +69,7 @@ class OpenPMDTimeSeries(parent_class) :
         self.t[0] = t
         self.geometry = params0['geometry']
         self.extension = params0['extension']
-        self.has_particles = params0['has_particles']
+        self.avail_species = params0['avail_species']
         self.has_fields = params0['has_fields']
 
         # - Check that the other files have the same parameters
@@ -139,11 +139,16 @@ class OpenPMDTimeSeries(parent_class) :
         A 1darray if only one quantity is requested by the user.
         A tuple of two 1darrays if two quantities are requested.
         """
-        # Check that there is particle data
-        if self.has_particles==False:
+        # Check that the species required is present
+        if self.avail_species is None:
             print('No particle data in this time series')
             return(None)
-        
+        if (species in self.avail_species)==False:
+            species_list = '\n - '.join( self.avail_species )
+            print("The requested species '%s' is not available.\nThe "
+                "available species are: \n - %s" %(species, species_list))
+            return(None)
+            
         # The requested time may not correspond exactly to an available
         # iteration. Therefore, find the last available iteration before
         # this time (modify self.current_i accordingly)

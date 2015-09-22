@@ -75,7 +75,7 @@ class InteractiveViewer(object) :
             
             # Determine whether to do the refresh
             do_refresh = False
-            if self.has_particles == True:
+            if self.avail_species is not None:
                 if force == True or ptcl_refresh_toggle.value == True:
                     do_refresh = True
             # Do the refresh
@@ -100,6 +100,7 @@ class InteractiveViewer(object) :
                 self.get_particle( self.current_t, output=False, plot=True,
                     quantity1=ptcl_xaxis_button.value,
                     quantity2=ptcl_yaxis_button.value,
+                    species=ptcl_species_button.value,
                     vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                     nbins=ptcl_bins_button.value )
                 
@@ -247,10 +248,14 @@ class InteractiveViewer(object) :
 
         # Particle widgets
         # ----------------
-        if self.has_particles :
-
+        if (self.avail_species is not None):
+            
             # Particle quantities
             # -------------------
+            # Species selection
+            ptcl_species_button = widgets.ToggleButtons(
+                options=self.avail_species )
+            ptcl_species_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(
                 value='z',
@@ -296,7 +301,8 @@ class InteractiveViewer(object) :
             # ----------
             # Particle quantity container
             container_ptcl_quantities = widgets.VBox( width=270,
-                children=[ptcl_xaxis_button, ptcl_yaxis_button] )
+                children=[ ptcl_species_button, ptcl_xaxis_button,
+                           ptcl_yaxis_button] )
             # Plotting options container
             container_ptcl_plots = widgets.VBox( width=270,
             children=[ ptcl_bins_button, ptcl_range_button,
@@ -313,7 +319,7 @@ class InteractiveViewer(object) :
                     children=[ ptcl_refresh_toggle, ptcl_refresh_button]) ])
 
         # Global container
-        if self.has_fields and self.has_particles :
+        if self.has_fields and (self.avail_species is not None) :
             global_container = widgets.HBox(
                 children=[ container_fld, container_ptcl])
             display(global_container)
