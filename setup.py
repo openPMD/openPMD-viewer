@@ -10,5 +10,6 @@ setup(name='opmd_viewer',
       url='git@bitbucket.org:berkeleylab/opmd_viewer.git',
       install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],
       packages = ['opmd_viewer', 'opmd_viewer.openpmd_timeseries', 
-                  'opmd_viewer.openpmd_timeseries.data_readers']
+                  'opmd_viewer.openpmd_timeseries.data_readers', 
+                  'addons', 'addons/pic' ]
       )
