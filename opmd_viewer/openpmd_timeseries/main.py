@@ -49,71 +49,44 @@ class OpenPMDTimeSeries(parent_class) :
             one file per iteration, and the name of the files should end
             with the iteration number, followed by '.h5' (e.g. data0005000.h5)
         """
-        
         # Extract the files and the iterations
         self.h5_files, self.iterations = list_h5_files( path_to_dir )
 
         # Check that there are HDF5 files in this directory
-        if len(self.h5_files) == 0 :
+        if len(self.h5_files) == 0:
             print("Error: Found no HDF5 files in the specified directory.\n"
                 "Please check that this is the path to the HDF5 files.")
             return(None)
-
-        # Go through the files of the series, check them and extract the time
+            
+        # Go through the files of the series, extract the time
+        # and a few parameters.
         N_files = len(self.h5_files) 
         self.t = np.zeros( N_files )
-        for k in range( N_files ):
-            # Open the file, and do a version check
-            f = h5py.File( self.h5_files[k], 'r')
-            version = f.attrs['openPMD'].decode()
-            extension = f.attrs['openPMDextension']
-            if version[:2] != '1.':
-                raise RuntimeError(
-                    "File {:s} is not supported: Invalid openPMD "
-                    "version: {:s})".format( self.h5_files[k], version) )
-            if extension != 1:
-                raise RuntimeError(
-                    "File {:s} is not supported: Not formatted with "
-                    "the PIC extension".format(self.h5_files[k]) )
-            # Find the base path, extract the time
-            bpath = f[ f.attrs["basePath"] ]
-            self.t[k] = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
-            f.close()
+
+        # - Extract parameters from the first file
+        t, params0 = extract_openPMD_params( self.h5_files[0] )
+        self.t[0] = t
+        self.geometry = params0['geometry']
+        self.extension = params0['extension']
+        self.has_particle = params0['has_particle']
+        self.has_fields = params0['has_fields']
+
+        # - Check that the other files have the same parameters
+        for k in range( 1, N_files ):
+            t, params = extract_openPMD_params( self.h5_files[k] )
+            self.t[k] = t
+            for key in params0.keys():
+                if params != params0:
+                    print(
+                        "Warning: File %s has different openPMD parameters "
+                        "than the rest of the time series." %self.h5_files[k])
+            
+        # - Set the current iteration and time
         self.current_i = 0
         self.current_t = self.t[0]
-        # Find the min and max of time
+        # - Find the min and the max of the time
         self.tmin = self.t.min()
         self.tmax = self.t.max()
-        
-        # Find out whether fields and particles are present or not
-        # If the fields are present, extract their geometry
-        f = h5py.File( self.h5_files[0] )
-        # - Find the base path object, and the path to the data
-        bpath = f[ f.attrs["basePath"] ]   
-        field_path = f.attrs['meshesPath'].decode().strip('/')
-        particle_path = f.attrs['particlesPath'].decode().strip('/')
-        # - Check for the fields
-        if field_path in bpath.keys() :
-            self.has_fields = True
-            # Pick the first field and inspect its geometry
-            first_field_path = next( iter(bpath[ field_path ]) )
-            first_field = bpath[ os.path.join(field_path, first_field_path) ]
-            self.geometry = first_field.attrs['geometry']
-            if self.geometry == "cartesian":
-                # Check if this a 2d or 3d Cartesian timeseries
-                dim = len( first_field.attrs['axisLabels'] )
-                if dim == 2:
-                    self.geometry = "2dcartesian"
-                elif dim==3:
-                    self.geometry = "3dcartesian"
-        else :
-            self.has_fields = False
-        # - Check for particles
-        if particle_path in bpath.keys() :
-            self.has_particles = True
-        else :
-            self.has_particles = False
-        f.close()
         
     def get_particle( self, t, quantity1='z', quantity2=None,
                    species='electrons', output=True, plot=False,
@@ -645,5 +618,65 @@ def get_shape( dset ) :
         shape = dset.shape
 
     return(shape)
+
+
+
+def extract_openPMD_params( filename ):
+    """
+    Extract the time and some openPMD parameters from a file
+
+    Parameter
+    ---------
+    filename: string
+        The path to the file from which parameters should be extracted
+
+    Returns
+    -------
+    A tuple with:
+    - A float corresponding to the time of this iteration in SI units
+    - A dictionary containing several parameters, such as the geometry, etc.
+    """
+    params = {}
+            
+    # Open the file, and do a version check
+    f = h5py.File( filename, 'r')
+    version = f.attrs['openPMD'].decode()
+    if version[:2] != '1.':
+        raise ValueError(
+            "File %s is not supported: Invalid openPMD version: "
+            "%s)" %( filename, version) )
+    params['extension'] = f.attrs['openPMDextension']
+
+    # Find the base path object, and extract the time
+    bpath = f[ f.attrs["basePath"] ]
+    t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
+
+    # Find out whether fields are present and extract their geometry
+    field_path = f.attrs['meshesPath'].decode().strip('/')
+    if field_path in bpath.keys():
+        params['has_fields'] = True
+        # Pick the first field and inspect its geometry
+        first_field_path = next( iter(bpath[ field_path ]) )
+        first_field = bpath[ os.path.join(field_path, first_field_path) ]
+        params['geometry'] = first_field.attrs['geometry']
+        if params['geometry'] == "cartesian":
+            # Check if this a 2d or 3d Cartesian timeseries
+            dim = len( first_field.attrs['axisLabels'] )
+            if dim == 2:
+                params['geometry'] = "2dcartesian"
+            elif dim==3:
+                params['geometry'] = "3dcartesian"
+    else :
+        params['has_fields'] = False
+
+    # Find out whether particles are present
+    particle_path = f.attrs['particlesPath'].decode().strip('/')
+    if particle_path in bpath.keys():
+        params['has_particles'] = True
+    else :
+        params['has_particles'] = False
     
+    # Close the file and return the parameters
+    f.close()
+    return( t, params )
 
