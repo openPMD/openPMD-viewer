@@ -39,9 +39,9 @@ def read_openPMD_params( filename ):
     # Find out whether fields are present and extract their geometry
     field_path = f.attrs['meshesPath'].decode().strip('/')
     if field_path in bpath.keys():
-        params['has_fields'] = True
+        params['avail_fields'] = bpath[field_path].keys()
         # Pick the first field and inspect its geometry
-        first_field_path = next( iter(bpath[ field_path ]) )
+        first_field_path = params['avail_fields'][0]
         first_field = bpath[ os.path.join(field_path, first_field_path) ]
         params['geometry'] = first_field.attrs['geometry']
         if params['geometry'] == "cartesian":
@@ -52,7 +52,7 @@ def read_openPMD_params( filename ):
             elif dim==3:
                 params['geometry'] = "3dcartesian"
     else :
-        params['has_fields'] = False
+        params['avail_fields'] = None
 
     # Find out whether particles are present, and if yes of which species
     particle_path = f.attrs['particlesPath'].decode().strip('/')

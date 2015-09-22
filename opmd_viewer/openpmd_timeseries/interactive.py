@@ -41,7 +41,7 @@ class InteractiveViewer(object) :
             
             # Determine whether to do the refresh
             do_refresh = False
-            if self.has_fields == True:
+            if (self.avail_fields is not None):
                 if force == True or fld_refresh_toggle.value == True:
                     do_refresh = True
             # Do the refresh
@@ -162,13 +162,13 @@ class InteractiveViewer(object) :
 
         # Field widgets
         # -------------
-        if self.has_fields :
+        if (self.avail_fields is not None) :
 
             # Field type
             # ----------
             # Field button
             fieldtype_button = widgets.ToggleButtons(
-                description='Field:', options=['E','B','J','rho'] )
+                description='Field:', options=self.avail_fields )
             fieldtype_button.on_trait_change( refresh_field )
 
             # Coord button
@@ -319,7 +319,8 @@ class InteractiveViewer(object) :
                     children=[ ptcl_refresh_toggle, ptcl_refresh_button]) ])
 
         # Global container
-        if self.has_fields and (self.avail_species is not None) :
+        if (self.avail_fields is not None) and \
+          (self.avail_species is not None):
             global_container = widgets.HBox(
                 children=[ container_fld, container_ptcl])
             display(global_container)

@@ -70,7 +70,7 @@ class OpenPMDTimeSeries(parent_class) :
         self.geometry = params0['geometry']
         self.extension = params0['extension']
         self.avail_species = params0['avail_species']
-        self.has_fields = params0['has_fields']
+        self.avail_fields = params0['avail_fields']
 
         # - Check that the other files have the same parameters
         for k in range( 1, N_files ):
@@ -241,10 +241,16 @@ class OpenPMDTimeSeries(parent_class) :
            F : a 2darray containing the required field
            extent : a 1darray with 4 elements, containing the extent
         """
-        # Check that there is field data
-        if self.has_fields == False:
+        # Check that the field required is present
+        if self.avail_fields is None:
             print('No field data in this time series')
             return(None)
+        if (field in self.avail_fields)==False:
+            field_list = '\n - '.join( self.avail_fields )
+            print("The requested field '%s' is not available.\nThe "
+                "available fields are: \n - %s" %(field, field_list))
+            return(None)
+
 
         # CHECK IF QUANTITY IS PRESENT IN THE FILE AND WHETHER
         # IT IS VECTOR OR SCALAR
