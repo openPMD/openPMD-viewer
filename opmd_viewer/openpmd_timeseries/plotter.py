@@ -155,13 +155,13 @@ class Plotter(object):
             plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
             plt.ylabel('$r \;(\mu m)$', fontsize=self.fontsize )
         # 2D Cartesian geometry
-        elif self.geometry =="2dcartesian":
+        elif geometry =="2dcartesian":
             plt.title("%s at %.1f fs   (iteration %d)" \
                 %(field_label, time_fs, iteration ), fontsize=self.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
             plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
         # 3D Cartesian geometry
-        elif self.geometry=="3dcartesian":
+        elif geometry=="3dcartesian":
             plt.title("%s sliced across %s at %.1f fs  (iteration %d)" \
                 %(field_label, slicing_dir, time_fs, iteration ),
                 fontsize=self.fontsize)

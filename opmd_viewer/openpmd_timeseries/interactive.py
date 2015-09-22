@@ -11,7 +11,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from .utilities import mode_dict
 
-class InteractiveViewer(object) :
+class InteractiveViewer(object):
 
     def __init__(self) :
         pass
@@ -41,7 +41,7 @@ class InteractiveViewer(object) :
             
             # Determine whether to do the refresh
             do_refresh = False
-            if self.has_fields == True:
+            if (self.avail_fields is not None):
                 if force == True or fld_refresh_toggle.value == True:
                     do_refresh = True
             # Do the refresh
@@ -75,7 +75,7 @@ class InteractiveViewer(object) :
             
             # Determine whether to do the refresh
             do_refresh = False
-            if self.has_particles == True:
+            if self.avail_species is not None:
                 if force == True or ptcl_refresh_toggle.value == True:
                     do_refresh = True
             # Do the refresh
@@ -100,6 +100,7 @@ class InteractiveViewer(object) :
                 self.get_particle( self.current_t, output=False, plot=True,
                     quantity1=ptcl_xaxis_button.value,
                     quantity2=ptcl_yaxis_button.value,
+                    species=ptcl_species_button.value,
                     vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                     nbins=ptcl_bins_button.value )
                 
@@ -161,13 +162,14 @@ class InteractiveViewer(object) :
 
         # Field widgets
         # -------------
-        if self.has_fields :
+        if (self.avail_fields is not None) :
 
             # Field type
             # ----------
             # Field button
             fieldtype_button = widgets.ToggleButtons(
-                description='Field:', options=['E','B','J','rho'] )
+                description='Field:',
+                options=sorted(self.avail_fields.keys()))
             fieldtype_button.on_trait_change( refresh_field )
 
             # Coord button
@@ -247,19 +249,22 @@ class InteractiveViewer(object) :
 
         # Particle widgets
         # ----------------
-        if self.has_particles :
-
+        if (self.avail_species is not None):
+            
             # Particle quantities
             # -------------------
+            # Species selection
+            ptcl_species_button = widgets.ToggleButtons(
+                options=self.avail_species )
+            ptcl_species_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(
-                value='z',
-                options=['x','y','z','ux','uy','uz'] )
+                options=self.avail_ptcl_quantities )
             ptcl_xaxis_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the y axis            
             ptcl_yaxis_button = widgets.ToggleButtons(
-                value='uz',
-                options=['x','y','z','ux','uy','uz','None'] )
+                value='None',
+                options=self.avail_ptcl_quantities+['None'] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
             # Plotting options
@@ -295,10 +300,11 @@ class InteractiveViewer(object) :
             # Containers
             # ----------
             # Particle quantity container
-            container_ptcl_quantities = widgets.VBox( width=270,
-                children=[ptcl_xaxis_button, ptcl_yaxis_button] )
+            container_ptcl_quantities = widgets.VBox( width=310,
+                children=[ ptcl_species_button, ptcl_xaxis_button,
+                           ptcl_yaxis_button] )
             # Plotting options container
-            container_ptcl_plots = widgets.VBox( width=270,
+            container_ptcl_plots = widgets.VBox( width=310,
             children=[ ptcl_bins_button, ptcl_range_button,
             widgets.HBox(children=[ ptcl_magnitude_button, ptcl_use_button] ),
             ptcl_color_button ])
@@ -308,17 +314,18 @@ class InteractiveViewer(object) :
             accord2.set_title(0, 'Particle quantities')
             accord2.set_title(1, 'Plotting options')
             # Complete particle container
-            container_ptcl =  widgets.VBox( width=310,
+            container_ptcl =  widgets.VBox( width=370,
                 children=[ accord2, widgets.HBox(
                     children=[ ptcl_refresh_toggle, ptcl_refresh_button]) ])
 
         # Global container
-        if self.has_fields and self.has_particles :
+        if (self.avail_fields is not None) and \
+          (self.avail_species is not None):
             global_container = widgets.HBox(
                 children=[ container_fld, container_ptcl])
             display(global_container)
-        elif self.has_fields :
+        elif self.avail_species is None:
             display( container_fld )
-        elif self.has_particles :
+        elif self.avail_fields is None:
             display( container_ptcl )
 
