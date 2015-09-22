@@ -10,7 +10,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import constants
 from .utilities import mode_dict, slice_dict
-from .plotter import fontsize
+from .plotter import Plotter
+from .data_reader.particle_reader import get_particle
+from .data_reader.field_reader import get_field
 
 # Check wether the interactive interface can be loaded
 try:
@@ -33,7 +35,7 @@ class OpenPMDTimeSeries(parent_class) :
 
     For more details, see the docstring of the following methods:
     - get_field
-    - get_particles
+    - get_particle
     - slider
     """
 
@@ -87,10 +89,14 @@ class OpenPMDTimeSeries(parent_class) :
         # - Find the min and the max of the time
         self.tmin = self.t.min()
         self.tmax = self.t.max()
-        
+
+        # - Initialize a plotter object, which holds information about the time
+        self.plotter = Plotter( self.t, self.iteration )
+
+
     def get_particle( self, t, quantity1='z', quantity2=None,
                    species='electrons', output=True, plot=False,
-                   nbins=50, cmap='Blues', vmin=None, vmax=None, **kw ) :
+                   nbins=150, **kw ) :
         """
         Extract one (or two) given particle quantity
         from an HDF5 file in the OpenPMD format.
@@ -133,20 +139,20 @@ class OpenPMDTimeSeries(parent_class) :
         Returns
         -------
         A 1darray if only one quantity is requested by the user.
-        A tuple of 1darrays if two quantities are requested.
+        A tuple of two 1darrays if two quantities are requested.
         """
         # Check that there is particle data
-        if self.has_particles == False:
+        if self.has_particles==False:
             print('No particle data in this time series')
-            return()
+            return(None)
         
-        # Find the index of the time array that correponds to this time
-        self.find_last_output(t)
+        # The requested time may not correspond exactly to an available
+        # iteration. Therefore, find the last available iteration before
+        # this time (modify self.current_i accordingly)
+        self._find_last_output(t)
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
-        iteration = self.iterations[ self.current_i ]
-        time_fs = 1.e15*self.current_t
-
+        
         # In the case of only one quantity
         if quantity2 is None or quantity2=='None' :
             # Extract from file
@@ -156,10 +162,8 @@ class OpenPMDTimeSeries(parent_class) :
                 # Extract weights for the histogram
                 w = get_particle( filename, species, 'w')
                 # Do the plotting
-                plt.hist(q1, bins=nbins, weights=w, **kw )
-                plt.xlabel(quantity1, fontsize=fontsize)
-                plt.title("t =  %.0f fs    (iteration %d)" \
-                    %(time_fs, iteration), fontsize=fontsize)
+                self.plotter.hist1d( q1, w, quantity1, self.current_i,
+                                     nbins, **kw )
             # Output
             if output :
                 return(q1)
@@ -174,15 +178,8 @@ class OpenPMDTimeSeries(parent_class) :
                 # Extract weights for the histogram
                 w = get_particle( filename, species, 'w')
                 # Do the plotting
-                plt.hist2d(q1, q2, bins=nbins, cmap=cmap,
-                    vmin=vmin, vmax=vmax, weights=w, **kw )
-                plt.colorbar()
-
-                plt.xlabel(quantity1, fontsize=fontsize)
-                plt.ylabel(quantity2, fontsize=fontsize)
-                plt.title("t =  %.1f fs   (iteration %d)"  \
-                    %(time_fs, iteration ), fontsize=fontsize )
-                    
+                self.plotter.hist2d( q1, q2, w, quantity1, quantity2,
+                                     self.current_i, nbins, **kw )
             # Output
             if output :
                 return(q1, q2)
@@ -249,7 +246,7 @@ class OpenPMDTimeSeries(parent_class) :
             return()
         
         # Find the index of the time array that correponds to this time
-        self.find_last_output(t)
+        self._find_last_output(t)
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
         iteration = self.iterations[ self.current_i ]
@@ -296,7 +293,7 @@ class OpenPMDTimeSeries(parent_class) :
         return( get_field( filename, field, coord, m, slicing, slicing_dir,
                            output, plot, geometry=self.geometry, **kw ) )
 
-    def find_last_output(self, t) :
+    def _find_last_output(self, t) :
         """
         Find the last file that was output before t
         and store the corresponding value in self.current_t
@@ -368,57 +365,7 @@ def list_h5_files( path_to_dir ) :
     return( filenames, iterations )
 
 
-def get_particle( filename, species, quantity ) :
-    """
-    Extract a given particle quantity
-    
-    In the case of positions, the result
-    is returned in microns
-    
-    Parameters
-    ----------
-    filename : string
-        The name of the file from which to extract data
-    
-    species : string
-        The name of the species to extract (in the OpenPMD file)
 
-    quantity : string
-        The quantity to extract
-        Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
-
-    """
-    # Translate the quantity to the OpenPMD format
-    dict_quantity = { 'x' : 'position/x',
-                      'y' : 'position/y',
-                      'z' : 'position/z',
-                      'ux' : 'momentum/x',
-                      'uy' : 'momentum/y',
-                      'uz' : 'momentum/z',
-                      'w' : 'weighting'}
-    
-    opmd_quantity = dict_quantity[quantity]
-
-    # Open the HDF5 file
-    dfile = h5py.File( filename, 'r' )
-    base_path =  dfile.attrs['basePath'].decode()
-    particles_path = dfile.attrs['particlesPath'].decode()
-
-    # Find the right dataset
-    species_grp =  dfile[ os.path.join( base_path, particles_path, species ) ]
-    data = get_data( species_grp[ opmd_quantity ] )
-
-    # - Return positions in microns, with an offset
-    if quantity in ['x', 'y', 'z']:
-        offset = get_data( species_grp[ 'positionOffset/%s' %quantity ] )
-        return( 1.e6 * (data + offset) )
-    # - Return momentum in normalized units
-    elif quantity in ['ux', 'uy', 'uz' ]: 
-        norm_factor = 1./( get_data( species_grp['mass'] ) * constants.c )
-        return( data * norm_factor )
-    # - Return the other quantities unchanged
-    else :
-        return( data )
 
 def get_field( filename, field='E', coord='r', m=1, slicing=0., slicing_dir='y',
                output=True, plot=True, geometry="thetaMode", **kw ) :
@@ -571,54 +518,6 @@ def get_field( filename, field='E', coord='r', m=1, slicing=0., slicing_dir='y',
 
     if output :
         return( F, extent, z, t )
-
-def get_data( dset ) :
-    """
-    Extract the data from a (possibly constant) dataset
-
-    Parameters:
-    -----------
-    dset: an h5py.Dataset or h5py.Group (when constant)
-        The object from which the data is extracted
-
-    Returns:
-    --------
-    An np.ndarray (non-constant dataset) or a single double (constant dataset)
-    """
-    # Case of a constant dataset
-    if type(dset) is h5py.Group:
-        data = dset.attrs['value']
-    # Case of a non-constant dataset
-    elif type(dset) is h5py.Dataset:
-        data = dset[...]
-
-    # Scale by the conversion factor
-    data = data * dset.attrs['unitSI']
-
-    return(data)
-
-def get_shape( dset ) :
-    """
-    Extract the shape of a (possibly constant) dataset
-
-    Parameters:
-    -----------
-    dset: an h5py.Dataset or h5py.Group (when constant)
-        The object whose shape is extracted
-
-    Returns:
-    --------
-    A tuple corresponding to the shape
-    """
-    # Case of a constant dataset
-    if type(dset) is h5py.Group:
-        shape = dset.attrs['shape']
-    # Case of a non-constant dataset
-    elif type(dset) is h5py.Dataset:
-        shape = dset.shape
-
-    return(shape)
-
 
 
 def extract_openPMD_params( filename ):
