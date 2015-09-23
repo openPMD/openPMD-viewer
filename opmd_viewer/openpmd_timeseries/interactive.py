@@ -64,8 +64,8 @@ class InteractiveViewer(object):
                 
                 self.get_field( self.current_t, output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
-                    m=mode_button.value, slicing=slicing_button.value,
-                    theta=theta_button.value,
+                    m=convert_to_int( mode_button.value ),
+                    slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value )
                 
@@ -332,3 +332,11 @@ class InteractiveViewer(object):
         elif self.avail_fields is None:
             display( container_ptcl )
 
+def convert_to_int( m ):
+    """
+    Convert the string m to an int, except if m is 'all'
+    """
+    if m != 'all':
+        return( int(m) )
+    else:
+        return(m)

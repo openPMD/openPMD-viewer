@@ -260,13 +260,13 @@ class OpenPMDTimeSeries(parent_class) :
         if self.avail_fields is None:
             print('No field data in this time series')
             return(None)
-        # - Check field type
+        # Check the field type
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
             print("The requested field '%s' is not available.\nThe "
                 "available fields are: \n - %s" %(field, field_list))
             return(None)
-        # - Check coordinate (for vector fields)
+        # Check the coordinate (for vector fields)
         if self.avail_fields[field]=='vector':
             coord_available = False
             if coord in ['x', 'y', 'z']:
@@ -276,7 +276,7 @@ class OpenPMDTimeSeries(parent_class) :
             if coord_available==False:
                 print("The requested coordinate '%s' is not available." %coord)
                 return(None)
-        # - Check mode (for thetaMode)
+        # Check the mode (for thetaMode)
         if self.geometry=="thetaMode":
             if (str(m) in self.avail_circ_modes) == False:
                 mode_list = '\n - '.join(self.avail_circ_modes)
@@ -300,8 +300,13 @@ class OpenPMDTimeSeries(parent_class) :
             field_label = field + coord
 
         # Get the field data
-        F, extent = read_field( filename, field_path, m, slicing,
-                        slicing_dir, geometry=self.geometry )
+        if self.geometry == "thetaMode":
+            F, extent = read_field_circ( filename, field_path, m, theta )
+        elif self.geometry == "2dcartesian":
+            F, extent = read_field_2d( filename, field_path )
+        elif self.geometry == "3dcartesian":
+            F, extent = read_field_3d( filename, field_path,
+                                       slicing, slicing_dir)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
