@@ -79,7 +79,7 @@ def read_field_circ( filename, field_path, m=0, theta=0. ) :
         # - Prepare the multiplier arrays
         mult_above_axis = [1]
         mult_below_axis = [1]
-        for mode in range(1,Nm+1):
+        for mode in range(1,int(Nm/2)+1):
             cos = np.cos( mode*theta )
             sin = np.sin( mode*theta )
             mult_above_axis += [cos, sin]
@@ -88,8 +88,8 @@ def read_field_circ( filename, field_path, m=0, theta=0. ) :
         mult_below_axis = np.array( mult_below_axis )
         # - Sum the modes
         F = get_data( dset ) # (Extracts all modes)
-        F_total[Nr:,:] = np.dot( mult_above_axis, F )[:,:]
-        F_total[:Nr,:] = np.dot( mult_below_axis, F )[::-1,:]
+        F_total[Nr:,:] = np.tensordot( mult_above_axis, F, axes=(0,0) )[:,:]
+        F_total[:Nr,:] = np.tensordot( mult_below_axis, F, axes=(0,0) )[::-1,:]
     elif m==0:
         # Extract mode 0
         F = get_data( dset, 0, 0 )

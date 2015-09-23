@@ -10,7 +10,8 @@ import numpy as np
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_particle
-from .data_reader.field_reader import read_field
+from .data_reader.field_reader import read_field_2d, \
+     read_field_circ, read_field_3d
 
 # Check wether the interactive interface can be loaded
 try:

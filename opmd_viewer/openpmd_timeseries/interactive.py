@@ -334,9 +334,9 @@ class InteractiveViewer(object):
 
 def convert_to_int( m ):
     """
-    Convert the string m to an int, except if m is 'all'
+    Convert the string m to an int, except if m is 'all' or None
     """
-    if m != 'all':
-        return( int(m) )
-    else:
+    if (m=='all') or (m is None):
         return(m)
+    else:
+        return( int(m) )
