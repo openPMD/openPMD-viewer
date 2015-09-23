@@ -174,7 +174,7 @@ class InteractiveViewer(object):
             # Coord button
             if self.geometry == "thetaMode":
                 coord_button = widgets.ToggleButtons(
-                    description='Coord:', options=['r', 't', 'z'] )
+                    description='Coord:', options=['x', 'y', 'z', 'r', 't'] )
             elif self.geometry in ["2dcartesian", "3dcartesian"] :
                 coord_button = widgets.ToggleButtons(
                     description='Coord:', options=['x', 'y', 'z'] )

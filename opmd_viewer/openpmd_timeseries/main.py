@@ -301,13 +301,28 @@ class OpenPMDTimeSeries(parent_class) :
             field_label = field + coord
 
         # Get the field data
-        if self.geometry == "thetaMode":
-            F, extent = read_field_circ( filename, field_path, m, theta )
-        elif self.geometry == "2dcartesian":
+        # - For 2D
+        if self.geometry == "2dcartesian":
             F, extent = read_field_2d( filename, field_path )
+        # - For 3D
         elif self.geometry == "3dcartesian":
-            F, extent = read_field_3d( filename, field_path,
-                                       slicing, slicing_dir)
+            F, extent = read_field_3d(
+                filename, field_path, slicing, slicing_dir)
+        # - For thetaMode
+        elif self.geometry == "thetaMode":
+            if (coord in ['x', 'y']) and (self.avail_fields[field]=='vector'):
+                # For Cartesian components, combine r and t components
+                Fr, extent = read_field_circ( filename, field+'/r', m, theta )
+                Ft, extent = read_field_circ( filename, field+'/t', m, theta )
+                if coord == 'x':
+                    F = np.cos(theta)*Fr - np.sin(theta)*Ft
+                elif coord == 'y':
+                    F = np.sin(theta)*Fr + np.cos(theta)*Ft
+                # Revert the sign below the axis
+                F[:len(F)/2] *= -1
+            else:
+                # For cylindrical or scalar components, no special treatment
+                F, extent = read_field_circ( filename, field_path, m, theta )
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
