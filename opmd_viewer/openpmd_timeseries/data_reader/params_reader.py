@@ -5,6 +5,7 @@ It defines a function that can read standard parameters from an openPMD file.
 """
 import os
 import h5py
+from .utilities import is_scalar_record, get_shape
 
 def read_openPMD_params( filename ):
     """
@@ -44,13 +45,23 @@ def read_openPMD_params( filename ):
         first_field_path = avail_fields[0]
         first_field = bpath[ os.path.join(meshes_path, first_field_path) ]
         params['geometry'] = first_field.attrs['geometry']
-        if params['geometry'] == "cartesian":
+        if params['geometry'] == "thetaMode":
+            # Check the available modes
+            if is_scalar_record(first_field):
+                Nm, _, _ = get_shape(first_field)
+            else:
+                coord = first_field.keys()[0]
+                Nm, _, _ = get_shape(first_field[coord])
+            params['avail_circ_modes'] = ['all'] + \
+                [ str(m) for m in range( int(Nm/2) + 1 ) ]
+        elif params['geometry'] == "cartesian":
             # Check if this a 2d or 3d Cartesian timeseries
             dim = len( first_field.attrs['axisLabels'] )
             if dim == 2:
                 params['geometry'] = "2dcartesian"
             elif dim==3:
                 params['geometry'] = "3dcartesian"
+            params['avail_circ_modes'] = None
         # For each field, check whether it is vector or scalar
         # Store the information in a dictionary
         params['avail_fields'] = {}
@@ -61,7 +72,6 @@ def read_openPMD_params( filename ):
             else:
                 field_type='vector'
             params['avail_fields'][field_name] = field_type
-
     else :
         params['avail_fields'] = None
 
@@ -72,7 +82,7 @@ def read_openPMD_params( filename ):
         params['avail_species'] = bpath[particle_path].keys()
         # Extract the available particle quantity, from the first species
         first_species_path = params['avail_species'][0]
-        first_species = bpath[ os.path.join(particle_path, first_species_path) ]
+        first_species = bpath[os.path.join(particle_path, first_species_path)]
         ptcl_quantities = []
         # Go through all the particle quantities
         for quantity_name in first_species.keys():
@@ -90,31 +100,11 @@ def read_openPMD_params( filename ):
     else :
         # Particles are absent
         params['avail_species'] = None
-        params['avail_ptcl_quantities'] = None
 
     # Close the file and return the parameters
     f.close()
     return( t, params )
 
-def is_scalar_record( record ):
-    """
-    Determine whether a record is a scalar record or a vector record
-
-    Parameter
-    ---------
-    record: an h5py Dataset or an h5py Group
-
-    Return
-    ------
-    A boolean indicating whether the record is scalar
-    """
-    scalar = False
-    if 'value' in record.attrs:
-        scalar=True
-    elif type(record) is h5py.Dataset:
-        scalar=True
-
-    return(scalar)
 
 def simplify_quantities( quantities ):
     """
