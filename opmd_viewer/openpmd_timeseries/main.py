@@ -7,11 +7,11 @@ import os
 import re
 import h5py
 import numpy as np
-from .utilities import slice_dict
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_particle
-from .data_reader.field_reader import read_field
+from .data_reader.field_reader import read_field_2d, \
+     read_field_circ, read_field_3d
 
 # Check wether the interactive interface can be loaded
 try:
@@ -70,11 +70,14 @@ class OpenPMDTimeSeries(parent_class) :
         # - Extract parameters from the first file
         t, params0 = read_openPMD_params( self.h5_files[0] )
         self.t[0] = t
-        self.geometry = params0['geometry']
-        self.extension = params0['extension']
-        self.avail_species = params0['avail_species']
-        self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
         self.avail_fields = params0['avail_fields']
+        self.extension = params0['extension']
+        if self.avail_fields is not None:
+            self.geometry = params0['geometry']
+            self.avail_circ_modes = params0['avail_circ_modes']
+        self.avail_species = params0['avail_species']
+        if self.avail_species is not None:
+            self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
 
         # - Check that the other files have the same parameters
         for k in range( 1, N_files ):
@@ -198,7 +201,7 @@ class OpenPMDTimeSeries(parent_class) :
                 return(q1, q2)
 
 
-    def get_field(self, t, field='E', coord='z', m=1, slicing=0.,
+    def get_field(self, t, field='E', coord='z', m='all', theta=0., slicing=0.,
                   slicing_dir='y', output=True, plot=False, **kw ) :
         """
         Extract a given field from an HDF5 file in the OpenPMD format.
@@ -216,11 +219,14 @@ class OpenPMDTimeSeries(parent_class) :
            Which component of the field to extract
            Either 'r', 't' or 'z'
 
-        m : int, optional
+        m : int or str, optional
            Only used for thetaMode geometry
-           0 : mode 0
-           1 : real part of mode 1
-           2 : imaginary part of mode 1
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
 
         slicing : float, optional
            Only used for 3dcartesian geometry
@@ -255,13 +261,13 @@ class OpenPMDTimeSeries(parent_class) :
         if self.avail_fields is None:
             print('No field data in this time series')
             return(None)
-        # - Check field type
+        # Check the field type
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
             print("The requested field '%s' is not available.\nThe "
                 "available fields are: \n - %s" %(field, field_list))
             return(None)
-        # - Check coordinate
+        # Check the coordinate (for vector fields)
         if self.avail_fields[field]=='vector':
             coord_available = False
             if coord in ['x', 'y', 'z']:
@@ -271,7 +277,14 @@ class OpenPMDTimeSeries(parent_class) :
             if coord_available==False:
                 print("The requested coordinate '%s' is not available." %coord)
                 return(None)
-
+        # Check the mode (for thetaMode)
+        if self.geometry=="thetaMode":
+            if (str(m) in self.avail_circ_modes) == False:
+                mode_list = '\n - '.join(self.avail_circ_modes)
+                print("The requested mode '%s' is not available.\nThe "
+                    "available modes are: \n - %s" %(m, mode_list))
+                return(None)
+                
         # The requested time may not correspond exactly to an available
         # iteration. Therefore, find the last available iteration before
         # this time (modify self.current_i accordingly)
@@ -288,8 +301,28 @@ class OpenPMDTimeSeries(parent_class) :
             field_label = field + coord
 
         # Get the field data
-        F, extent = read_field( filename, field_path, m, slicing,
-                        slicing_dir, geometry=self.geometry )
+        # - For 2D
+        if self.geometry == "2dcartesian":
+            F, extent = read_field_2d( filename, field_path )
+        # - For 3D
+        elif self.geometry == "3dcartesian":
+            F, extent = read_field_3d(
+                filename, field_path, slicing, slicing_dir)
+        # - For thetaMode
+        elif self.geometry == "thetaMode":
+            if (coord in ['x', 'y']) and (self.avail_fields[field]=='vector'):
+                # For Cartesian components, combine r and t components
+                Fr, extent = read_field_circ( filename, field+'/r', m, theta )
+                Ft, extent = read_field_circ( filename, field+'/t', m, theta )
+                if coord == 'x':
+                    F = np.cos(theta)*Fr - np.sin(theta)*Ft
+                elif coord == 'y':
+                    F = np.sin(theta)*Fr + np.cos(theta)*Ft
+                # Revert the sign below the axis
+                F[:len(F)/2] *= -1
+            else:
+                # For cylindrical or scalar components, no special treatment
+                F, extent = read_field_circ( filename, field_path, m, theta )
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection

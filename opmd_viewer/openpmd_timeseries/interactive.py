@@ -9,7 +9,6 @@ from IPython.display import display, clear_output
 import math
 import matplotlib
 import matplotlib.pyplot as plt
-from .utilities import mode_dict
 
 class InteractiveViewer(object):
 
@@ -65,8 +64,8 @@ class InteractiveViewer(object):
                 
                 self.get_field( self.current_t, output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
-                    m=int(mode_dict[mode_button.value]),
-                    slicing=slicing_button.value,
+                    m=convert_to_int( mode_button.value ),
+                    slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value )
                 
@@ -173,18 +172,21 @@ class InteractiveViewer(object):
             fieldtype_button.on_trait_change( refresh_field )
 
             # Coord button
-            if self.geometry == "thetaMode" :
+            if self.geometry == "thetaMode":
                 coord_button = widgets.ToggleButtons(
-                    description='Coord:', options=['r', 't', 'z'] )
+                    description='Coord:', options=['x', 'y', 'z', 'r', 't'] )
             elif self.geometry in ["2dcartesian", "3dcartesian"] :
                 coord_button = widgets.ToggleButtons(
                     description='Coord:', options=['x', 'y', 'z'] )
             coord_button.on_trait_change( refresh_field )
-            # Mode button
+            # Mode and theta button (for thetaMode)
             mode_button = widgets.ToggleButtons( description='Mode:',
-                            options=['0', '1 (real)', '1 (imag.)'] )
+                            options=self.avail_circ_modes )
             mode_button.on_trait_change( refresh_field )
-            # Slicing buttons
+            theta_button = widgets.FloatSlider( width=140, value=0.,
+                    description=r'Theta:', min=-math.pi/2, max=math.pi/2 )
+            theta_button.on_trait_change( refresh_field )
+            # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(
                 description='Slicing direction:', options=['x', 'y', 'z'] )
             slicing_dir_button.on_trait_change( refresh_field )
@@ -223,7 +225,8 @@ class InteractiveViewer(object):
             # Field type container
             if self.geometry == "thetaMode" :
                 container_fields = widgets.VBox( width=260, 
-                    children=[fieldtype_button, coord_button, mode_button] )
+                    children=[fieldtype_button, coord_button,
+                              mode_button, theta_button] )
             elif self.geometry == "2dcartesian":
                 container_fields = widgets.VBox( width=260,
                     children=[fieldtype_button, coord_button] )
@@ -329,3 +332,11 @@ class InteractiveViewer(object):
         elif self.avail_fields is None:
             display( container_ptcl )
 
+def convert_to_int( m ):
+    """
+    Convert the string m to an int, except if m is 'all' or None
+    """
+    if (m=='all') or (m is None):
+        return(m)
+    else:
+        return( int(m) )

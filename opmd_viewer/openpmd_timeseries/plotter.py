@@ -5,7 +5,6 @@ It defines a set of methods which are useful for plotting
 (and labeling the plots).
 """
 import matplotlib.pyplot as plt
-from opmd_viewer.openpmd_timeseries.utilities import mode_dict
 
 class Plotter(object):
     """
@@ -149,7 +148,7 @@ class Plotter(object):
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
-            mode = mode_dict[str(m)]
+            mode = str(m)
             plt.title("%s in the mode %s at %.1f fs   (iteration %d)" \
             %(field_label, mode, time_fs, iteration ), fontsize=self.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
