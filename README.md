@@ -16,9 +16,8 @@ The routines of openPMD viewer can be used in two ways :
 - Use the **interactive interface for IPython Notebook**, in order to interactively
 visualize the data.
 
-All the objects and functions are internally documented, and thus
-their documentation can be accessed through the attribute `.__doc__`
-or (in an ipython shell) by using `?`.
+The notebook help in this
+How to download or view them (either github or interactive)
 
 ## Installation
 

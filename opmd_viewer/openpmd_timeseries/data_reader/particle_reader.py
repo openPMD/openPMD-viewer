@@ -7,6 +7,7 @@ import os
 import h5py
 from scipy import constants
 import numpy as np
+from .utilities import get_data
 
 def read_particle( filename, species, quantity ) :
     """
@@ -58,28 +59,3 @@ def read_particle( filename, species, quantity ) :
     # Close the HDF5 file and return the data
     dfile.close()
     return( data )
-
-def get_data( dset ) :
-    """
-    Extract the data from a (possibly constant) dataset
-
-    Parameters:
-    -----------
-    dset: an h5py.Dataset or h5py.Group (when constant)
-        The object from which the data is extracted
-
-    Returns:
-    --------
-    An np.ndarray (non-constant dataset) or a single double (constant dataset)
-    """
-    # Case of a constant dataset
-    if type(dset) is h5py.Group:
-        data = dset.attrs['value'] * np.ones( dset.attrs['shape'] )
-    # Case of a non-constant dataset
-    elif type(dset) is h5py.Dataset:
-        data = dset[...]
-
-    # Scale by the conversion factor
-    data = data * dset.attrs['unitSI']
-
-    return(data)
