@@ -206,7 +206,7 @@ class OpenPMDTimeSeries(parent_class) :
                 return(q1, q2)
 
 
-    def get_field(self, field='E', coord='z', t=None, iteration=None,
+    def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slicing=0., slicing_dir='y', 
                   output=True, plot=False, **kw ) :
         """
@@ -273,30 +273,33 @@ class OpenPMDTimeSeries(parent_class) :
         # Check that the field required is present
         if self.avail_fields is None:
             print('No field data in this time series')
-            return(None)
+            return(None,None)
         # Check the field type
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
-            print("The requested field '%s' is not available.\nThe "
-                "available fields are: \n - %s" %(field, field_list))
-            return(None)
+            print("The `field` argument is missing or erroneous.\nThe "
+                "available fields are: \n - %s" %(field_list))
+            print("Please set the `field` argument accordingly.")
+            return(None,None)
         # Check the coordinate (for vector fields)
         if self.avail_fields[field]=='vector':
-            coord_available = False
-            if coord in ['x', 'y', 'z']:
-                coord_available = True
-            elif self.geometry=='thetaMode' and (coord in ['r', 't']):
-                coord_available = True
-            if coord_available==False:
-                print("The requested coordinate '%s' is not available." %coord)
-                return(None)
+            available_coord = ['x', 'y', 'z']
+            if self.geometry=='thetaMode':
+                available_coord += ['r', 't']
+            if (coord in available_coord) == False:
+                coord_list = '\n - '.join( available_coord )
+                print("The field %s is a vector field, but the `coord` "
+                      "argument is missing or erroneous.\nThe available "
+                      "coordinates are: \n - %s" %(field, coord_list) ) 
+                print("Please set the `coord` argument accordingly.")
+                return(None,None)
         # Check the mode (for thetaMode)
         if self.geometry=="thetaMode":
             if (str(m) in self.avail_circ_modes) == False:
                 mode_list = '\n - '.join(self.avail_circ_modes)
                 print("The requested mode '%s' is not available.\nThe "
                     "available modes are: \n - %s" %(m, mode_list))
-                return(None)
+                return(None,None)
         
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
