@@ -99,9 +99,9 @@ class OpenPMDTimeSeries(parent_class) :
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter( self.t, self.iterations )
 
-    def get_particle( self, t, quantity1='z', quantity2=None,
-                   species='electrons', output=True, plot=False,
-                   nbins=150, **kw ) :
+    def get_particle( self, quantity1='z', quantity2=None, t=None,
+                      iteration=None, species='electrons',
+                      output=True, plot=False, nbins=150, **kw ) :
         """
         Extract one (or two) given particle quantity
         from an HDF5 file in the OpenPMD format.
@@ -115,9 +115,6 @@ class OpenPMDTimeSeries(parent_class) :
 
         Parameters
         ----------
-        t : float (in seconds)
-            Time at which to plot the file
-
         quantity1 : string, optional
            Which quantity to extract
            Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
@@ -128,6 +125,15 @@ class OpenPMDTimeSeries(parent_class) :
            Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
            Default : no second quantity
 
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+           
         output : bool, optional
            Whether to return the requested quantity
            
@@ -162,10 +168,9 @@ class OpenPMDTimeSeries(parent_class) :
                   "available quantities are: \n - %s" %quantity_list )
             return(None)
 
-        # The requested time may not correspond exactly to an available
-        # iteration. Therefore, find the last available iteration before
-        # this time (modify self.current_i accordingly)
-        self._find_last_output(t)
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
         
@@ -201,15 +206,14 @@ class OpenPMDTimeSeries(parent_class) :
                 return(q1, q2)
 
 
-    def get_field(self, t, field='E', coord='z', m='all', theta=0., slicing=0.,
-                  slicing_dir='y', output=True, plot=False, **kw ) :
+    def get_field(self, field='E', coord='z', t=None, iteration=None,
+                  m='all', theta=0., slicing=0., slicing_dir='y', 
+                  output=True, plot=False, **kw ) :
         """
         Extract a given field from an HDF5 file in the OpenPMD format.
 
         Parameters
         ----------
-        t : float (in seconds)
-            Time at which to plot the file
 
         field : string, optional
            Which field to extract
@@ -224,6 +228,15 @@ class OpenPMDTimeSeries(parent_class) :
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+        
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
@@ -284,11 +297,10 @@ class OpenPMDTimeSeries(parent_class) :
                 print("The requested mode '%s' is not available.\nThe "
                     "available modes are: \n - %s" %(m, mode_list))
                 return(None)
-                
-        # The requested time may not correspond exactly to an available
-        # iteration. Therefore, find the last available iteration before
-        # this time (modify self.current_i accordingly)
-        self._find_last_output(t)
+        
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
 
@@ -336,33 +348,50 @@ class OpenPMDTimeSeries(parent_class) :
         return( F, extent )
 
 
-    def _find_last_output(self, t) :
+    def _find_output(self, t, iteration ) :
         """
-        Find the last file that was output before t
-        and store the corresponding value in self.current_t
-        and self.current_i
+        Find the output that correspond to the requested `t` or `iteration`
+        Modify self.current_i accordingly.
 
         Parameter
         ---------
         t : float (in seconds)
             Time requested
+
+        iteration : int
+            Iteration requested
         """
-        # Make sur the time requested does not exceed
-        # the allowed bounds
-        if t < self.tmin :
-            i = 0
-            print('Reached first iteration')
-        elif t > self.tmax :
-            i = len(self.t) -1
-            print('Reached last iteration')
-        # Find the last output
-        else :
-            i = self.t[ self.t <= t ].argmax()
+        # Check the arguments
+        if (t is not None) and (iteration is not None):
+            raise ValueError("Please pass either a time (`t`) or an "
+                             "iteration (`iteration`), but not both.")
+        # If a time is requested
+        elif (t is not None):
+            # Make sur the time requested does not exceed the allowed bounds
+            if t < self.tmin :
+                self.current_i = 0
+                print('Reached first iteration')
+            elif t > self.tmax :
+                self.current_i = len(self.t) -1
+                print('Reached last iteration')
+            # Find the last existing output
+            else :
+                self.current_i = self.t[ self.t <= t ].argmax()
+        # If an iteration is requested 
+        elif (iteration is not None):
+            if (iteration in self.iterations):
+                i = self.iterations.index(iteration)
+            else:
+                iter_list = '\n - '.join([ str(it) for it in self.iterations])
+                print("The requested iteration '%s' is not available.\nThe "
+                    "available modes are: \n - %s" %(iteration, iter_list))
+                print("The first iteration is used instead.")
+                self.current_i = 0
+        else:
+            pass # self.current_i retains its previous value
 
         # Register the value in the object
-        self.current_i = i
-        self.current_t = self.t[i]
-
+        self.current_t = self.t[ self.current_i ]
 
 def list_h5_files( path_to_dir ) :
     """

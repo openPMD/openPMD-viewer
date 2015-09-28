@@ -62,7 +62,7 @@ class InteractiveViewer(object):
                     vmin = None
                     vmax = None
                 
-                self.get_field( self.current_t, output=False, plot=True,
+                self.get_field( t=self.current_t, output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int( mode_button.value ),
                     slicing=slicing_button.value, theta=theta_button.value,
@@ -96,7 +96,7 @@ class InteractiveViewer(object):
                     vmin = None
                     vmax = None
                 
-                self.get_particle( self.current_t, output=False, plot=True,
+                self.get_particle( t=self.current_t, output=False, plot=True,
                     quantity1=ptcl_xaxis_button.value,
                     quantity2=ptcl_yaxis_button.value,
                     species=ptcl_species_button.value,
