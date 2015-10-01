@@ -6,20 +6,6 @@
 This package contains a set of tools to load and visualize the contents of an
 [openPMD](http://www.openpmd.org/#/start) file simulation.
 
-## Usage
-
-The routines of openPMD viewer can be used in two ways :
-
-- Use the **Python API**, in order to write a script that loads the
-  data and produces a set of pre-defined plots.
-
-- Use the **interactive interface for IPython Notebook**, in order to interactively
-visualize the data.
-
-All the objects and functions are internally documented, and thus
-their documentation can be accessed through the attribute `.__doc__`
-or (in an ipython shell) by using `?`.
-
 ## Installation
 
 To install this package :
@@ -29,7 +15,7 @@ To install this package :
 - `cd` into the directory `opmd_viewer` and run `python setup.py install`
 
 **Warning:** The **interactive interface** for IPython Notebook is not
-installed by default.  
+operational by default.  
 This is because it requires dependencies that may be difficult to
 install on some systems (e.g. Edison@NERSC).  
 If you wish to have the interactive interface working, install the
@@ -41,3 +27,21 @@ or higher)
 
 - [ipywidgets](https://pypi.python.org/pypi/ipywidgets/4.0.2)  
 `pip install ipywidgets`
+
+## Usage
+
+The routines of openPMD viewer can be used in two ways :
+
+- Use the **Python API**, in order to write a script that loads the
+  data and produces a set of pre-defined plots.
+
+- Use the **interactive GUI inside the IPython Notebook**, in order to interactively
+visualize the data.
+
+The notebooks in the folder `tutorials/` demonstrate how to use these
+routines. You can be view these notebooks online
+(here)[https://github.com/RemiLehe/openPMD-viewer/tree/master/tutorials],
+or, alternatively, you can run them on your local computer.
+
+The notebook help in this
+How to download or view them (either github or interactive)
