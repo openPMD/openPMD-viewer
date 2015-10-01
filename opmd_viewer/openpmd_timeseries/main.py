@@ -99,9 +99,8 @@ class OpenPMDTimeSeries(parent_class) :
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter( self.t, self.iterations )
 
-    def get_particle( self, quantity1='z', quantity2=None, t=None,
-                      iteration=None, species='electrons',
-                      output=True, plot=False, nbins=150, **kw ) :
+    def get_particle( self, q1=None, q2=None, species=None, t=None,
+                iteration=None, output=True, plot=False, nbins=150, **kw ) :
         """
         Extract one (or two) given particle quantity
         from an HDF5 file in the OpenPMD format.
@@ -115,15 +114,12 @@ class OpenPMDTimeSeries(parent_class) :
 
         Parameters
         ----------
-        quantity1 : string, optional
+        q1 : string
            Which quantity to extract
-           Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
-           Default : 'z'
 
-        quantity2 : string, optional
+        q2 : string, optional
            Which second quantity to extract
-           Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
-           Default : no second quantity
+           Use None to extract only the q1 quantity.
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
@@ -158,14 +154,21 @@ class OpenPMDTimeSeries(parent_class) :
             return(None)
         if (species in self.avail_species)==False:
             species_list = '\n - '.join( self.avail_species )
-            print("The requested species '%s' is not available.\nThe "
-                "available species are: \n - %s" %(species, species_list))
+            print("The argument `species` is missing or erroneous.\nThe "
+                "available species are: \n - %s" %species_list )
+            print("Please set the argument `species` accordingly.") 
             return(None)
-        if (quantity1 in self.avail_ptcl_quantities)==False or \
-            (quantity2 in self.avail_ptcl_quantities + [None, 'None'])==False:
+        if (q1 in self.avail_ptcl_quantities)==False:
             quantity_list = '\n - '.join( self.avail_ptcl_quantities )
-            print("One of the requested quantities is not available.\nThe "
+            print("The argument `q1` is missing or erroneous.\nThe "
                   "available quantities are: \n - %s" %quantity_list )
+            print("Please set the argument `q1` accordingly.")
+            return(None)
+        if (q2 in self.avail_ptcl_quantities + [None, 'None'])==False:
+            quantity_list = '\n - '.join( self.avail_ptcl_quantities )
+            print("The argument `q2` is erroneous.\nThe "
+                  "available quantities are: \n - %s" %quantity_list )
+            print("Please set the argument `q2` accordingly.")
             return(None)
 
         # Find the output that corresponds to the requested time/iteration
@@ -175,35 +178,35 @@ class OpenPMDTimeSeries(parent_class) :
         filename = self.h5_files[ self.current_i ]
         
         # In the case of only one quantity
-        if quantity2 is None or quantity2=='None' :
+        if q2 is None or q2=='None' :
             # Extract from file
-            q1 = read_particle( filename, species, quantity1 )
+            quantity1 = read_particle( filename, species, q1 )
             # Plot
             if plot :
                 # Extract weights for the histogram
                 w = read_particle( filename, species, 'w')
                 # Do the plotting
-                self.plotter.hist1d( q1, w, quantity1, self.current_i,
+                self.plotter.hist1d( quantity1, w, q1, self.current_i,
                                      nbins, **kw )
             # Output
             if output :
-                return(q1)
+                return(quantity1)
 
         # In the case of two quantities
         else :
             # Extract from file
-            q1 = read_particle( filename, species, quantity1 )
-            q2 = read_particle( filename, species, quantity2 )
+            quantity1 = read_particle( filename, species, q1 )
+            quantity2 = read_particle( filename, species, q2 )
             # Plot
             if plot :
                 # Extract weights for the histogram
                 w = read_particle( filename, species, 'w')
                 # Do the plotting
-                self.plotter.hist2d( q1, q2, w, quantity1, quantity2,
+                self.plotter.hist2d( quantity1, quantity2, w, q1, q2,
                                      self.current_i, nbins, **kw )
             # Output
             if output :
-                return(q1, q2)
+                return(quantity1, quantity2)
 
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
