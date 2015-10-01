@@ -97,8 +97,8 @@ class InteractiveViewer(object):
                     vmax = None
                 
                 self.get_particle( t=self.current_t, output=False, plot=True,
-                    quantity1=ptcl_xaxis_button.value,
-                    quantity2=ptcl_yaxis_button.value,
+                    q1=ptcl_xaxis_button.value,
+                    q2=ptcl_yaxis_button.value,
                     species=ptcl_species_button.value,
                     vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                     nbins=ptcl_bins_button.value )
