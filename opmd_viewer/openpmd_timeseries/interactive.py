@@ -187,7 +187,7 @@ class InteractiveViewer(object):
                     description=r'Theta:', min=-math.pi/2, max=math.pi/2 )
             theta_button.on_trait_change( refresh_field )
             # Slicing buttons (for 3D)
-            slicing_dir_button = widgets.ToggleButtons(
+            slicing_dir_button = widgets.ToggleButtons( value='y',
                 description='Slicing direction:', options=['x', 'y', 'z'] )
             slicing_dir_button.on_trait_change( refresh_field )
             slicing_button = widgets.FloatSlider( width=150,
