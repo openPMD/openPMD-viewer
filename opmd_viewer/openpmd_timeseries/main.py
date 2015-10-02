@@ -99,14 +99,13 @@ class OpenPMDTimeSeries(parent_class) :
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter( self.t, self.iterations )
 
-    def get_particle( self, q1=None, q2=None, species=None, t=None,
+    def get_particle( self, var_list=None, species=None, t=None,
                 iteration=None, output=True, plot=False, nbins=150, **kw ) :
         """
-        Extract one (or two) given particle quantity
+        Extract a list of particle variables
         from an HDF5 file in the OpenPMD format.
 
-        In the case of positions, the result is returned
-        in microns
+        In the case of positions, the result is returned in microns
 
         Plot the histogram of the returned quantity.
         If two quantities are requested by the user, this plots
@@ -114,12 +113,9 @@ class OpenPMDTimeSeries(parent_class) :
 
         Parameters
         ----------
-        q1 : string
-           Which quantity to extract
-
-        q2 : string, optional
-           Which second quantity to extract
-           Use None to extract only the q1 quantity.
+        var_list : list of string, optional
+           A list of the particle variables to extract. If var_list is not
+           provided, the available particle quantities are printed
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
@@ -135,6 +131,8 @@ class OpenPMDTimeSeries(parent_class) :
            
         plot : bool, optional
            Whether to plot the requested quantity
+           Plotting support is only available when requesting one or two
+           quantities (i.e. when var_list is of length 1 or 2)
 
         nbins : int, optional
            Number of bins for the histograms
@@ -145,8 +143,8 @@ class OpenPMDTimeSeries(parent_class) :
 
         Returns
         -------
-        A 1darray if only one quantity is requested by the user.
-        A tuple of two 1darrays if two quantities are requested.
+        A list of 1darray corresponding to the data requested in `var_list`
+        (one 1darray per element of 'var_list', returned in the same order)
         """
         # Check that the species and quantity required are present
         if self.avail_species is None:
@@ -158,17 +156,22 @@ class OpenPMDTimeSeries(parent_class) :
                 "available species are: \n - %s" %species_list )
             print("Please set the argument `species` accordingly.") 
             return(None)
-        if (q1 in self.avail_ptcl_quantities)==False:
+
+        # Check the list of variables
+        valid_var_list = True
+        if type(var_list) != list:
+            valid_var_list = False
+        else:
+            for quantity in var_list:
+                if (quantity in self.avail_ptcl_quantities) == False:
+                    valid_var_list = False
+        if valid_var_list == False:
             quantity_list = '\n - '.join( self.avail_ptcl_quantities )
-            print("The argument `q1` is missing or erroneous.\nThe "
-                  "available quantities are: \n - %s" %quantity_list )
-            print("Please set the argument `q1` accordingly.")
-            return(None)
-        if (q2 in self.avail_ptcl_quantities + [None, 'None'])==False:
-            quantity_list = '\n - '.join( self.avail_ptcl_quantities )
-            print("The argument `q2` is erroneous.\nThe "
-                  "available quantities are: \n - %s" %quantity_list )
-            print("Please set the argument `q2` accordingly.")
+            print("The argument `var_list` is missing or erroneous.\nIt "
+                  "should be a list of strings representing particle "
+                  "quantities.\n The available quantities are: "
+                  "\n - %s" %quantity_list )
+            print("Please set the argument `var_list` accordingly.")
             return(None)
 
         # Find the output that corresponds to the requested time/iteration
@@ -177,36 +180,34 @@ class OpenPMDTimeSeries(parent_class) :
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
         
-        # In the case of only one quantity
-        if q2 is None or q2=='None' :
-            # Extract from file
-            quantity1 = read_particle( filename, species, q1 )
-            # Plot
-            if plot :
-                # Extract weights for the histogram
-                w = read_particle( filename, species, 'w')
-                # Do the plotting
-                self.plotter.hist1d( quantity1, w, q1, self.current_i,
-                                     nbins, **kw )
-            # Output
-            if output :
-                return(quantity1)
+        # Extract the list of particle quantities
+        data_list = []
+        for quantity in var_list:
+            data_list.append( read_particle( filename, species, quantity ) )
 
-        # In the case of two quantities
-        else :
-            # Extract from file
-            quantity1 = read_particle( filename, species, q1 )
-            quantity2 = read_particle( filename, species, q2 )
+        # Plotting
+        # - In the case of only one quantity
+        if len(data_list) == 1:
+            if plot :
+                # Extract weights for the histogram
+                w = read_particle( filename, species, 'w')
+                # Do the plotting
+                self.plotter.hist1d( data_list[0], w, var_list[0],
+                                     self.current_i, nbins, **kw )
+
+        # - In the case of two quantities
+        elif len(data_list) == 2:
             # Plot
             if plot :
                 # Extract weights for the histogram
                 w = read_particle( filename, species, 'w')
                 # Do the plotting
-                self.plotter.hist2d( quantity1, quantity2, w, q1, q2,
+                self.plotter.hist2d( data_list[0], data_list[1], w,
+                                     var_list[0], var_list[1],
                                      self.current_i, nbins, **kw )
-            # Output
-            if output :
-                return(quantity1, quantity2)
+        # Output
+        if output :
+            return( data_list )
 
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
