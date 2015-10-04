@@ -42,9 +42,9 @@ def read_openPMD_params( filename ):
     if meshes_path in bpath.keys():
         avail_fields = bpath[meshes_path].keys()
         # Pick the first field and inspect its geometry
-        first_field_path = avail_fields[0]
+        first_field_path = next(iter(avail_fields))
         first_field = bpath[ os.path.join(meshes_path, first_field_path) ]
-        params['geometry'] = first_field.attrs['geometry']
+        params['geometry'] = first_field.attrs['geometry'].decode()
         if params['geometry'] == "thetaMode":
             # Check the available modes
             if is_scalar_record(first_field):
@@ -78,10 +78,12 @@ def read_openPMD_params( filename ):
     # Find out whether particles are present, and if yes of which species
     particle_path = f.attrs['particlesPath'].decode().strip('/')
     if particle_path in bpath.keys():
-        # Particles are present ; extract the species
-        params['avail_species'] = bpath[particle_path].keys()
+        # Particles are present ; extract the species 
+        params['avail_species'] = []
+        for species_name in bpath[particle_path].keys():
+            params['avail_species'].append(species_name)
         # Extract the available particle quantity, from the first species
-        first_species_path = params['avail_species'][0]
+        first_species_path = next(iter(params['avail_species']))
         first_species = bpath[os.path.join(particle_path, first_species_path)]
         ptcl_quantities = []
         # Go through all the particle quantities
