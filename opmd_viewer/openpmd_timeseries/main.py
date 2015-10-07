@@ -5,7 +5,6 @@ It defines the main OpenPMDTimeSeries class.
 """
 import os
 import re
-import h5py
 import numpy as np
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
