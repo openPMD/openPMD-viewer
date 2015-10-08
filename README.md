@@ -3,8 +3,9 @@
 
 ## Overview
 
-This package contains a set of tools to load and visualize the contents of an
-[openPMD](http://www.openpmd.org/#/start) file simulation.
+This package contains a set of tools to load and visualize the
+contents of a set of [openPMD](http://www.openpmd.org/#/start) files
+(typically, a timeseries).
 
 ## Installation
 
