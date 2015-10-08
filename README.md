@@ -46,3 +46,7 @@ or, alternatively, you can run them on your local computer by typing:
 
 `ipython notebook tutorials/`
 
+## Contributing to the openPMD-viewer
+
+We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
+guidelines on how to contribute.

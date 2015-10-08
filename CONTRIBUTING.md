@@ -65,7 +65,7 @@ git push -u origin <NewBranchName>
 
 - Features that **modify** or **improve** the `OpenPMDTimeSeries` object
 should be implemented in the
-`opmd_viewer/opempmd_timeseries` folder. Features that build upon the
+`opmd_viewer/opempmd_timeseries` folder. Features that **build upon** the
 `OpenPMDTimeSeries` object to create domain-specific analysis tools
 (e.g. laser diagnostics for PIC simulations) should be implemented in
 the `opmd_viewer/addons` folder.
