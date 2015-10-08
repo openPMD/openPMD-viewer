@@ -95,13 +95,22 @@ class InteractiveViewer(object):
                 else :
                     vmin = None
                     vmax = None
-                
-                self.get_particle( t=self.current_t, output=False, plot=True,
-                    q1=ptcl_xaxis_button.value,
-                    q2=ptcl_yaxis_button.value,
-                    species=ptcl_species_button.value,
-                    vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
-                    nbins=ptcl_bins_button.value )
+                    
+                if ptcl_yaxis_button.value == 'None':
+                    # 1D histogram
+                    self.get_particle( t=self.current_t, output=False,
+                        var_list=[ptcl_xaxis_button.value],
+                        species=ptcl_species_button.value, plot=True, 
+                        vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
+                        nbins=ptcl_bins_button.value )
+                else :
+                    # 2D histogram
+                    self.get_particle( t=self.current_t, output=False,
+                        var_list=[ptcl_xaxis_button.value,
+                                  ptcl_yaxis_button.value],
+                        species=ptcl_species_button.value, plot=True,
+                        vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
+                        nbins=ptcl_bins_button.value )
                 
         def refresh_ptcl_now(b):
             "Refresh the particles immediately"
