@@ -271,12 +271,11 @@ class InteractiveViewer(object):
             ptcl_species_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(
-                options=self.avail_ptcl_quantities )
+                value='z', options=self.avail_ptcl_quantities )
             ptcl_xaxis_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the y axis            
             ptcl_yaxis_button = widgets.ToggleButtons(
-                value='None',
-                options=self.avail_ptcl_quantities+['None'] )
+                value='x', options=self.avail_ptcl_quantities+['None'] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
             # Plotting options
