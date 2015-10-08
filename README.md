@@ -13,13 +13,13 @@ To install this package :
 
 - Clone this repository using `git`
 
-- `cd` into the directory `opmd_viewer` and run `python setup.py install`
+- `cd` into the directory `openPMD-viewer` and run `python setup.py install`
 
-**Warning:** The **interactive interface** for IPython Notebook is not
+**Warning:** The **interactive GUI** for IPython Notebook is not
 operational by default.  
 This is because it requires dependencies that may be difficult to
 install on some systems (e.g. Edison@NERSC).  
-If you wish to have the interactive interface working, install the
+If you wish to have the interactive GUI working, install the
 following dependencies by hand:
 
 - [IPython Notebook](http://ipython.org/notebook.html)  (version 4.0
@@ -40,7 +40,7 @@ The routines of openPMD viewer can be used in two ways :
 visualize the data.
 
 The notebooks in the folder `tutorials/` demonstrate how to use these
-routines. You can be view these notebooks online
+routines. You can view these notebooks online
 [here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials),
 or, alternatively, you can run them on your local computer by typing:
 
