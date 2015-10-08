@@ -40,8 +40,8 @@ visualize the data.
 
 The notebooks in the folder `tutorials/` demonstrate how to use these
 routines. You can be view these notebooks online
-(here)[https://github.com/RemiLehe/openPMD-viewer/tree/master/tutorials],
-or, alternatively, you can run them on your local computer.
+[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials),
+or, alternatively, you can run them on your local computer by typing:
 
-The notebook help in this
-How to download or view them (either github or interactive)
+`ipython notebook tutorials/`
+
