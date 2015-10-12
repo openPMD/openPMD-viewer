@@ -46,6 +46,12 @@ or, alternatively, you can run them on your local computer by typing:
 
 `ipython notebook tutorials/`
 
+NB: For [NERSC](http://www.nersc.gov/) users, if you have installed
+the openPMD-viewer on a NERSC machine, you can run the tutorials on a
+remote machine by logging in at
+[https://ipython.nersc.gov](https://ipython.nersc.gov), and by
+navigating to your personal copy of the directory `openPMD-viewer/tutorials`.
+
 ## Contributing to the openPMD-viewer
 
 We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
