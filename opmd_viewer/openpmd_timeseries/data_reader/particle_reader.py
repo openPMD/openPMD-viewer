@@ -6,7 +6,6 @@ It defines a function that reads particle data from an openPMD file
 import os
 import h5py
 from scipy import constants
-import numpy as np
 from .utilities import get_data
 
 def read_particle( filename, species, quantity ) :

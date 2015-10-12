@@ -386,7 +386,7 @@ class OpenPMDTimeSeries(parent_class) :
         # If an iteration is requested 
         elif (iteration is not None):
             if (iteration in self.iterations):
-                i = self.iterations.index(iteration)
+                self.current_i = self.iterations.index(iteration)
             else:
                 iter_list = '\n - '.join([ str(it) for it in self.iterations])
                 print("The requested iteration '%s' is not available.\nThe "
@@ -438,8 +438,8 @@ def list_h5_files( path_to_dir ) :
     # Sort the list of tuples according to the iteration
     iters_and_names.sort()
     # Extract the list of filenames and iterations
-    filenames = [ name for (iteration, name) in iters_and_names ]
-    iterations = [ iteration for (iteration, name) in iters_and_names ]
+    filenames = [ name for (it, name) in iters_and_names ]
+    iterations = [ it for (it, name) in iters_and_names ]
 
     return( filenames, iterations )
 
