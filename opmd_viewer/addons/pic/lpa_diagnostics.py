@@ -1,13 +1,13 @@
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
-# For the moment the class is empty
 from opmd_viewer import OpenPMDTimeSeries
 import numpy as np
 import scipy.constants as const
 
+
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
-    def __init__(self, path_to_dir):
+    def __init__( self, path_to_dir ):
         """
         Initialize an OpenPMD time series
 
@@ -21,8 +21,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         super(LpaDiagnostics, self).__init__( path_to_dir )
 
-    def get_mean_gamma(self, t=None, iteration=None, species=None,
-                       select=None):
+    def get_mean_gamma( self, t=None, iteration=None, species=None,
+                        select=None ):
         """
         Calculate the mean energy and standard deviation according to their
         particle weights
@@ -46,7 +46,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-            'gamma' : [5., None]  (Particles with gamma above 5)
 
         Returns
         -------
@@ -58,34 +57,25 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get particle data
-        x, y, z, ux, uy, uz , w= self.get_particle(
-                                    var_list=['x','y','z','ux','uy','uz','w'], 
-                                    species=species, t=t, iteration=iteration )
+        ux, uy, uz, w = self.get_particle(
+                         var_list=['ux', 'uy', 'uz', 'w'],
+                         species=species, t=t, iteration=iteration )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-        # Quantity dictionary for particle selection
-        quantities = {'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy,
-                       'uz': uz, 'w': w, 'gamma': gamma} 
-        # Create selection array
-        select_array = apply_selection(select, quantities, np.size(w))
-        # Trim gamma and w arrays to selction
-        gamma = gamma[select_array]
-        w = w[select_array]
-
-        if not np.any(w):
-            # If selection results in deselection of all particles, return nan
+        # Calculate weighted mean and average
+        try:
+            # Calculate mean_gamma for selected particles
+            mean_gamma = np.average(gamma, weights=w)
+        except ZeroDivisionError:
+            # If selection is empty or all particles have weight zero,
+            # return NaN
             mean_gamma = np.nan
-            std_gamma = np.nan
-        else:
-            # Calculate weighted mean and average
-            mean_gamma = np.ma.average(gamma, weights=w)
-            std_gamma = wstd(gamma, w)
-
+        std_gamma = wstd(gamma, w)
         # Return the result
-        return [mean_gamma, std_gamma]
+        return( mean_gamma, std_gamma )
 
     def get_charge( self, t=None, iteration=None, species=None, select=None,
-                   q=const.e ):
+                    q=const.e ):
         """
         Calculate the charge of the selcted particles.
 
@@ -108,79 +98,124 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-            'gamma' : [5., None]  (Particles with gamma above 5)
 
         q : float, optional
             Charge of `species` (default e)
+
+        Returns
+        -------
+        A float with the electric charge of the selected particles
         """
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get particle data
-        x, y, z, ux, uy, uz, w = self.get_particle(
-                                    var_list=['x','y','z','ux','uy','uz','w'], 
-                                    species=species, t=t, iteration=iteration )
-        # Calculate Lorentz factor for all particles
-        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-        # Quantity dictionary for particle selection
-        quantities = {'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy,
-                       'uz': uz, 'w': w, 'gamma': gamma} 
-        # Create selection array
-        select_array = apply_selection(select, quantities, np.size(w))
-        # Trim gamma and w arrays to selction
-        w = w[select_array]
+        w = self.get_particle( var_list=['w'], species=species, t=t,
+                               iteration=iteration )
         # Calculate charge
         charge = np.sum(w) * q
         # Return the result
-        return charge
+        return( charge )
 
-def apply_selection(select, quantities, N):
-    """
-        Apply the rules of self.select to determine which
-        particles should be written
+    def get_divergence( self, t=None, iteration=None, species=None,
+                        select=None ):
+        """
+        Calculate the divergence of the selected particles.
 
         Parameters
         ----------
-        select : dict
-            Dictionary of rules
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : string
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-            'gamma' : [5., None]  (Particles with gamma above 5)
-
-        quantities : dict
-            Dictionary of particle quantities with corresponding data
-
-        N : float
-            Length of array to apply rules on
 
         Returns
         -------
-        A 1d array of the same shape as that particle array
-        containing True for the particles that satify all
-        the rules of self.select
+        A tuple with:
+        - divergence in x plane
+        - divergence in y plane
         """
-    # Initialize an array filled with True
-    select_array = np.ones( N, dtype='bool' )
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
+        # Get particle data
+        ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
+                                           t=t, iteration=iteration,
+                                           species=species )
+        # Calculate diveregence
+        div_x = wstd( ux / uz, w )
+        div_y = wstd( uy / uz, w )
+        # Return the result
+        return( div_x, div_y )
 
-    # Apply the rules successively
-    if select is not None :
-        # Go through the quantities on which a rule applies
-        for quantity in select.keys() :
-            quantity_array = quantities[quantity]
-            # Lower bound
-            if select[quantity][0] is not None :
-                select_array = np.logical_and(
-                    quantity_array > select[quantity][0],
-                    select_array )
-            # Upper bound
-            if select[quantity][1] is not None :
-                select_array = np.logical_and(
-                    quantity_array < select[quantity][1],
-                    select_array )
-    return select_array
+    def get_emittance( self, t=None, iteration=None, species=None,
+                       select=None ):
+        """
+        Calculate the normalized RMS emittance.
+        (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
+        
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
 
-def wstd(a, weights):
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : string
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
+        Returns
+        -------
+        A tuple with :
+        - normalized beam emittance in the x plane
+        - normalized beam get_emittance in the y plane
+        """
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
+        # Get particle data
+        x, y, ux, uy, w = self.get_particle(
+                                    var_list=['x', 'y', 'ux', 'uy', 'uz', 'w'],
+                                    t=t, iteration=iteration,
+                                    species=species )
+        # Calculate the necessary RMS values
+        xsq = np.average( x ** 2, weights=w )
+        ysq = np.average( y ** 2, weights=w )
+        uxsq = np.average( ux ** 2, weights=w )
+        uysq = np.average( uy ** 2, weights=w )
+        xpx = np.average( x * ux, weights=w )
+        ypy = np.average( y * uy, weights=w )
+        # Calculate the beam emittances
+        emit_x = np.sqrt( xsq * uxsq - xpx ** 2 )
+        emit_y = np.sqrt( ysq * uysq - ypy ** 2 )
+        # Return the results
+        return( emit_x, emit_y )
+
+
+def wstd( a, weights ):
     """
     Calcualted the weighted standard deviation.
 
@@ -194,8 +229,15 @@ def wstd(a, weights):
 
     Returns
     -------
-    Float with the weighted standard deviation
+    Float with the weighted standard deviation.
+    Returns nan if input array is empty
     """
-    average = np.average(a, weights=weights)
-    variance = np.average((a-average)**2, weights=weights)
-    return np.sqrt(variance)
+    # Check if input contains data
+    if not np.any(weights) and not np.any(a):
+        # If input is empty return NaN
+        return np.nan
+    else:
+        # Calculate the weighted standard deviation
+        average = np.average(a, weights=weights)
+        variance = np.average((a-average)**2, weights=weights)
+        return( np.sqrt(variance) )
