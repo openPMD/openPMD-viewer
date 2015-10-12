@@ -4,7 +4,13 @@ This file is part of the OpenPMD viewer
 It defines an interactive interface for the viewer,
 based on the IPython notebook functionalities
 """
-from ipywidgets import widgets
+try:
+    from ipywidgets import widgets
+except ImportError:
+    # If ipywidgets is not available, use the deprecated package
+    # IPython.html.widgets, so that the GUI still works
+    from IPython.html import widgets
+
 from IPython.display import display, clear_output
 import math
 import matplotlib
