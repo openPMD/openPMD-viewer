@@ -21,10 +21,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         super(LpaDiagnostics, self).__init__( path_to_dir )
 
-    def get_mean_gamma( self, t=None, iteration=None, species=None,
-                        select=None ):
+    def get_rms_gamma( self, t=None, iteration=None, species=None,
+                       select=None ):
         """
-        Calculate the mean energy and standard deviation according to their
+        Calculate the rms gamma and standard deviation according to the
         particle weights
 
         Parameters
@@ -65,7 +65,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Calculate weighted mean and average
         try:
             # Calculate mean_gamma for selected particles
-            mean_gamma = np.average(gamma, weights=w)
+            mean_gamma = np.sqrt(np.average(gamma ** 2, weights=w))
         except ZeroDivisionError:
             # If selection is empty or all particles have weight zero,
             # return NaN
@@ -166,7 +166,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the normalized RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
-        
+
         Parameters
         ----------
         t : float (in seconds), optional
@@ -198,10 +198,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         self._find_output( t, iteration )
         # Get particle data
         x, y, ux, uy, w = self.get_particle(
-                                    var_list=['x', 'y', 'ux', 'uy', 'uz', 'w'],
+                                    var_list=['x', 'y', 'ux', 'uy', 'w'],
                                     t=t, iteration=iteration,
                                     species=species )
         # Calculate the necessary RMS values
+        x *= 1.e-6
+        y *= 1.e-6
         xsq = np.average( x ** 2, weights=w )
         ysq = np.average( y ** 2, weights=w )
         uxsq = np.average( ux ** 2, weights=w )
@@ -214,10 +216,73 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the results
         return( emit_x, emit_y )
 
+    def get_current( self, t=None, iteration=None, species=None, select=None,
+                     bins=100, q=const.e ):
+        """
+        Calculate the electric current along the z-axis for selected particles.
+
+        Parameters
+        ----------
+         t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : string
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
+        bins : float
+            Number of bins along the z-axis in which to calculate the current
+
+        Returns
+        -------
+        A tuple of arrays containig
+        - The current in each bin
+        - The z positions of the bin edges
+        """
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
+        # Get particle data
+        z, uz, uy, ux, w = self.get_particle(
+                                     var_list=['z', 'uz', 'uy', 'ux', 'w'],
+                                     t=t, iteration=iteration,
+                                     species=species )
+        # Calculate Lorentz factor for all particles
+        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+        # Length to be seperated in bins
+        len_z = np.max(z) - np.min(z)
+        # Define bins
+        bins_list = np.linspace(np.min(z), np.max(z), bins)
+        # Get bin index of each particle
+        particle_bin = np.digitize(z, bins_list)
+        # Calculate sum of vz in each bin
+        vz_sum = np.zeros_like(bins_list)
+        for i in range(bins):
+            vz_sum[i] = np.sum(uz[particle_bin == i] / gamma[particle_bin == i]
+                               * const.c * w[particle_bin == i] )
+        # Calculete the current in each bin
+        current = vz_sum * q * bins / (len_z * 1.e-6)
+
+        # Return the current and bin edges
+        return(current, bins_list)
+
+
+
 
 def wstd( a, weights ):
     """
-    Calcualted the weighted standard deviation.
+    Calcualte the weighted standard deviation.
 
     Parameters
     ----------
