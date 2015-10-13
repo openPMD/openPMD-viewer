@@ -151,10 +151,4 @@ def simplify_quantities( quantities ):
         quantities.remove('weighting')
         quantities.append('w')
 
-    # Remove some of the less interesting parameters
-    if 'mass' in quantities:
-        quantities.remove('mass')
-    if 'charge' in quantities:
-        quantities.remove('charge')
-
     return(quantities)

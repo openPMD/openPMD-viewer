@@ -35,7 +35,10 @@ def read_particle( filename, species, quantity ) :
                       'uy' : 'momentum/y',
                       'uz' : 'momentum/z',
                       'w' : 'weighting'}
-    opmd_quantity = dict_quantity[quantity]
+    if quantity in dict_quantity:
+        opmd_quantity = dict_quantity[quantity]
+    else:
+        opmd_quantity = quantity
 
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
