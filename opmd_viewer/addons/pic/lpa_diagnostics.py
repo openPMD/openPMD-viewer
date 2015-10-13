@@ -74,8 +74,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( mean_gamma, std_gamma )
 
-    def get_charge( self, t=None, iteration=None, species=None, select=None,
-                    q=const.e ):
+    def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
         Calculate the charge of the selcted particles.
 
@@ -99,9 +98,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
 
-        q : float, optional
-            Charge of `species` (default e)
-
         Returns
         -------
         A float with the electric charge of the selected particles
@@ -110,8 +106,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get particle data
-        w = self.get_particle( var_list=['w'], species=species, t=t,
-                               iteration=iteration )
+        w, q = self.get_particle( var_list=['w', 'charge'], species=species,
+                                 t=t, iteration=iteration )
         # Calculate charge
         charge = np.sum(w) * q
         # Return the result
@@ -217,7 +213,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( emit_x, emit_y )
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
-                     bins=100, q=const.e ):
+                     bins=100 ):
         """
         Calculate the electric current along the z-axis for selected particles.
 
@@ -254,10 +250,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get particle data
-        z, uz, uy, ux, w = self.get_particle(
-                                     var_list=['z', 'uz', 'uy', 'ux', 'w'],
-                                     t=t, iteration=iteration,
-                                     species=species )
+        z, uz, uy, ux, w, q = self.get_particle(
+                               var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
+                               t=t, iteration=iteration,
+                               species=species )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Length to be seperated in bins
@@ -272,12 +268,99 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             vz_sum[i] = np.sum(uz[particle_bin == i] / gamma[particle_bin == i]
                                * const.c * w[particle_bin == i] )
         # Calculete the current in each bin
-        current = vz_sum * q * bins / (len_z * 1.e-6)
+        current = vz_sum * np.abs(q) * bins / (len_z * 1.e-6)
 
         # Return the current and bin edges
         return(current, bins_list)
 
+    def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
+                            freq_filter=40, index='center' ):
+        # Check if polarization has been entered
+        if pol is None:
+            raise ValueError('The `pol` argument is missing or erroneous.')
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
+        # Test that polarization is in x or y plane for 3D cart. coordinates
+        if self.geometry == "3dcartesian" or self.geometry == "2dcartesian":
+            if pol == 0:
+                slicing_dir = 'y'
+                coord = 'x'
+                pol = None
+            elif pol == np.pi/2:
+                slicing_dir = 'x'
+                coord = 'y'
+                pol = None
+            else:
+                raise ValueError('Only polarization in the x or y plane is '
+                                 'supported for carthesian coordinates')
+        else:
+            # Extract radial if in thetaMode
+            coord = 'r'
+            slicing_dir = None
+        # Get field data
+        field = self.get_field( t=t, iteration=iteration, field='E',
+                                coord=coord, theta=pol,
+                                slicing_dir=slicing_dir )
+        extent = field[1][0]
+        if index == 'center':
+            # Get central slice
+            field_slice = field[0][int( field[0].shape[0] / 2), :]
+            # Calculate inverse FFT of filtered FFT array
+            envelope = self._fft_filter(field_slice, freq_filter)
+        elif index == 'all':
+            envelope = [ self._fft_filter(field[0][i, :], freq_filter)
+                         for i in range(field[0].shape[0]) ]
+            extent = field[1]
+        else:
+            field_slice = field[0][index, :]
+            # Calculate inverse FFT of filtered FFT array
+            envelope = self._fft_filter(field_slice, freq_filter)
+        # Return the result
+        return( envelope, extent )
 
+    def _fft_filter(self, field, freq_filter):
+        """
+        Filters out high frequencies in input data. Frequencies higher than
+        freq_filter / 100 times the dominant frequency will be filtered.
+
+        Parameters
+        ----------
+        field : 1D array
+            Array with input data in time/space domain
+
+        freq_filter : float
+            Frequency range in percent around the dominant frequency which will
+            not be filtered out
+
+        Returns
+        -------
+        A 1D array with filtered input data in time/space domain
+        """
+        # Number of sample points
+        N = field.size
+        # Fourier transform of the field slice
+        fft_field_slice = np.fft.fft(field)
+        fft_freqs = np.fft.fftfreq(N)
+        # Find central frequency
+        central_freq_i = np.argmax(fft_field_slice[:N / 2])
+        central_freq = fft_freqs[central_freq_i]
+        # Filter frequencies higher than central_freq * freq_filter/100
+        filter_bound = central_freq * freq_filter / 100.
+        # Find index from where to filter
+        filter_i = np.argmin(np.abs(filter_bound - fft_freqs))
+        filter_freq_range_i = central_freq_i - filter_i
+        # Write filtered FFT array
+        filtered_fft = np.zeros_like( field, dtype=np.complex )
+        filtered_fft[N / 2 - filter_freq_range_i:
+                     N / 2 + filter_freq_range_i] \
+        = fft_field_slice[central_freq_i - filter_freq_range_i:
+                          central_freq_i + filter_freq_range_i]
+        # Calculate inverse FFT of filtered FFT array
+        envelope = np.abs(np.fft.ifft(np.fft.fftshift(2 * filtered_fft)))
+
+        # Return the result
+        return( envelope )
 
 
 def wstd( a, weights ):
