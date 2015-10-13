@@ -275,6 +275,47 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center' ):
+        """
+        Calculate a laser field by filtering out high frequencies. Can either
+        return the envelope slice-wise or a full 2D envelope.
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane) 
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        freq_filter : float, optional
+            Range of frequencies in percent which to filter: Frequencies higher
+            than freq_filter/100 times the dominant frequencies will be
+            filtered out
+
+        index : int or str, optional
+            Transversal index of the slice from which to calculate the envelope
+            Default is 'center', using the center slice.
+            Use 'all' to calculate a full 2D envelope
+
+        Returns
+        -------
+        A tuple with:
+        - Envelope data (1D or 2D array) 
+        - extent of the data (in microns)
+        """
         # Check if polarization has been entered
         if pol is None:
             raise ValueError('The `pol` argument is missing or erroneous.')
