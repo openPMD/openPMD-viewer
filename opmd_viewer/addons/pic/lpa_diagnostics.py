@@ -469,8 +469,74 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Calculate the RMS of the frequencies
         rms = np.sqrt(np.average(frq[:frq.size/2]**2, weights=np.abs(
                       fft_field[:frq.size/2])))
-        return rms
+        return( rms )
 
+    def get_a0( self, t=None, iteration=None, pol=None ):
+        """
+        Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane)
+
+        Returns
+        -------
+        Float with normalized vector potential a0
+        """
+        # Get the peak field from field envelope
+        Emax, _ = np.max(self.get_laser_envelope(t=t, iteration=iteration,
+                                                 pol=pol))
+        # Get mean frequency
+        omega = self.get_mean_frequency(t=t, iteration=iteration, pol=pol)
+        # Calculate a0
+        a0 = Emax * const.e / (const.m_e * const.c * omega)
+        return( a0 )
+
+    def get_ctau( self, t=None, iteration=None, pol=None ):
+        """
+        Calculate the length of a (gaussian) laser pulse. ( 2 * sigma_z)
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane)
+
+        Returns
+        -------
+        Float with ctau
+        """
+        # Get the peak field from field envelope
+        Emax, extent = self.get_laser_envelope(t=t, iteration=iteration,
+                                               pol=pol)
+        # Allocate linspace of z positions
+        z_pos = np.linspace(extent[0], extent[1], Emax.size)
+        # Calculate standard deviation
+        sigma = wstd(z_pos, Emax)
+        # Return ctau = 2 sigma
+        return( 2 * sigma )
 
 
 def wstd( a, weights ):
