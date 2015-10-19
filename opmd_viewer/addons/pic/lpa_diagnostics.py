@@ -313,8 +313,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with:
-        - Envelope data (1D or 2D array) 
-        - extent of the data (in microns)
+        - Envelope data (1D or 2D array)
+        - A FieldMetaInformation object (note that this contains obsolete
+            information about the transversal coordinate in 1D case)
         """
         # Check if polarization has been entered
         if pol is None:
@@ -343,7 +344,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=coord, theta=pol, m=m,
                                 slicing_dir=slicing_dir )
-        extent = field[1][0]
+        extent = field[1]
         if index == 'center':
             # Get central slice
             field_slice = field[0][int( field[0].shape[0] / 2), :]
@@ -352,7 +353,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         elif index == 'all':
             envelope = [ self._fft_filter(field[0][i, :], freq_filter)
                          for i in range(field[0].shape[0]) ]
-            extent = field[1]
         else:
             field_slice = field[0][index, :]
             # Calculate inverse FFT of filtered FFT array
@@ -459,12 +459,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=coord, theta=pol, m=m,
                                 slicing_dir=slicing_dir )
+        z_length = field[1].zmax - field[1].zmin
         # Get central field lineout
         field1d = field[0][field[0].shape[0]/2, :]
         # FFT of 1d data
         fft_field = np.fft.fft(field1d)
         # Corresponding angular frequency
-        frq = np.fft.fftfreq(field1d.size, (field[1][1]-field[1][0]) /
+        frq = np.fft.fftfreq(field1d.size, z_length /
                              field1d.size * 1 / const.c) * 2 * np.pi
         # Calculate the RMS of the frequencies
         rms = np.sqrt(np.average(frq[:frq.size/2]**2, weights=np.abs(
@@ -531,10 +532,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get the peak field from field envelope
         Emax, extent = self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol)
-        # Allocate linspace of z positions
-        z_pos = np.linspace(extent[0], extent[1], Emax.size)
         # Calculate standard deviation
-        sigma = wstd(z_pos, Emax)
+        sigma = wstd(extent.z, Emax)
         # Return ctau = 2 sigma
         return( 2 * sigma )
 
