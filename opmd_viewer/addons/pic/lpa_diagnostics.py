@@ -507,7 +507,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_ctau( self, t=None, iteration=None, pol=None ):
         """
-        Calculate the length of a (gaussian) laser pulse. ( 2 * sigma_z)
+        Calculate the length of a (gaussian) laser pulse. ( sqrt(2) * sigma_z)
 
         Parameters
         ----------
@@ -529,13 +529,50 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with ctau
         """
-        # Get the peak field from field envelope
+        # Get the field envelope
         Emax, extent = self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol)
         # Calculate standard deviation
         sigma = wstd(extent.z, Emax)
-        # Return ctau = 2 sigma
-        return( 2 * sigma )
+        # Return ctau = sqrt(2) * sigma
+        return( np.sqrt(2) * sigma )
+
+    def get_laser_waist( self, t=None, iteration=None, pol=None ):
+        """
+        Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane)
+
+        Returns
+        -------
+        Float with laser waist
+        """
+        # Get the field envelope
+        field, extent = self.get_laser_envelope(t=t, iteration=iteration,
+                                                pol=pol, index='all')
+        # Find the maximum of the envelope along the transverse axis
+        trans_max = np.argmax(field, axis=1)
+        # Get transverse positons
+        trans_pos = getattr(extent, extent.axes[0])
+        # Calculate standard deviation
+        sigma_r = wstd(trans_max, trans_pos)
+        # Return the laser waist = sqrt(2) * sigma_r
+        return(np.sqrt(2) * sigma_r)
+
 
 
 def wstd( a, weights ):
