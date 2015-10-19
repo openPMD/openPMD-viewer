@@ -341,7 +341,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             slicing_dir = None
         # Get field data
         field = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=coord, theta=pol,
+                                coord=coord, theta=pol, m=m,
                                 slicing_dir=slicing_dir )
         extent = field[1][0]
         if index == 'center':
@@ -402,6 +402,75 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Return the result
         return( envelope )
+
+    def get_mean_frequency( self, t=None, iteration=None, pol=None, m='all'):
+        """
+        Calculate the rms angular frequency of a laser pulse.
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane) 
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        Returns
+        -------
+        A float with rms angular frequency
+        """
+        # Check if polarization has been entered
+        if pol is None:
+            raise ValueError('The `pol` argument is missing or erroneous.')
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self.current_i and self.current_t)
+        self._find_output( t, iteration )
+        # Test that polarization is in x or y plane for 3D cart. coordinates
+        if self.geometry == "3dcartesian" or self.geometry == "2dcartesian":
+            if pol == 0:
+                slicing_dir = 'y'
+                coord = 'x'
+                pol = None
+            elif pol == np.pi/2:
+                slicing_dir = 'x'
+                coord = 'y'
+                pol = None
+            else:
+                raise ValueError('Only polarization in the x or y plane is '
+                                 'supported for carthesian coordinates')
+        else:
+            # Extract radial if in thetaMode
+            coord = 'r'
+            slicing_dir = None
+        # Get field data
+        field = self.get_field( t=t, iteration=iteration, field='E',
+                                coord=coord, theta=pol, m=m,
+                                slicing_dir=slicing_dir )
+        # Get central field lineout
+        field1d = field[0][field[0].shape[0]/2, :]
+        # FFT of 1d data
+        fft_field = np.fft.fft(field1d)
+        # Corresponding angular frequency
+        frq = np.fft.fftfreq(field1d.size, (field[1][1]-field[1][0]) /
+                             field1d.size * 1 / const.c) * 2 * np.pi
+        # Calculate the RMS of the frequencies
+        rms = np.sqrt(np.average(frq[:frq.size/2]**2, weights=np.abs(
+                      fft_field[:frq.size/2])))
+        return rms
+
 
 
 def wstd( a, weights ):
