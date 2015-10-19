@@ -7,6 +7,7 @@ import os
 import h5py
 import numpy as np
 from .utilities import slice_dict, get_shape, get_data
+from .field_metainfo import FieldMetaInformation
 
 def read_field_2d( filename, field_path ):
     """
@@ -21,6 +22,13 @@ def read_field_2d( filename, field_path ):
     field_path : string
        The relative path to the requested field, from the openPMD meshes path
        (e.g. 'rho', 'E/r', 'B/x')
+
+    Returns
+    -------
+    A tuple with
+       F : a 2darray containing the required field
+       info : a FieldMetaInformation object
+       (contains information about the grid; see the corresponding docstring)
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
@@ -29,16 +37,15 @@ def read_field_2d( filename, field_path ):
     
     # Extract the data in 2D Cartesian
     F = get_data( dset )
-    # Extract the extent
-    Nx, Nz = F.shape
-    dx, dz = group.attrs['gridSpacing']
-    xmin, zmin = group.attrs['gridGlobalOffset']
-    extent = np.array([ zmin-0.5*dz, zmin+0.5*dz+dz*Nz,
-            xmin-0.5*dx, xmin+0.5*dx+dx*Nx ])
-    
+
+    # Extract the metainformation
+    info = FieldMetaInformation( { 0:'x', 1:'z' }, F.shape,
+        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+        group.attrs['gridUnitSI'], dset.attrs['position'] )
+
     # Close the file
     dfile.close()
-    return( F, extent )    
+    return( F, info )    
 
 def read_field_circ( filename, field_path, m=0, theta=0. ) :
     """
@@ -64,15 +71,21 @@ def read_field_circ( filename, field_path, m=0, theta=0. ) :
     -------
     A tuple with
        F : a 2darray containing the required field
-       extent : a 1darray with 4 elements, containing the extent
+       info : a FieldMetaInformation object
+       (contains information about the grid; see the corresponding docstring)
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
     group, dset = find_dataset( dfile, field_path )
 
-    # Extract the modes and recombine them properly
+    # Extract the metainformation
     Nm, Nr, Nz = get_shape( dset )
+    info = FieldMetaInformation( { 0:'r', 1:'z' }, (Nr, Nz),
+        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+        group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
+
+    # Extract the modes and recombine them properly
     F_total = np.zeros( (2*Nr, Nz ) )
     if m=='all':
         # Sum of all the modes
@@ -103,16 +116,11 @@ def read_field_circ( filename, field_path, m=0, theta=0. ) :
         F_sin = get_data( dset, 2*m, 0 )
         F = cos*F_cos + sin*F_sin
         F_total[Nr:,:] = F[:,:]
-        F_total[:Nr,:] = (-1)**m * F[::-1,:] 
-    # Extract the extent
-    dr, dz = group.attrs['gridSpacing']
-    rmin, zmin = group.attrs['gridGlobalOffset']
-    extent = np.array([ zmin-0.5*dz, zmin+0.5*dz+dz*Nz,
-                        -(Nr+1)*dr, (Nr+1)*dr ])
+        F_total[:Nr,:] = (-1)**m * F[::-1,:]
 
     # Close the file
     dfile.close()
-    return( F_total, extent )
+    return( F_total, info )
 
 
 def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ) :
@@ -147,7 +155,8 @@ def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ) :
     -------
     A tuple with
        F : a 2darray containing the required field
-       extent : a 1darray with 4 elements, containing the extent
+       info : a FieldMetaInformation object
+       (contains information about the grid; see the corresponding docstring)
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
@@ -169,25 +178,28 @@ def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ) :
         # Extraction of the data
         if slicing_dir=='x':
             F = get_data( dset, i_cell, 0 )
-            extent = np.array([ zmin-0.5*dz, zmin+0.5*dz+dz*Nz,
-                                xmin-0.5*dx, xmin+0.5*dx+dx*Nx ])
+            info = FieldMetaInformation( { 0:'y', 1:'z' }, (Ny, Nz),
+                        (dy, dz), (ymin, zmin), group.attrs['gridUnitSI'],
+                        dset.attrs['position'] )
         elif slicing_dir=='y':
             F = get_data( dset, i_cell, 1 )
-            extent = np.array([ zmin-0.5*dz, zmin+0.5*dz+dz*Nz,
-                            ymin-0.5*dy, ymin+0.5*dy+dy*Ny ])
+            info = FieldMetaInformation( { 0:'x', 1:'z' }, (Nx, Nz),
+                        (dx, dz), (xmin, zmin), group.attrs['gridUnitSI'],
+                        dset.attrs['position'] )
         elif slicing_dir=='z':
             F = get_data( dset, i_cell, 2 )
-            extent = np.array([ ymin-0.5*dy, ymin+0.5*dy+dy*Ny,
-                            xmin-0.5*dx, xmin+0.5*dx+dx*Nx ])
+            info = FieldMetaInformation( { 0:'x', 1:'y' }, (Nx, Ny),
+                        (dx, dy), (xmin, ymin), group.attrs['gridUnitSI'],
+                        dset.attrs['position'] )
     else:
         F = get_data( dset )
-        extent = np.array([ zmin-0.5*dz, zmin+0.5*dz+dz*Nz,
-                            ymin-0.5*dy, ymin+0.5*dy+dy*Ny,
-                            xmin-0.5*dx, xmin+0.5*dx+dx*Nx ])
+        info = FieldMetaInformation( { 0:'x', 1:'y', 2:'z' }, F.shape,
+            group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+            group.attrs['gridUnitSI'], dset.attrs['position'] )
 
     # Close the file
     dfile.close()
-    return( F, extent )
+    return( F, info )
 
         
 def find_dataset( dfile, field_path ):
