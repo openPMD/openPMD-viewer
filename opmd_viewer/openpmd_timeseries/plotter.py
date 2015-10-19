@@ -114,7 +114,7 @@ class Plotter(object):
                 %(time_fs, iteration ), fontsize=self.fontsize )
 
 
-    def show_field( self, F, extent, slicing_dir, m,
+    def show_field( self, F, info, slicing_dir, m,
                     field_label, geometry, current_i, **kw ):
         """
         Plot the given field in 2D
@@ -124,8 +124,8 @@ class Plotter(object):
         F: 2darray of floats
             Contains the field to be plotted
 
-        extent: 1darray of floats (meters)
-            Contains the extent of the plotted window
+        info: a FieldMetaInformation object
+            Contains the information about the plotted field
             
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
@@ -151,30 +151,21 @@ class Plotter(object):
             mode = str(m)
             plt.title("%s in the mode %s at %.1f fs   (iteration %d)" \
             %(field_label, mode, time_fs, iteration ), fontsize=self.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-            plt.ylabel('$r \;(\mu m)$', fontsize=self.fontsize )
         # 2D Cartesian geometry
         elif geometry =="2dcartesian":
             plt.title("%s at %.1f fs   (iteration %d)" \
                 %(field_label, time_fs, iteration ), fontsize=self.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-            plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
         # 3D Cartesian geometry
         elif geometry=="3dcartesian":
             plt.title("%s sliced across %s at %.1f fs  (iteration %d)" \
                 %(field_label, slicing_dir, time_fs, iteration ),
                 fontsize=self.fontsize)
-            if slicing_dir=='x':
-                plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                plt.ylabel('$y \;(\mu m)$', fontsize=self.fontsize )
-            elif slicing_dir=='y':
-                plt.xlabel('$z \;(\mu m)$', fontsize=self.fontsize )
-                plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
-            elif slicing_dir=='z':
-                plt.xlabel('$y \;(\mu m)$', fontsize=self.fontsize )
-                plt.ylabel('$x \;(\mu m)$', fontsize=self.fontsize )
+
+        # Add the name of the axes
+        plt.xlabel('$%s \;(\mu m)$' %info.axes[1], fontsize=self.fontsize )
+        plt.ylabel('$%s \;(\mu m)$' %info.axes[0], fontsize=self.fontsize )
 
         # Plot the data
-        plt.imshow( F, extent=1.e6*extent, origin='lower',
+        plt.imshow( F, extent=1.e6*info.imshow_extent, origin='lower',
             interpolation='nearest', aspect='auto', **kw )
         plt.colorbar()
