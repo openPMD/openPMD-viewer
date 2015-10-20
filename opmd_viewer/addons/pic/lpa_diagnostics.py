@@ -497,8 +497,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with normalized vector potential a0
         """
         # Get the peak field from field envelope
-        Emax, _ = np.max(self.get_laser_envelope(t=t, iteration=iteration,
-                                                 pol=pol))
+        Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
+                                                 pol=pol)[0])
         # Get mean frequency
         omega = self.get_mean_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
@@ -565,11 +565,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field, extent = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all')
         # Find the maximum of the envelope along the transverse axis
-        trans_max = np.argmax(field, axis=1)
+        trans_max = np.amax(field, axis=1)
         # Get transverse positons
         trans_pos = getattr(extent, extent.axes[0])
         # Calculate standard deviation
-        sigma_r = wstd(trans_max, trans_pos)
+        sigma_r = wstd(trans_pos, trans_max)
         # Return the laser waist = sqrt(2) * sigma_r
         return(np.sqrt(2) * sigma_r)
 
