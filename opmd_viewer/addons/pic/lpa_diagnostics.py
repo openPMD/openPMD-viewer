@@ -9,7 +9,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def __init__( self, path_to_dir ):
         """
-        Initialize an OpenPMD time series
+        Initialize an OpenPMD time series with various methods to diagnose the
+        data
 
         Parameter
         ---------
@@ -608,11 +609,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             if pol == 0:
                 slicing_dir = 'y'
                 coord = 'x'
-                pol = None
             elif pol == np.pi/2:
                 slicing_dir = 'x'
                 coord = 'y'
-                pol = None
             else:
                 raise ValueError('Only polarization in the x or y plane is '
                                  'supported for carthesian coordinates')
