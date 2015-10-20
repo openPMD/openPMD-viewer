@@ -100,7 +100,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Returns
         -------
-        A float with the electric charge of the selected particles
+        A float with the electric charge of the selected particles in Coulomb
         """
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
@@ -141,8 +141,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with:
-        - divergence in x plane
-        - divergence in y plane
+        - divergence in x plane in rad
+        - divergence in y plane in rad
         """
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
@@ -186,8 +186,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with :
-        - normalized beam emittance in the x plane
-        - normalized beam get_emittance in the y plane
+        - normalized beam emittance in the x plane (pi m rad)
+        - normalized beam get_emittance in the y plane (pi m rad)
         """
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
@@ -243,7 +243,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple of arrays containig
-        - The current in each bin
+        - The current in each bin in Ampere
         - The z positions of the bin edges
         """
         # Find the output that corresponds to the requested time/iteration
@@ -527,13 +527,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Returns
         -------
-        Float with ctau
+        Float with ctau in meters
         """
         # Get the field envelope
-        Emax, extent = self.get_laser_envelope(t=t, iteration=iteration,
-                                               pol=pol)
+        E, extent = self.get_laser_envelope(t=t, iteration=iteration,
+                                            pol=pol)
         # Calculate standard deviation
-        sigma = wstd(extent.z, Emax)
+        sigma = wstd(extent.z, E)
         # Return ctau = sqrt(2) * sigma
         return( np.sqrt(2) * sigma )
 
@@ -559,11 +559,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Returns
         -------
-        Float with laser waist
+        Float with laser waist in meters
         """
         # Get the field envelope
         field, extent = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all')
+
         # Find the maximum of the envelope along the transverse axis
         trans_max = np.amax(field, axis=1)
         # Get transverse positons
@@ -573,7 +574,91 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the laser waist = sqrt(2) * sigma_r
         return(np.sqrt(2) * sigma_r)
 
+    def wigner_transform( self, t=None, iteration=None, pol=None ):
+        """
+        Calculates the wigner transformation of a laserpulse.
+        See Trebino, R: Frequency Resolved Optical Gating: The measurements of
+        Ultrashort Laser Pulses: year 2000: formula 5.2
+        Resulting wigner transform is not taken to power of two.
 
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : float
+            Polarization angel of the field relative to the x plane. Can be
+            freely chosen between 0 and Pi/2 in thetaMode. For carthesian
+            coordinates it as to be either 0 or Pi/2 (x or y plane)
+
+        Returns
+        -------
+        - A 2d array with wigner transform
+        - extents (time centered around the laser pulse in s and the
+          angular frequency)
+        """
+        # Test that polarization is in x or y plane for 3D cart. coordinates
+        if self.geometry == "3dcartesian" or self.geometry == "2dcartesian":
+            if pol == 0:
+                slicing_dir = 'y'
+                coord = 'x'
+                pol = None
+            elif pol == np.pi/2:
+                slicing_dir = 'x'
+                coord = 'y'
+                pol = None
+            else:
+                raise ValueError('Only polarization in the x or y plane is '
+                                 'supported for carthesian coordinates')
+        else:
+            # Extract radial if in thetaMode
+            coord = 'r'
+            slicing_dir = None
+        # Get the field envelope
+        env, _ = self.get_laser_envelope(t=t, iteration=iteration,
+                                         pol=pol)
+        # Get the field
+        E, extent = self.get_field( t=t, iteration=iteration, field='E',
+                                    coord=coord, theta=pol,
+                                    slicing_dir=slicing_dir )
+        # Get central slice
+        E = E[E.shape[0] / 2, :]
+        # Get time domain of the data
+        tmin = extent.zmin / const.c
+        tmax = extent.zmax / const.c
+        T = tmax - tmin
+        dt = T / E.size
+        # Normalize the Envelope
+        env /= np.sqrt(np.trapz(env ** 2, dx=dt))
+        # Allocate array for shifted E field and wigner transform
+        E_shift = np.zeros_like(E)
+        wigner = np.zeros((2 * E.size, E.size))
+        # Construct shifted E field
+        for i in range(E.size * 2):
+            itau = i % E.size
+            if i < E.size:
+                E_shift[:itau] = env[E.size - itau: E.size]
+                E_shift[itau:] = 0
+            else:
+                E_shift[itau:] = env[: E.size - itau]
+                E_shift[:itau] = 0
+            EE = E * E_shift ** 2
+            fftwigner = np.fft.fft(EE)
+            wigner[i, :] = np.abs(fftwigner) ** 2
+        # Rotate and flip array to have input form of imshow
+        wigner = np.flipud(np.rot90(wigner[:, E.size / 2:]))
+        # Calculate the axis range
+        maxi, maxj = np.unravel_index(wigner.argmax(), wigner.shape)
+        xmin = -(T - T / wigner.shape[1] * maxj)
+        xmax = -(0 - T / wigner.shape[1] * maxj)
+        # Return the wigner transform an the extents
+        return( wigner, [xmin, xmax, 0, np.pi / dt] )
 
 def wstd( a, weights ):
     """
