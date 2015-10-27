@@ -376,7 +376,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_mean_frequency( self, t=None, iteration=None, pol=None, m='all'):
         """
-        Calculate the rms angular frequency of a laser pulse.
+        Calculate the mean angular frequency of a laser pulse.
 
         Parameters
         ----------
@@ -399,7 +399,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Returns
         -------
-        A float with rms angular frequency
+        A float with mean angular frequency
         """
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
@@ -423,10 +423,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Corresponding angular frequency
         frq = np.fft.fftfreq(field1d.size, z_length /
                              field1d.size * 1 / const.c) * 2 * np.pi
-        # Calculate the RMS of the frequencies
-        rms = np.sqrt(np.average(frq[:frq.size/2]**2, weights=np.abs(
+        # Calculate the mean of the frequencies
+        avg = np.average(frq[:frq.size/2]), weights=np.abs(
                       fft_field[:frq.size/2])))
-        return( rms )
+        return( avg )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
