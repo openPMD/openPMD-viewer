@@ -313,7 +313,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
-        extent = field[1]
+        info = field[1]
         if index == 'center':
             # Get central slice
             field_slice = field[0][int( field[0].shape[0] / 2), :]
@@ -326,8 +326,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             field_slice = field[0][index, :]
             # Calculate inverse FFT of filtered FFT array
             envelope = self._fft_filter(field_slice, freq_filter)
+
+        # Restrict the metainformation to 1d if needed
+        if index != 'all':
+            info.restrict_to_1Daxis( info.axes[1] )
+            
         # Return the result
-        return( envelope, extent )
+        return( envelope, info )
 
     def _fft_filter(self, field, freq_filter):
         """
@@ -499,11 +504,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             slicing_dir = 'x'
             theta = np.pi/2.
         # Get the field envelope
-        E, extent = self.get_laser_envelope(t=t, iteration=iteration,
+        E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
         # Calculate standard deviation
-        sigma = wstd(extent.z, E)
+        sigma = wstd(info.z, E)
         # Return ctau = sqrt(2) * sigma
         return( np.sqrt(2) * sigma )
 
@@ -540,7 +545,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with laser waist in meters
         """
         # Get the field envelope
-        field, extent = self.get_laser_envelope(t=t, iteration=iteration,
+        field, info = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all',
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
@@ -548,7 +553,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Find the maximum of the envelope along the transverse axis
         trans_max = np.amax(field, axis=1)
         # Get transverse positons
-        trans_pos = getattr(extent, extent.axes[0])
+        trans_pos = getattr(info, info.axes[0])
         # Calculate standard deviation
         sigma_r = wstd(trans_pos, trans_max)
         # Return the laser waist = sqrt(2) * sigma_r
@@ -587,14 +592,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
                                          pol=pol)
         # Get the field
-        E, extent = self.get_field( t=t, iteration=iteration, field='E',
+        E, info = self.get_field( t=t, iteration=iteration, field='E',
                                     coord=pol, theta=theta,
                                     slicing_dir=slicing_dir )
         # Get central slice
         E = E[E.shape[0] / 2, :]
         # Get time domain of the data
-        tmin = extent.zmin / const.c
-        tmax = extent.zmax / const.c
+        tmin = info.zmin / const.c
+        tmax = info.zmax / const.c
         T = tmax - tmin
         dt = T / E.size
         # Normalize the Envelope
