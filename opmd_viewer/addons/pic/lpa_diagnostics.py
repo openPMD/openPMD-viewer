@@ -1,8 +1,6 @@
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
-from opmd_viewer import OpenPMDTimeSeries
-from opmd_viewer.openpmd_timeseries.data_reader.field_metainfo import (
-    FieldMetaInformation )
+from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 
@@ -424,8 +422,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         frq = np.fft.fftfreq(field1d.size, z_length /
                              field1d.size * 1 / const.c) * 2 * np.pi
         # Calculate the mean of the frequencies
-        avg = np.average(frq[:frq.size/2]), weights=np.abs(
-                      fft_field[:frq.size/2])))
+        avg = np.average(frq[:frq.size/2], weights=np.abs(
+                      fft_field[:frq.size/2]))
         return( avg )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
