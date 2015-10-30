@@ -86,7 +86,7 @@ class FieldMetaInformation(object):
         # Finalize imshow_extent by converting it from list to array
         self.imshow_extent = np.array(self.imshow_extent)
 
-    def restrict_to_1Daxis( axis ):
+    def restrict_to_1Daxis( self, axis ):
         """
         Suppresses the information that correspond to other axes than `axis`
 
@@ -97,12 +97,12 @@ class FieldMetaInformation(object):
             This has to be one of the keys of the self.axes dictionary
         """
         # Check if axis is a valid key
-        if (axis in self.axes)==False:
+        if (axis in self.axes.values()) is False:
             raise ValueError('`axis` is not one of the coordinates '
                              'that are present in this object.')
 
         # Loop through the coordinates and suppress them
-        for obsolete_axis in self.axes:
+        for obsolete_axis in self.axes.values():
             if obsolete_axis != axis:
                 delattr( self, obsolete_axis )
                 delattr( self, obsolete_axis+'min' )

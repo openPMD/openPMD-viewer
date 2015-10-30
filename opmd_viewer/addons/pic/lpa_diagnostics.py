@@ -377,9 +377,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope )
 
-    def get_mean_frequency( self, t=None, iteration=None, pol=None, m='all'):
+    def get_main_frequency( self, t=None, iteration=None, pol=None, m='all'):
         """
-        Calculate the mean angular frequency of a laser pulse.
+        Calculate the angular frequency of a laser pulse.
+        (Defined as the frequency for which the spectrum is maximum)
 
         Parameters
         ----------
@@ -407,29 +408,28 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-
         if pol == 'x':
             slicing_dir = 'y'
             theta = 0
         else:
             slicing_dir = 'x'
             theta = np.pi/2.
+
         # Get field data
-        field = self.get_field( t=t, iteration=iteration, field='E',
+        field, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
-        z_length = field[1].zmax - field[1].zmin
         # Get central field lineout
-        field1d = field[0][field[0].shape[0]/2, :]
+        field1d = field[field.shape[0]/2, :]
         # FFT of 1d data
         fft_field = np.fft.fft(field1d)
         # Corresponding angular frequency
-        frq = np.fft.fftfreq(field1d.size, z_length /
-                             field1d.size * 1 / const.c) * 2 * np.pi
-        # Calculate the mean of the frequencies
-        avg = np.average(frq[:frq.size/2], weights=np.abs(
-                      fft_field[:frq.size/2]))
-        return( avg )
+        dz = info.z[1]-info.z[0]
+        omega = np.fft.fftfreq(field1d.size, d=dz) * 2*np.pi*const.c
+        # Calculate the main frequency
+        i_max = np.argmax( np.abs(fft_field[:fft_field.size/2]) )
+        omega0 = omega[i_max]
+        return( omega0 )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
@@ -467,7 +467,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                                pol=pol, theta=theta,
                                                slicing_dir=slicing_dir)[0])
         # Get mean frequency
-        omega = self.get_mean_frequency(t=t, iteration=iteration, pol=pol)
+        omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
         a0 = Emax * const.e / (const.m_e * const.c * omega)
         return( a0 )
