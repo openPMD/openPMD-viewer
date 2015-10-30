@@ -1,6 +1,7 @@
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
 from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
 
@@ -559,13 +560,17 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the laser waist = sqrt(2) * sigma_r
         return(np.sqrt(2) * sigma_r)
 
-    def wigner_transform( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y' ):
+    def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
+                          slicing_dir='y', plot=False ):
         """
-        Calculates the wigner transformation of a laserpulse.
+        Calculates the spectrogram of a laserpulse, by the FROG method.
+
+        Mathematically:
+        $$ s(\omega, \tau) = | \int_{-\infty}^{\infty} E(t) |E(t-\tau)|^2
+            \exp( -i\omega t) dt |^2 $$
         See Trebino, R: Frequency Resolved Optical Gating: The measurements of
         Ultrashort Laser Pulses: year 2000: formula 5.2
-        Resulting wigner transform is not taken to power of two.
+
         The time is centered around the laser pulse.
 
         Parameters
@@ -580,55 +585,70 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Either `t` or `iteration` should be given by the user.
 
         pol : string
-            Polarization of the field. Options are 'x', 'y'
+            Polarization of the laser field. Options are 'x', 'y'
+
+        plot: bool, optional
+            Whether to plot the spectrogram
 
         Returns
         -------
-        - A 2d array with wigner transform
+        - A 2d array with spectrogram
         - info : a FieldMetaInformation object
            (see the corresponding docstring)
         """
         # Get the field envelope
-        env, _ = self.get_laser_envelope(t=t, iteration=iteration,
-                                         pol=pol)
+        env, _ = self.get_laser_envelope(t=t, iteration=iteration, pol=pol)
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
                                     coord=pol, theta=theta,
                                     slicing_dir=slicing_dir )
         # Get central slice
         E = E[E.shape[0] / 2, :]
+        Nz = len(E)
         # Get time domain of the data
         tmin = info.zmin / const.c
         tmax = info.zmax / const.c
         T = tmax - tmin
-        dt = T / E.size
+        dt = T / Nz
         # Normalize the Envelope
         env /= np.sqrt(np.trapz(env ** 2, dx=dt))
-        # Allocate array for shifted E field and wigner transform
+        # Allocate array for the gating function and the spectrogran
         E_shift = np.zeros_like(E)
-        wigner = np.zeros((2 * E.size, E.size))
-        # Construct shifted E field
-        for i in range(E.size * 2):
-            itau = i % E.size
-            if i < E.size:
-                E_shift[:itau] = env[E.size - itau: E.size]
+        spectrogram = np.zeros((2 * Nz, Nz))
+        # Loop over the time variable of the spectrogram
+        for i in range( Nz * 2):
+            itau = i % Nz
+            # Shift the E field and fill the rest with zeros
+            if i < Nz:
+                E_shift[:itau] = env[ Nz - itau: Nz]
                 E_shift[itau:] = 0
             else:
-                E_shift[itau:] = env[: E.size - itau]
+                E_shift[itau:] = env[: Nz - itau]
                 E_shift[:itau] = 0
             EE = E * E_shift ** 2
-            fftwigner = np.fft.fft(EE)
-            wigner[i, :] = np.abs(fftwigner) ** 2
+            fft_EE = np.fft.fft(EE)
+            spectrogram[i, :] = np.abs(fft_EE) ** 2
         # Rotate and flip array to have input form of imshow
-        wigner = np.flipud(np.rot90(wigner[:, E.size / 2:]))
-        # Calculate the axis range
-        maxi, maxj = np.unravel_index(wigner.argmax(), wigner.shape)
-        xmin = -(T - T / wigner.shape[1] * maxj)
-        dtw = T / wigner.shape[1]
-        info = FieldMetaInformation( {0: 'omega', 1: 't'}, wigner.shape,
-                    grid_spacing=(np.pi / dt / wigner.shape[0], dtw),
-                    grid_unitSI=1, global_offset=(0, xmin), position=(0, 0))
-        return( wigner, info )
+        spectrogram = np.flipud(np.rot90(spectrogram[:, Nz / 2:]))
+        # Find the time at which the wigner transform is the highest
+        maxi, maxj = np.unravel_index(spectrogram.argmax(), spectrogram.shape)
+        tmin = -(T - T / spectrogram.shape[1] * maxj)
+        info = FieldMetaInformation( {0:'omega', 1:'t'}, spectrogram.shape,
+                    grid_spacing=( np.pi/T, dt/2. ), grid_unitSI=1,
+                    global_offset=(0, tmin), position=(0, 0))
+
+        # Plot the result if needed
+        if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15*self.t[ self.current_i ]
+            plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto')
+            plt.title("Spectrogram at %.1f fs   (iteration %d)" \
+                %(time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
+            plt.ylabel('$\omega \;(rad.s^{-1})$',
+                       fontsize=self.plotter.fontsize )
+
+        return( spectrogram, info )
 
 
 def wstd( a, weights ):
