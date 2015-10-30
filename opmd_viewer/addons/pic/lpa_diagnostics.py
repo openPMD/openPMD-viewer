@@ -1,8 +1,7 @@
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
-from opmd_viewer import OpenPMDTimeSeries
-from opmd_viewer.openpmd_timeseries.data_reader.field_metainfo import (
-    FieldMetaInformation )
+from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
 
@@ -315,7 +314,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
-        extent = field[1]
+        info = field[1]
         if index == 'center':
             # Get central slice
             field_slice = field[0][int( field[0].shape[0] / 2), :]
@@ -328,8 +327,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             field_slice = field[0][index, :]
             # Calculate inverse FFT of filtered FFT array
             envelope = self._fft_filter(field_slice, freq_filter)
+
+        # Restrict the metainformation to 1d if needed
+        if index != 'all':
+            info.restrict_to_1Daxis( info.axes[1] )
+            
         # Return the result
-        return( envelope, extent )
+        return( envelope, info )
 
     def _fft_filter(self, field, freq_filter):
         """
@@ -374,9 +378,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope )
 
-    def get_mean_frequency( self, t=None, iteration=None, pol=None, m='all'):
+    def get_main_frequency( self, t=None, iteration=None, pol=None, m='all'):
         """
-        Calculate the rms angular frequency of a laser pulse.
+        Calculate the angular frequency of a laser pulse.
+        (Defined as the frequency for which the spectrum is maximum)
 
         Parameters
         ----------
@@ -399,34 +404,33 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Returns
         -------
-        A float with rms angular frequency
+        A float with mean angular frequency
         """
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-
         if pol == 'x':
             slicing_dir = 'y'
             theta = 0
         else:
             slicing_dir = 'x'
             theta = np.pi/2.
+
         # Get field data
-        field = self.get_field( t=t, iteration=iteration, field='E',
+        field, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
-        z_length = field[1].zmax - field[1].zmin
         # Get central field lineout
-        field1d = field[0][field[0].shape[0]/2, :]
+        field1d = field[field.shape[0]/2, :]
         # FFT of 1d data
         fft_field = np.fft.fft(field1d)
         # Corresponding angular frequency
-        frq = np.fft.fftfreq(field1d.size, z_length /
-                             field1d.size * 1 / const.c) * 2 * np.pi
-        # Calculate the RMS of the frequencies
-        rms = np.sqrt(np.average(frq[:frq.size/2]**2, weights=np.abs(
-                      fft_field[:frq.size/2])))
-        return( rms )
+        dz = info.z[1]-info.z[0]
+        omega = np.fft.fftfreq(field1d.size, d=dz) * 2*np.pi*const.c
+        # Calculate the main frequency
+        i_max = np.argmax( np.abs(fft_field[:fft_field.size/2]) )
+        omega0 = omega[i_max]
+        return( omega0 )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
@@ -464,7 +468,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                                pol=pol, theta=theta,
                                                slicing_dir=slicing_dir)[0])
         # Get mean frequency
-        omega = self.get_mean_frequency(t=t, iteration=iteration, pol=pol)
+        omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
         a0 = Emax * const.e / (const.m_e * const.c * omega)
         return( a0 )
@@ -501,11 +505,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             slicing_dir = 'x'
             theta = np.pi/2.
         # Get the field envelope
-        E, extent = self.get_laser_envelope(t=t, iteration=iteration,
+        E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
         # Calculate standard deviation
-        sigma = wstd(extent.z, E)
+        sigma = wstd(info.z, E)
         # Return ctau = sqrt(2) * sigma
         return( np.sqrt(2) * sigma )
 
@@ -542,7 +546,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with laser waist in meters
         """
         # Get the field envelope
-        field, extent = self.get_laser_envelope(t=t, iteration=iteration,
+        field, info = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all',
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
@@ -550,19 +554,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Find the maximum of the envelope along the transverse axis
         trans_max = np.amax(field, axis=1)
         # Get transverse positons
-        trans_pos = getattr(extent, extent.axes[0])
+        trans_pos = getattr(info, info.axes[0])
         # Calculate standard deviation
         sigma_r = wstd(trans_pos, trans_max)
         # Return the laser waist = sqrt(2) * sigma_r
         return(np.sqrt(2) * sigma_r)
 
-    def wigner_transform( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y' ):
+    def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
+                          slicing_dir='y', plot=False ):
         """
-        Calculates the wigner transformation of a laserpulse.
+        Calculates the spectrogram of a laserpulse, by the FROG method.
+
+        Mathematically:
+        $$ s(\omega, \tau) = | \int_{-\infty}^{\infty} E(t) |E(t-\tau)|^2
+            \exp( -i\omega t) dt |^2 $$
         See Trebino, R: Frequency Resolved Optical Gating: The measurements of
         Ultrashort Laser Pulses: year 2000: formula 5.2
-        Resulting wigner transform is not taken to power of two.
+
         The time is centered around the laser pulse.
 
         Parameters
@@ -577,55 +585,70 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Either `t` or `iteration` should be given by the user.
 
         pol : string
-            Polarization of the field. Options are 'x', 'y'
+            Polarization of the laser field. Options are 'x', 'y'
+
+        plot: bool, optional
+            Whether to plot the spectrogram
 
         Returns
         -------
-        - A 2d array with wigner transform
+        - A 2d array with spectrogram
         - info : a FieldMetaInformation object
            (see the corresponding docstring)
         """
         # Get the field envelope
-        env, _ = self.get_laser_envelope(t=t, iteration=iteration,
-                                         pol=pol)
+        env, _ = self.get_laser_envelope(t=t, iteration=iteration, pol=pol)
         # Get the field
-        E, extent = self.get_field( t=t, iteration=iteration, field='E',
+        E, info = self.get_field( t=t, iteration=iteration, field='E',
                                     coord=pol, theta=theta,
                                     slicing_dir=slicing_dir )
         # Get central slice
         E = E[E.shape[0] / 2, :]
+        Nz = len(E)
         # Get time domain of the data
-        tmin = extent.zmin / const.c
-        tmax = extent.zmax / const.c
+        tmin = info.zmin / const.c
+        tmax = info.zmax / const.c
         T = tmax - tmin
-        dt = T / E.size
+        dt = T / Nz
         # Normalize the Envelope
         env /= np.sqrt(np.trapz(env ** 2, dx=dt))
-        # Allocate array for shifted E field and wigner transform
+        # Allocate array for the gating function and the spectrogran
         E_shift = np.zeros_like(E)
-        wigner = np.zeros((2 * E.size, E.size))
-        # Construct shifted E field
-        for i in range(E.size * 2):
-            itau = i % E.size
-            if i < E.size:
-                E_shift[:itau] = env[E.size - itau: E.size]
+        spectrogram = np.zeros((2 * Nz, Nz))
+        # Loop over the time variable of the spectrogram
+        for i in range( Nz * 2):
+            itau = i % Nz
+            # Shift the E field and fill the rest with zeros
+            if i < Nz:
+                E_shift[:itau] = env[ Nz - itau: Nz]
                 E_shift[itau:] = 0
             else:
-                E_shift[itau:] = env[: E.size - itau]
+                E_shift[itau:] = env[: Nz - itau]
                 E_shift[:itau] = 0
             EE = E * E_shift ** 2
-            fftwigner = np.fft.fft(EE)
-            wigner[i, :] = np.abs(fftwigner) ** 2
+            fft_EE = np.fft.fft(EE)
+            spectrogram[i, :] = np.abs(fft_EE) ** 2
         # Rotate and flip array to have input form of imshow
-        wigner = np.flipud(np.rot90(wigner[:, E.size / 2:]))
-        # Calculate the axis range
-        maxi, maxj = np.unravel_index(wigner.argmax(), wigner.shape)
-        xmin = -(T - T / wigner.shape[1] * maxj)
-        dtw = T / wigner.shape[1]
-        info = FieldMetaInformation( {0: 'omega', 1: 't'}, wigner.shape,
-                    grid_spacing=(np.pi / dt / wigner.shape[0], dtw),
-                    grid_unitSI=1, global_offset=(0, xmin), position=(0, 0))
-        return( wigner, info )
+        spectrogram = np.flipud(np.rot90(spectrogram[:, Nz / 2:]))
+        # Find the time at which the wigner transform is the highest
+        maxi, maxj = np.unravel_index(spectrogram.argmax(), spectrogram.shape)
+        tmin = -(T - T / spectrogram.shape[1] * maxj)
+        info = FieldMetaInformation( {0:'omega', 1:'t'}, spectrogram.shape,
+                    grid_spacing=( np.pi/T, dt/2. ), grid_unitSI=1,
+                    global_offset=(0, tmin), position=(0, 0))
+
+        # Plot the result if needed
+        if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15*self.t[ self.current_i ]
+            plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto')
+            plt.title("Spectrogram at %.1f fs   (iteration %d)" \
+                %(time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
+            plt.ylabel('$\omega \;(rad.s^{-1})$',
+                       fontsize=self.plotter.fontsize )
+
+        return( spectrogram, info )
 
 
 def wstd( a, weights ):
