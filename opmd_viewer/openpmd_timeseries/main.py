@@ -84,8 +84,7 @@ class OpenPMDTimeSeries(parent_class) :
             self.t[k] = t
             for key in params0.keys():
                 if params != params0:
-                    print(
-                        "Warning: File %s has different openPMD parameters "
+                    print("Warning: File %s has different openPMD parameters "
                         "than the rest of the time series." %self.h5_files[k])
             
         # - Set the current iteration and time
@@ -271,7 +270,8 @@ class OpenPMDTimeSeries(parent_class) :
         -------
         A tuple with
            F : a 2darray containing the required field
-           extent : a 1darray with 4 elements, containing the extent
+           info : a FieldMetaInformation object
+           (see the corresponding docstring)
         """
         # Check that the field required is present
         if self.avail_fields is None:
@@ -321,17 +321,17 @@ class OpenPMDTimeSeries(parent_class) :
         # Get the field data
         # - For 2D
         if self.geometry == "2dcartesian":
-            F, extent = read_field_2d( filename, field_path )
+            F, info = read_field_2d( filename, field_path )
         # - For 3D
         elif self.geometry == "3dcartesian":
-            F, extent = read_field_3d(
+            F, info = read_field_3d(
                 filename, field_path, slicing, slicing_dir)
         # - For thetaMode
         elif self.geometry == "thetaMode":
             if (coord in ['x', 'y']) and (self.avail_fields[field]=='vector'):
                 # For Cartesian components, combine r and t components
-                Fr, extent = read_field_circ( filename, field+'/r', m, theta )
-                Ft, extent = read_field_circ( filename, field+'/t', m, theta )
+                Fr, info = read_field_circ( filename, field+'/r', m, theta )
+                Ft, info = read_field_circ( filename, field+'/t', m, theta )
                 if coord == 'x':
                     F = np.cos(theta)*Fr - np.sin(theta)*Ft
                 elif coord == 'y':
@@ -340,18 +340,18 @@ class OpenPMDTimeSeries(parent_class) :
                 F[:len(F)/2] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, extent = read_field_circ( filename, field_path, m, theta )
+                F, info = read_field_circ( filename, field_path, m, theta )
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
         if (self.geometry=="3dcartesian") and (slicing is None):
             plot = False
         if plot==True:
-            self.plotter.show_field( F, extent, slicing_dir, m,
+            self.plotter.show_field( F, info, slicing_dir, m,
                         field_label, self.geometry, self.current_i, **kw )
 
         # Return the result
-        return( F, extent )
+        return( F, info )
 
 
     def _find_output(self, t, iteration ) :

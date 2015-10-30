@@ -270,18 +270,21 @@ class InteractiveViewer(object):
         if (self.avail_species is not None):
             
             # Particle quantities
-            # -------------------
+            # -------------------         
             # Species selection
             ptcl_species_button = widgets.ToggleButtons(
                 options=self.avail_species )
             ptcl_species_button.on_trait_change( refresh_ptcl )
+            # Remove charge and mass (less interesting) 
+            avail_ptcl_quantities = [ q for q in self.avail_ptcl_quantities \
+                        if (q in ['charge', 'mass'])==False ]
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(
-                value='z', options=self.avail_ptcl_quantities )
+                value='z', options=avail_ptcl_quantities )
             ptcl_xaxis_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the y axis            
             ptcl_yaxis_button = widgets.ToggleButtons(
-                value='x', options=self.avail_ptcl_quantities+['None'] )
+                value='x', options=avail_ptcl_quantities+['None'] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
             # Plotting options
