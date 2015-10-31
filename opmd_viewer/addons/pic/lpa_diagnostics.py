@@ -466,10 +466,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # FFT of 1d data
         fft_field = np.fft.fft(field1d)
         # Take half of the data (positive frequencies only)
-        spectrum = abs( ftt_field[ :len(fft_field)/2 ] )
+        spectrum = abs( fft_field[ :len(fft_field)/2 ] )
         # Create a FieldMetaInformation object
-        T = (info.zmax-info.zmin)/c
-        spect_info = FieldMetaInformation( {0:'omega'}, fft_field.shape,
+        T = (info.zmax-info.zmin)/const.c
+        spect_info = FieldMetaInformation( {0:'omega'}, spectrum.shape,
                     grid_spacing=( 2*np.pi/T, ), grid_unitSI=1,
                     global_offset=(0,), position=(0,))
 
