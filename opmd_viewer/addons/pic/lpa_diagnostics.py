@@ -304,8 +304,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         A tuple with:
         - Envelope data (1D or 2D array)
-        - A FieldMetaInformation object (note that this contains obsolete
-            information about the transversal coordinate in 1D case)
+        - A FieldMetaInformation object
         """
         # Check if polarization has been entered
         if pol is None:
@@ -406,6 +405,48 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         A float with mean angular frequency
         """
+        # Extract the spectrum
+        spectrum, info = self.get_spectrum( t, iteration, pol, m )
+        
+        # Calculate the main frequency
+        i_max = np.argmax( spectrum )
+        omega0 = info.omega[i_max]
+        return( omega0 )
+
+    def get_spectrum( self, t=None, iteration=None, pol=None,
+                      m='all', plot=False ):
+        """
+        Return the spectrum of the laser
+        (Absolute value of the Fourier transform of the fields.)
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : string
+            Polarization of the field. Options are 'x', 'y'
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        plot: bool, optional
+           Whether to plot the data
+
+        Returns
+        -------
+        A tuple with:
+            - The 1D spectrum on axis        
+            - A FieldMetaInformation object 
+        """
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
@@ -424,14 +465,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field1d = field[field.shape[0]/2, :]
         # FFT of 1d data
         fft_field = np.fft.fft(field1d)
-        # Corresponding angular frequency
-        dz = info.z[1]-info.z[0]
-        omega = np.fft.fftfreq(field1d.size, d=dz) * 2*np.pi*const.c
-        # Calculate the main frequency
-        i_max = np.argmax( np.abs(fft_field[:fft_field.size/2]) )
-        omega0 = omega[i_max]
-        return( omega0 )
+        # Take half of the data (positive frequencies only)
+        spectrum = abs( fft_field[ :len(fft_field)/2 ] )
+        # Create a FieldMetaInformation object
+        T = (info.zmax-info.zmin)/const.c
+        spect_info = FieldMetaInformation( {0:'omega'}, spectrum.shape,
+                    grid_spacing=( 2*np.pi/T, ), grid_unitSI=1,
+                    global_offset=(0,), position=(0,))
 
+        # Plot the field if required
+        if plot:
+            plt.plot( spect_info.omega, spectrum )
+            plt.xlabel('$\omega \; (rad.s^{-1})$',
+                       fontsize=self.plotter.fontsize )
+            plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
+        
+        return( spectrum, spect_info )
+        
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
@@ -634,7 +684,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         maxi, maxj = np.unravel_index(spectrogram.argmax(), spectrogram.shape)
         tmin = -(T - T / spectrogram.shape[1] * maxj)
         info = FieldMetaInformation( {0:'omega', 1:'t'}, spectrogram.shape,
-                    grid_spacing=( np.pi/T, dt/2. ), grid_unitSI=1,
+                    grid_spacing=( 2*np.pi/T, dt/2. ), grid_unitSI=1,
                     global_offset=(0, tmin), position=(0, 0))
 
         # Plot the result if needed
