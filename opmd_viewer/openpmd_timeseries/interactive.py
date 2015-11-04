@@ -272,7 +272,7 @@ class InteractiveViewer(object):
             # Particle quantities
             # -------------------         
             # Species selection
-            ptcl_species_button = widgets.ToggleButtons(
+            ptcl_species_button = widgets.Dropdown( width=250,
                 options=self.avail_species )
             ptcl_species_button.on_trait_change( refresh_ptcl )
             # Remove charge and mass (less interesting) 
