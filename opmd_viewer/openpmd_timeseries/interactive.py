@@ -287,6 +287,11 @@ class InteractiveViewer(object):
                 value='x', options=avail_ptcl_quantities+['None'] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
+            # Particle selection
+            # ------------------
+            # 3 selection rules at maximum
+            ptcl_select_widget = ParticleSelectWidget(3, avail_ptcl_quantities)
+
             # Plotting options
             # ----------------
             # Number of bins
@@ -323,6 +328,8 @@ class InteractiveViewer(object):
             container_ptcl_quantities = widgets.VBox( width=310,
                 children=[ ptcl_species_button, ptcl_xaxis_button,
                            ptcl_yaxis_button] )
+            # Particle selection container
+            container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
             container_ptcl_plots = widgets.VBox( width=310,
             children=[ ptcl_bins_button, ptcl_range_button,
@@ -330,9 +337,11 @@ class InteractiveViewer(object):
             ptcl_color_button ])
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
-            children=[container_ptcl_quantities, container_ptcl_plots] )
+            children=[container_ptcl_quantities, container_ptcl_select,
+                      container_ptcl_plots] )
             accord2.set_title(0, 'Particle quantities')
-            accord2.set_title(1, 'Plotting options')
+            accord2.set_title(1, 'Particle selection')
+            accord2.set_title(2, 'Plotting options')
             # Complete particle container
             container_ptcl =  widgets.VBox( width=370,
                 children=[ accord2, widgets.HBox(
@@ -357,3 +366,42 @@ def convert_to_int( m ):
         return(m)
     else:
         return( int(m) )
+
+
+
+class ParticleSelectWidget(object):
+    """
+    Documentation ...
+    """
+
+    def __init__( self, n_rules, avail_ptcl_quantities):
+        """
+        Documentation ...
+
+        """
+        self.n_rules = n_rules
+        
+        # Widgets that determines whether the rule is used
+        self.activate = [ widgets.Checkbox(value=False) \
+                         for i in range(n_rules) ]
+        # Widgets that determines the quantity on which to select
+        self.quantity = [ widgets.Dropdown(options=avail_ptcl_quantities,
+                            description='Select ') for i in range(n_rules) ]
+        # Widgets that determines the lower bound and upper bound
+        self.low_bound = [ widgets.FloatText( value=-1.e-1, width = 90,
+                            description='from ') for i in range(n_rules) ]
+        self.up_bound = [ widgets.FloatText( value=1.e-1, width = 90,
+                            description='to ') for i in range(n_rules) ]
+
+    def to_container( self ):
+        """
+        Documentation ...
+        """
+        containers = []
+        for i in range(self.n_rules):
+            containers.append( widgets.HBox(
+                children=[self.activate[i], self.quantity[i]] ))
+            containers.append( widgets.HBox(
+                children=[self.low_bound[i], self.up_bound[i]] ))
+
+        return( widgets.VBox( children=containers, width=310 ) )
