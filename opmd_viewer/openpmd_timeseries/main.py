@@ -199,12 +199,16 @@ class OpenPMDTimeSeries(parent_class) :
                     "quantities.\n The available quantities are: "
                     "\n - %s" %quantity_list )
                 print("Please set the argument `select` accordingly.")
-    
+
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
+
+        # If a plot is request, add the weights to the extracted variables
+        if plot:
+            var_list.append('w')
         
         # Extract the list of particle quantities
         data_list = []
@@ -216,21 +220,17 @@ class OpenPMDTimeSeries(parent_class) :
             data_list = apply_selection( data_list, select, species, filename )
             
         # Plotting
-        # - In the case of only one quantity
-        if len(data_list) == 1:
-            if plot :
-                # Extract weights for the histogram
-                w = read_particle( filename, species, 'w')
+        if plot :
+            # Pop the weights from the quantity_list
+            # (not requested by user, but needed here)
+            w = data_list.pop()
+            # - In the case of only one quantity
+            if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d( data_list[0], w, var_list[0],
                                      self.current_i, nbins, **kw )
-
-        # - In the case of two quantities
-        elif len(data_list) == 2:
-            # Plot
-            if plot :
-                # Extract weights for the histogram
-                w = read_particle( filename, species, 'w')
+            # - In the case of two quantities
+            elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d( data_list[0], data_list[1], w,
                                      var_list[0], var_list[1],

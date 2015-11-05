@@ -106,6 +106,7 @@ class InteractiveViewer(object):
                     # 1D histogram
                     self.get_particle( t=self.current_t, output=False,
                         var_list=[ptcl_xaxis_button.value],
+                        select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True, 
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value )
@@ -114,6 +115,7 @@ class InteractiveViewer(object):
                     self.get_particle( t=self.current_t, output=False,
                         var_list=[ptcl_xaxis_button.value,
                                   ptcl_yaxis_button.value],
+                        select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value )
@@ -290,7 +292,8 @@ class InteractiveViewer(object):
             # Particle selection
             # ------------------
             # 3 selection rules at maximum
-            ptcl_select_widget = ParticleSelectWidget(3, avail_ptcl_quantities)
+            ptcl_select_widget = ParticleSelectWidget(3,
+                                avail_ptcl_quantities, refresh_ptcl)
 
             # Plotting options
             # ----------------
@@ -374,24 +377,31 @@ class ParticleSelectWidget(object):
     Documentation ...
     """
 
-    def __init__( self, n_rules, avail_ptcl_quantities):
+    def __init__( self, n_rules, avail_ptcl_quantities, refresh_ptcl):
         """
         Documentation ...
 
         """
         self.n_rules = n_rules
         
-        # Widgets that determines whether the rule is used
-        self.activate = [ widgets.Checkbox(value=False) \
+        # Create widgets that determines whether the rule is used
+        self.active = [ widgets.Checkbox(value=False) \
                          for i in range(n_rules) ]
-        # Widgets that determines the quantity on which to select
+        # Create widgets that determines the quantity on which to select
         self.quantity = [ widgets.Dropdown(options=avail_ptcl_quantities,
                             description='Select ') for i in range(n_rules) ]
-        # Widgets that determines the lower bound and upper bound
+        # Create widgets that determines the lower bound and upper bound
         self.low_bound = [ widgets.FloatText( value=-1.e-1, width = 90,
-                            description='from ') for i in range(n_rules) ]
+                    description='from ') for i in range(n_rules) ]
         self.up_bound = [ widgets.FloatText( value=1.e-1, width = 90,
-                            description='to ') for i in range(n_rules) ]
+                    description='to ') for i in range(n_rules) ]
+
+        # Add the callback function refresh_ptcl to each widget
+        for i in range(n_rules):
+            self.active[i].on_trait_change( refresh_ptcl )
+            self.quantity[i].on_trait_change( refresh_ptcl )
+            self.low_bound[i].on_trait_change( refresh_ptcl )
+            self.up_bound[i].on_trait_change( refresh_ptcl )
 
     def to_container( self ):
         """
@@ -399,9 +409,29 @@ class ParticleSelectWidget(object):
         """
         containers = []
         for i in range(self.n_rules):
-            containers.append( widgets.HBox(
-                children=[self.activate[i], self.quantity[i]] ))
-            containers.append( widgets.HBox(
+            containers.append( widgets.HBox( height=40,
+                children=[self.active[i], self.quantity[i]] ))
+            containers.append( widgets.HBox( height=50, 
                 children=[self.low_bound[i], self.up_bound[i]] ))
 
         return( widgets.VBox( children=containers, width=310 ) )
+
+    def to_dict( self ):
+        """
+        Documentation...
+        """
+        rule_dict = {}
+        # Go through the selection rules and add the active rules
+        for i in range( self.n_rules ):
+            if self.active[i].value is True:
+                rule_dict[ self.quantity[i].value ] = \
+                    [ self.low_bound[i].value, self.up_bound[i].value ]
+
+        # If any rule is active, return a dictionary
+        if len(rule_dict) != 0:
+            return(rule_dict)
+        # If no rule is active, return None
+        else:
+            return(None)
+
+# Add documentation 
