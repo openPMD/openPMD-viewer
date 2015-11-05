@@ -374,13 +374,23 @@ def convert_to_int( m ):
 
 class ParticleSelectWidget(object):
     """
-    Documentation ...
+    Class that groups the particle selection widgets.
     """
 
     def __init__( self, n_rules, avail_ptcl_quantities, refresh_ptcl):
         """
-        Documentation ...
+        Initialize a set of particle selection widgets
 
+        Parameters:
+        -----------
+        n_rules: int
+            The number of selection rules to display
+
+        avail_ptcl_quantities: list of string
+            The particle quantities in the present openPMD timeseries
+
+        refresh_ptcl: callable
+            The callback function to execute when the widget is changed
         """
         self.n_rules = n_rules
         
@@ -405,7 +415,8 @@ class ParticleSelectWidget(object):
 
     def to_container( self ):
         """
-        Documentation ...
+        Return a widget container, where all the particle selection
+        widgets are placed properly, with respect to each other.
         """
         containers = []
         for i in range(self.n_rules):
@@ -418,7 +429,9 @@ class ParticleSelectWidget(object):
 
     def to_dict( self ):
         """
-        Documentation...
+        Return a selection dictionary of the form
+        {'uz': [-0.1, 2.], 'x':[-10., 10.]}
+        depending on the values of the widgets.
         """
         rule_dict = {}
         # Go through the selection rules and add the active rules
@@ -433,5 +446,3 @@ class ParticleSelectWidget(object):
         # If no rule is active, return None
         else:
             return(None)
-
-# Add documentation 
