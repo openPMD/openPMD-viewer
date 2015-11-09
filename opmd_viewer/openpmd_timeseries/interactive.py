@@ -212,7 +212,7 @@ class InteractiveViewer(object):
             # ----------------
             # Figure number
             fld_figure_button = widgets.IntText( description='Figure ',
-                                        value=0, width=50 )
+                                        value=0, width=50)
             # Range of values
             fld_range_button = widgets.FloatRangeSlider(
                 min=-10, max=10, width=220 )
@@ -254,8 +254,8 @@ class InteractiveViewer(object):
             # Plotting options container
             container_fld_plots = widgets.VBox( width=260,
                 children=[ fld_figure_button, fld_range_button,
-            widgets.HBox( children=[ fld_magnitude_button, fld_use_button] ),
-            fld_color_button ] )
+            widgets.HBox( children=[ fld_magnitude_button, fld_use_button],
+                          height=50 ), fld_color_button ] )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
                 children=[container_fields, container_fld_plots] )
@@ -339,8 +339,8 @@ class InteractiveViewer(object):
             # Plotting options container
             container_ptcl_plots = widgets.VBox( width=310,
             children=[ ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
-            widgets.HBox(children=[ ptcl_magnitude_button, ptcl_use_button] ),
-            ptcl_color_button ])
+            widgets.HBox(children=[ ptcl_magnitude_button, ptcl_use_button],
+                         height=50), ptcl_color_button ])
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
             children=[container_ptcl_quantities, container_ptcl_select,
