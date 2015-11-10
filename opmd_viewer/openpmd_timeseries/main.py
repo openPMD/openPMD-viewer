@@ -98,7 +98,8 @@ class OpenPMDTimeSeries(parent_class) :
         self.plotter = Plotter( self.t, self.iterations )
 
     def get_particle( self, var_list=None, species=None, t=None,
-                iteration=None, output=True, plot=False, nbins=150, **kw ) :
+            iteration=None, select=None, output=True,
+            plot=False, nbins=150, **kw ) :
         """
         Extract a list of particle variables
         from an HDF5 file in the OpenPMD format.
@@ -112,9 +113,12 @@ class OpenPMDTimeSeries(parent_class) :
         Parameters
         ----------
         var_list : list of string, optional
-           A list of the particle variables to extract. If var_list is not
-           provided, the available particle quantities are printed
+            A list of the particle variables to extract. If var_list is not
+            provided, the available particle quantities are printed
 
+        species: string
+            A string indicating the name of the species
+           
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
@@ -126,7 +130,14 @@ class OpenPMDTimeSeries(parent_class) :
            
         output : bool, optional
            Whether to return the requested quantity
-           
+
+        select: dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
+            'uz' : [5., None]  (Particles with uz above 5 mc)
+
         plot : bool, optional
            Whether to plot the requested quantity
            Plotting support is only available when requesting one or two
@@ -172,33 +183,54 @@ class OpenPMDTimeSeries(parent_class) :
             print("Please set the argument `var_list` accordingly.")
             return(None)
 
+        # Check the selection quantities
+        if select is not None:
+            valid_select_list = True
+            if type(select) != dict:
+                valid_select_list = False
+            else:
+                for quantity in select.keys():
+                    if (quantity in self.avail_ptcl_quantities) == False:
+                        valid_select_list = False
+            if valid_select_list == False:
+                quantity_list = '\n - '.join( self.avail_ptcl_quantities )
+                print("The argument `select` is erroneous.\nIt "
+                    "should be a dictionary whose keys represent particle "
+                    "quantities.\n The available quantities are: "
+                    "\n - %s" %quantity_list )
+                print("Please set the argument `select` accordingly.")
+
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
+
+        # If a plot is request, add the weights to the extracted variables
+        if plot:
+            var_list.append('w')
         
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
-            data_list.append( read_particle( filename, species, quantity ) )
+            data_list.append(read_particle( filename, species, quantity ))
 
+        # Apply selection if needed
+        if select is not None:
+            data_list = apply_selection( data_list, select, species, filename )
+            
         # Plotting
-        # - In the case of only one quantity
-        if len(data_list) == 1:
-            if plot :
-                # Extract weights for the histogram
-                w = read_particle( filename, species, 'w')
+        if plot :
+            # Pop the weights from the quantity_list
+            # (not requested by user, but needed here)
+            w = data_list.pop()
+            # - In the case of only one quantity
+            if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d( data_list[0], w, var_list[0],
                                      self.current_i, nbins, **kw )
-
-        # - In the case of two quantities
-        elif len(data_list) == 2:
-            # Plot
-            if plot :
-                # Extract weights for the histogram
-                w = read_particle( filename, species, 'w')
+            # - In the case of two quantities
+            elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d( data_list[0], data_list[1], w,
                                      var_list[0], var_list[1],
@@ -443,3 +475,51 @@ def list_h5_files( path_to_dir ) :
 
     return( filenames, iterations )
 
+def apply_selection( data_list, select, species, filename ):
+    """
+    Select the elements of each particle quantities in data_list,
+    based on the selection rules in `select`
+
+    Parameters
+    ----------
+    data_list: list of 1darrays
+        A list of arrays with one element per macroparticle, that represent
+        different particle quantities
+
+    select: dict
+        A dictionary of rules to select the particles
+        'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+        'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
+        'uz' : [5., None]  (Particles with uz above 5 mc)
+
+    species: string
+       Name of the species being requested
+
+    filename: string
+       Name of the file (i.e. iteration) being requested
+
+    Returns
+    -------
+    A list of 1darrays that correspond to data_list, but were only the
+    macroparticles that meet the selection rules are kept
+    """
+    # Create the array that determines whether the particle
+    # should be selected or not.
+    Ntot = len(data_list[0])
+    select_array = np.ones( Ntot, dtype='bool')
+
+    # Loop through the selection rules, and aggregate results in select_array
+    for quantity in select.keys():
+        q = read_particle( filename, species, quantity )
+        # Check lower bound
+        if select[quantity][0] is not None:
+            select_array = np.logical_and(select_array, q>select[quantity][0])
+        # Check upper bound
+        if select[quantity][1] is not None:
+            select_array = np.logical_and(select_array, q<select[quantity][1])
+
+    # Use select_array to reduce each quantity
+    for i in range(len(data_list)):
+        data_list[i] = data_list[i][select_array]
+    
+    return(data_list)
