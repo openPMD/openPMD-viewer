@@ -464,7 +464,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get central field lineout
         field1d = field[field.shape[0]/2, :]
         # FFT of 1d data
-        fft_field = np.fft.fft(field1d)
+        dt = (info.z[1]-info.z[0])/const.c  # Integration step for the FFT
+        fft_field = np.fft.fft(field1d) * dt
         # Take half of the data (positive frequencies only)
         spectrum = abs( fft_field[ :len(fft_field)/2 ] )
         # Create a FieldMetaInformation object
