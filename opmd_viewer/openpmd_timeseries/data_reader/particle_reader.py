@@ -6,7 +6,7 @@ It defines a function that reads particle data from an openPMD file
 import os
 import h5py
 from scipy import constants
-from .utilities import get_data
+from .utilities import get_data, get_bpath
 
 def read_particle( filename, species, quantity ) :
     """
@@ -42,7 +42,7 @@ def read_particle( filename, species, quantity ) :
 
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
-    base_path =  dfile.attrs['basePath'].decode()
+    base_path =  get_bpath( dfile )
     particles_path = dfile.attrs['particlesPath'].decode()
 
     # Find the right dataset
