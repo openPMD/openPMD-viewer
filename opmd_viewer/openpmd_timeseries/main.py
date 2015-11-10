@@ -520,6 +520,7 @@ def apply_selection( data_list, select, species, filename ):
 
     # Use select_array to reduce each quantity
     for i in range(len(data_list)):
-        data_list[i] = data_list[i][select_array]
+        if len(data_list[i]) >1:  # Do not apply selection on scalar records
+            data_list[i] = data_list[i][select_array]
     
     return(data_list)
