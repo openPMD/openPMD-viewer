@@ -6,7 +6,7 @@ It defines functions that can read the fields from an HDF5 file.
 import os
 import h5py
 import numpy as np
-from .utilities import slice_dict, get_shape, get_data
+from .utilities import slice_dict, get_shape, get_data, get_bpath
 from .field_metainfo import FieldMetaInformation
 
 def read_field_2d( filename, field_path ):
@@ -227,7 +227,7 @@ def find_dataset( dfile, field_path ):
     - an h5py.Dataset object
     """
     # Find the meshes path
-    base_path = dfile.attrs["basePath"].decode()
+    base_path = get_bpath( dfile )
     relative_meshes_path = dfile.attrs["meshesPath"].decode()
 
     # Get the proper dataset

@@ -11,6 +11,21 @@ import numpy as np
 slice_dict = { 'x':0, 'y':1, 'z':2 }
 
 
+def get_bpath( f ):
+    """
+    Return a string that corresponds to the base path of the data.
+
+    NB: For openPMD 1.0.0, the basePath is always of the form
+    '/data/%T' where %T is replaced by the actual iteration which
+    is present in the file. 
+    
+    Parameters:
+    -----------
+    f: am h5py.File object
+    """
+    iteration = f['/data'].keys()[0]
+    return( '/data/%s' %iteration )
+
 def is_scalar_record( record ):
     """
     Determine whether a record is a scalar record or a vector record
