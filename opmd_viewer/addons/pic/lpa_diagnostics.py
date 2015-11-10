@@ -146,7 +146,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                            species=species, select=select )
         # Calculate diveregence
         div_x = wstd( np.arctan2(ux, uz), w )
-        div_y = wstd( np.arctan2(ux, uz), w )
+        div_y = wstd( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
