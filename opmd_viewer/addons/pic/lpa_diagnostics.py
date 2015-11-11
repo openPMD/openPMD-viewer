@@ -57,7 +57,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle(
-                         var_list=['ux', 'uy', 'uz', 'w'],
+                         var_list=['ux', 'uy', 'uz', 'w'], select=select,
                          species=species, t=t, iteration=iteration )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
@@ -103,7 +103,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Get particle data
         w, q = self.get_particle( var_list=['w', 'charge'], species=species,
-                                 t=t, iteration=iteration )
+                                 select=select, t=t, iteration=iteration )
         # Calculate charge
         charge = np.sum(w*q)
         # Return the result
@@ -143,10 +143,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get particle data
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
-                                           species=species )
+                                           species=species, select=select )
         # Calculate diveregence
         div_x = wstd( np.arctan2(ux, uz), w )
-        div_y = wstd( np.arctan2(ux, uz), w )
+        div_y = wstd( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
@@ -186,7 +186,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         x, y, ux, uy, w = self.get_particle(
                                     var_list=['x', 'y', 'ux', 'uy', 'w'],
                                     t=t, iteration=iteration,
-                                    species=species )
+                                    species=species, select=select )
         # Calculate the necessary RMS values
         x *= 1.e-6
         y *= 1.e-6
@@ -240,7 +240,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         z, uz, uy, ux, w, q = self.get_particle(
                                var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
                                t=t, iteration=iteration,
-                               species=species )
+                               species=species, select=select )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate particle velocities
@@ -464,7 +464,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get central field lineout
         field1d = field[field.shape[0]/2, :]
         # FFT of 1d data
-        fft_field = np.fft.fft(field1d)
+        dt = (info.z[1]-info.z[0])/const.c  # Integration step for the FFT
+        fft_field = np.fft.fft(field1d) * dt
         # Take half of the data (positive frequencies only)
         spectrum = abs( fft_field[ :len(fft_field)/2 ] )
         # Create a FieldMetaInformation object

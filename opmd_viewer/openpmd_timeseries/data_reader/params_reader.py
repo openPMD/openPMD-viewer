@@ -5,7 +5,7 @@ It defines a function that can read standard parameters from an openPMD file.
 """
 import os
 import h5py
-from .utilities import is_scalar_record, get_shape
+from .utilities import is_scalar_record, get_shape, get_bpath
 
 def read_openPMD_params( filename ):
     """
@@ -34,7 +34,7 @@ def read_openPMD_params( filename ):
     params['extension'] = f.attrs['openPMDextension']
 
     # Find the base path object, and extract the time
-    bpath = f[ f.attrs["basePath"] ]
+    bpath = f[ get_bpath(f) ]
     t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
 
     # Find out whether fields are present and extract their geometry
@@ -88,6 +88,9 @@ def read_openPMD_params( filename ):
         ptcl_quantities = []
         # Go through all the particle quantities
         for quantity_name in first_species.keys():
+            # Skip the particlePatches, which are not used here.
+            if quantity_name == 'particlePatches':
+                continue            
             quantity = first_species[quantity_name]
             if is_scalar_record( quantity ):
                 # Add the name of the scalar record

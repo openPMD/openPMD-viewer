@@ -33,8 +33,8 @@ class Plotter(object):
         self.iterations = iterations
 
 
-    def hist1d( self, q1, w, quantity1, current_i, nbins, cmap='Blues',
-                vmin=None, vmax=None, **kw ):
+    def hist1d( self, q1, w, quantity1, species, current_i, nbins,
+                cmap='Blues', vmin=None, vmax=None, **kw ):
         """
         Plot a 1D histogram of the particle quantity q1
         Sets the proper labels
@@ -52,6 +52,9 @@ class Plotter(object):
         quantity1: string
             The name of the quantity to be plotted (for labeling purposes)
 
+        species: string
+            The name of the species from which the data is taken
+            
         current_i: int
             The index of this iteration, within the iterations list
 
@@ -68,11 +71,11 @@ class Plotter(object):
         # Do the plot
         plt.hist(q1, bins=nbins, weights=w, **kw )
         plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("t =  %.0f fs    (iteration %d)" \
-                %(time_fs, iteration), fontsize=self.fontsize )
+        plt.title("%s:   t =  %.0f fs    (iteration %d)" \
+                %(species, time_fs, iteration), fontsize=self.fontsize )
 
 
-    def hist2d( self, q1, q2, w, quantity1, quantity2, current_i,
+    def hist2d( self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, cmap='Blues', vmin=None, vmax=None, **kw ):
         """
         Plot a 2D histogram of the particle quantity q1
@@ -88,9 +91,12 @@ class Plotter(object):
             An array with one element per macroparticle, representing
             the number of real particles that correspond to each macroparticle
 
-        quantity1: string
+        quantity1, quantity2: strings
             The name of the quantity to be plotted (for labeling purposes)
 
+        species: string
+            The name of the species from which the data is taken
+            
         current_i: int
             The index of this iteration, within the iterations list
 
@@ -110,8 +116,8 @@ class Plotter(object):
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("t =  %.1f fs   (iteration %d)"  \
-                %(time_fs, iteration ), fontsize=self.fontsize )
+        plt.title("%s:   t =  %.1f fs   (iteration %d)"  \
+                %(species, time_fs, iteration ), fontsize=self.fontsize )
 
 
     def show_field( self, F, info, slicing_dir, m,
