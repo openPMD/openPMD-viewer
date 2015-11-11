@@ -21,20 +21,17 @@ class InteractiveViewer(object):
     def __init__(self) :
         pass
 
-    def slider(self, figsize=(10,10), ifig_f=0, ifig_p=1, **kw) :
+    def slider(self, figsize=(10,10), **kw) :
         """
         Navigate the simulation using a slider
 
         Parameters :
         ------------
-        ifig_f : int
-           Number of the figure where to plot the fields
+        figsize: tuple
+            Size of the figures
 
-        ifig_g : int
-           Number of the figure where to plot the particles
-
-        kw : dict
-           Extra arguments to pass to matplotlib's imshow
+        kw: dict
+            Extra arguments to pass to matplotlib's imshow
         """
 
         # -----------------------
@@ -51,7 +48,7 @@ class InteractiveViewer(object):
                     do_refresh = True
             # Do the refresh
             if do_refresh == True :
-                plt.figure(ifig_f, figsize=figsize)
+                plt.figure(fld_figure_button.value, figsize=figsize)
                 plt.clf()
 
                 # When working in inline mode, in an ipython notebook,
@@ -85,7 +82,7 @@ class InteractiveViewer(object):
                     do_refresh = True
             # Do the refresh
             if do_refresh == True :
-                plt.figure(ifig_p, figsize=figsize)
+                plt.figure(ptcl_figure_button.value, figsize=figsize)
                 plt.clf()
 
                 # When working in inline mode, in an ipython notebook,
@@ -213,6 +210,9 @@ class InteractiveViewer(object):
 
             # Plotting options
             # ----------------
+            # Figure number
+            fld_figure_button = widgets.IntText( description='Figure ',
+                                        value=0, width=50)
             # Range of values
             fld_range_button = widgets.FloatRangeSlider(
                 min=-10, max=10, width=220 )
@@ -253,9 +253,9 @@ class InteractiveViewer(object):
                     slicing_dir_button, slicing_button ] )
             # Plotting options container
             container_fld_plots = widgets.VBox( width=260,
-                children=[ fld_range_button,
-            widgets.HBox( children=[ fld_magnitude_button, fld_use_button] ),
-            fld_color_button ] )
+                children=[ fld_figure_button, fld_range_button,
+            widgets.HBox( children=[ fld_magnitude_button, fld_use_button],
+                          height=50 ), fld_color_button ] )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
                 children=[container_fields, container_fld_plots] )
@@ -297,6 +297,9 @@ class InteractiveViewer(object):
 
             # Plotting options
             # ----------------
+            # Figure number
+            ptcl_figure_button = widgets.IntText( description='Figure ',
+                                            value=1, width=50 )
             # Number of bins
             ptcl_bins_button = widgets.IntSlider( description='nbins:',
                             min=50, max=300, value=100, width=150 )
@@ -335,9 +338,9 @@ class InteractiveViewer(object):
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
             container_ptcl_plots = widgets.VBox( width=310,
-            children=[ ptcl_bins_button, ptcl_range_button,
-            widgets.HBox(children=[ ptcl_magnitude_button, ptcl_use_button] ),
-            ptcl_color_button ])
+            children=[ ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
+            widgets.HBox(children=[ ptcl_magnitude_button, ptcl_use_button],
+                         height=50), ptcl_color_button ])
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
             children=[container_ptcl_quantities, container_ptcl_select,

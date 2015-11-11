@@ -227,13 +227,13 @@ class OpenPMDTimeSeries(parent_class) :
             # - In the case of only one quantity
             if len(data_list) == 1:
                 # Do the plotting
-                self.plotter.hist1d( data_list[0], w, var_list[0],
+                self.plotter.hist1d( data_list[0], w, var_list[0], species,
                                      self.current_i, nbins, **kw )
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d( data_list[0], data_list[1], w,
-                                     var_list[0], var_list[1],
+                                     var_list[0], var_list[1], species, 
                                      self.current_i, nbins, **kw )
         # Output
         if output :
