@@ -239,7 +239,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         A tuple of arrays containig
         - The current in each bin in Ampere
-        - The z positions of the bin centers
+        - A FieldMetaInformation object (See object's docstring for more details)
+
         """
         # Get particle data
         z, uz, uy, ux, w, q = self.get_particle(
