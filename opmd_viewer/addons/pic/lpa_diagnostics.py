@@ -203,7 +203,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( emit_x, emit_y )
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
-                     bins=100 ):
+                     bins=100, plot=False, **kw ):
         """
         Calculate the electric current along the z-axis for selected particles.
 
@@ -212,11 +212,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
          t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
-            Either `t` or `iteration` should be given by the user.
+            Either `t` or `iteration` should be given by the user
 
         iteration : int
             The iteration at which to obtain the data
-            Either `t` or `iteration` should be given by the user.
+            Either `t` or `iteration` should be given by the user
 
         species : string
             Particle species to use for calculations
@@ -230,11 +230,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         bins : int, optional
             Number of bins along the z-axis in which to calculate the current
 
+        plot : bool, optional
+           Whether to plot the requested quantity
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` method
         Returns
         -------
         A tuple of arrays containig
         - The current in each bin in Ampere
-        - The z positions of the bin edges
+        - The z positions of the bin centers
         """
         # Get particle data
         z, uz, uy, ux, w, q = self.get_particle(
@@ -247,13 +252,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         vz = uz / gamma * const.c
         # Length to be seperated in bins
         len_z = np.max(z) - np.min(z)
-        vzq_sum, bins_list = np.histogram(z, bins=bins, weights=(vz*w*q))
+        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz*w*q))
         # Calculete the current in each bin
         current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
-        # Central position of the bins
-        bins_list = 0.5*(bins_list[1:]+bins_list[:-1])
-        # Return the current and bin edges
-        return(current, bins_list)
+        # Info object with central position of the bins
+        info = FieldMetaInformation( {0: 'z'}, current.shape,
+                    grid_spacing=(len_z/bins, ), grid_unitSI=1,
+                    global_offset=(np.min(z)+len_z/bins/2,), position=(0,))
+        # Plot the result if needed
+        if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15*self.t[ self.current_i ]
+            plt.plot( info.z, current, **kw)
+            plt.title("Current at %.1f fs   (iteration %d)"
+                %(time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            plt.ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
+        # Return the current and bin centers
+        return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
@@ -414,7 +430,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( omega0 )
 
     def get_spectrum( self, t=None, iteration=None, pol=None,
-                      m='all', plot=False ):
+                      m='all', plot=False, **kw ):
         """
         Return the spectrum of the laser
         (Absolute value of the Fourier transform of the fields.)
@@ -440,6 +456,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         plot: bool, optional
            Whether to plot the data
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` method
 
         Returns
         -------
@@ -476,7 +495,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
-            plt.plot( spect_info.omega, spectrum )
+            plt.plot( spect_info.omega, spectrum, **kw )
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
@@ -612,7 +631,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(np.sqrt(2) * sigma_r)
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y', plot=False ):
+                          slicing_dir='y', plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
@@ -641,6 +660,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot: bool, optional
             Whether to plot the spectrogram
 
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `imshow` method
+           
         Returns
         -------
         - A 2d array with spectrogram
@@ -692,7 +714,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             iteration = self.iterations[ self.current_i ]
             time_fs = 1.e15*self.t[ self.current_i ]
-            plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto')
+            plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
+                        **kw)
             plt.title("Spectrogram at %.1f fs   (iteration %d)" \
                 %(time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
