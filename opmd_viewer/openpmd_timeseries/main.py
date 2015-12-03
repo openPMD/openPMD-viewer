@@ -422,7 +422,7 @@ class OpenPMDTimeSeries(parent_class) :
             else:
                 iter_list = '\n - '.join([ str(it) for it in self.iterations])
                 print("The requested iteration '%s' is not available.\nThe "
-                    "available modes are: \n - %s" %(iteration, iter_list))
+                "available iterations are: \n - %s" %(iteration, iter_list))
                 print("The first iteration is used instead.")
                 self.current_i = 0
         else:
