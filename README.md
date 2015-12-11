@@ -18,9 +18,8 @@ To install this package :
 **Warning:** The **interactive GUI** for IPython Notebook is not
 operational by default.  
 This is because it requires dependencies that may be difficult to
-install on some systems (e.g. Edison@NERSC).  
-If you wish to have the interactive GUI working, install the
-following dependencies by hand:
+install on some systems. If you wish to have the interactive GUI
+working, install the following dependencies by hand:
 
 - [IPython Notebook](http://ipython.org/notebook.html)  (version 4.0
 or higher)  
@@ -28,6 +27,13 @@ or higher)
 
 - [ipywidgets](https://pypi.python.org/pypi/ipywidgets/4.0.2)  
 `pip install ipywidgets`
+
+NB: For [NERSC](http://www.nersc.gov/) users, it is not necessary to
+install the above two packages, as NERSC provides replacements for
+them, when logging to
+[https://ipython.nersc.gov](https://ipython.nersc.gov).
+Therefore, NERSC users only need to install the `openPMD-viewer`
+package itself.
 
 ## Usage
 
@@ -46,8 +52,7 @@ or, alternatively, you can run them on your local computer by typing:
 
 `ipython notebook tutorials/`
 
-NB: For [NERSC](http://www.nersc.gov/) users, if you have installed
-the openPMD-viewer on a NERSC machine, you can run the tutorials on a
+NB: For [NERSC](http://www.nersc.gov/) users, you can run the tutorials on a
 remote machine by logging in at
 [https://ipython.nersc.gov](https://ipython.nersc.gov), and by
 navigating to your personal copy of the directory `openPMD-viewer/tutorials`.
