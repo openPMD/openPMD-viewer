@@ -10,7 +10,7 @@ setup(name='opmd_viewer',
       packages = find_packages('./'),
       package_data = {'opmd_viewer':['notebook_starter/*.ipynb']},
       scripts = ['opmd_viewer/notebook_starter/openPMD_notebook'],
-      install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],
+      install_requires=['wget', 'numpy', 'scipy', 'matplotlib', 'h5py'],
       tests_require=['pytest'],
       setup_requires=['pytest-runner']
     )

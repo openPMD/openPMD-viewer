@@ -10,7 +10,7 @@ $ python tests/test_tutorials.py
 $ py.test
 $ python setup.py test
 """
-import os
+import os, wget, tarfile
 import re
 
 def test_tutorials():
