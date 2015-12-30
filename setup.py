@@ -7,8 +7,10 @@ setup(name='opmd_viewer',
       author_email='remi.lehe@lbl.gov',
       description='Visualization tools for OpenPMD files',
       url='git@bitbucket.org:berkeleylab/opmd_viewer.git',
-      install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],
       packages = find_packages('./'),
       package_data = {'opmd_viewer':['notebook_starter/*.ipynb']},
-      scripts = ['opmd_viewer/notebook_starter/openPMD_notebook']
-      )
+      scripts = ['opmd_viewer/notebook_starter/openPMD_notebook'],
+      install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],
+      tests_require=['pytest'],
+      setup_requires=['pytest-runner']
+    )

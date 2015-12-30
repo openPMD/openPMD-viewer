@@ -2,9 +2,49 @@
 This test file is part of the openPMD-viewer.
 
 It makes sure that the tutorial notebooks run without error.
+
+Usage:
+This file is meant to be run from the root directory of openPMD-viewer,
+by any of the following commands
+$ python tests/test_tutorials.py
+$ py.test
+$ python setup.py test
 """
 import os
 import re
+
+def test_tutorials():
+    """Test all the tutorial notebooks"""
+
+    # Go to the relative path where all tutorial notebooks are
+    os.chdir( 'tutorials' )
+    tutorial_notebooks = [ filename for filename in os.listdir('./') \
+                           if filename[-6:] == '.ipynb' ]
+
+    # Loop through the tutorials and test them
+    for notebook_name in tutorial_notebooks:
+
+        # Do a first pass where only the non-IPython features are tested.
+        # (This gives better debugging information.)
+        # The notebook is converted to a standard Python script and
+        # run directly with `execfile`
+        script_name = notebook_name[:-6] + '.py'
+        os.system( 'ipython nbconvert --to=python %s' %notebook_name )
+        clean_ipython_features( script_name )
+        execfile( script_name )
+
+        # Do a second pass where the full IPython features are executed.
+        # The notebook is executed by the OS, through `ipython nbconvert`
+        response = os.system( "ipython nbconvert --to=python "\
+            + "--ExecutePreprocessor.enabled=True %s" %notebook_name)
+        # Check the response from the OS
+        if response != 0:
+            raise OSError("The execution of the notebook %s by the OS "
+                          "with `ipython nbconvert` has failed.")
+
+        # Clean the produced script file
+        os.remove( script_name )
+
 
 def clean_ipython_features( script_name ):
     """
@@ -51,33 +91,6 @@ def clean_ipython_features( script_name ):
             script_file.write( line )
 
     
-if __name__ == '__main__':
 
-    # Go to the relative path where all tutorial notebooks are
-    os.chdir( '../tutorials' )
-    tutorial_notebooks = [ filename for filename in os.listdir('./') \
-                           if filename[-6:] == '.ipynb' ]
-
-    # Loop through the tutorials and test them
-    for notebook_name in tutorial_notebooks:
-
-        # Do a first pass where only the non-IPython features are tested.
-        # (This gives better debugging information.)
-        # The notebook is converted to a standard Python script and
-        # run directly with `execfile`
-        script_name = notebook_name[:-6] + '.py'
-        os.system( 'ipython nbconvert --to=python %s' %notebook_name )
-        clean_ipython_features( script_name )
-        execfile( script_name )
-
-        # Do a second pass where the full IPython features are executed.
-        # The notebook is executed by the OS, through `ipython nbconvert`
-        response = os.system( "ipython nbconvert --to=python "\
-            + "--ExecutePreprocessor.enabled=True %s" %notebook_name)
-        # Check the response from the OS
-        if response != 0:
-            raise OSError("The execution of the notebook %s by the OS "
-                          "with `ipython nbconvert` has failed.")
-
-        # Clean the produced script file
-        os.remove( script_name )
+if __name__=='__main__':
+    test_tutorials()
