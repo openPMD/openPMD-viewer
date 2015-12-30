@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""
+This executable script is part of the openPMD-viewer package.
+
+It automatically creates a new pre-filled IPython notebook
+in the local directory, and opens it in a browser.
+
+Usage: Simply type `openPMD_notebook` in a regular terminal
+"""
+import os
+from pkg_resources import resource_string
+
+# Use pkg_resources to retrieve the location and contents
+# of the pre-existing template notebook
+notebook_text = resource_string('opmd_viewer',
+                                'notebook_starter/Template_notebook.ipynb')
+
+# Create a new notebook in the local directory and copy
+# the contents of the pre-existing template
+with open('./openPMD-visualization.ipynb', 'w') as notebook_file:
+    notebook_file.write( notebook_text )
+
+# Launch the corresponding notebook
+os.system('ipython notebook openPMD-visualization.ipynb')

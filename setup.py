@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='opmd_viewer',
       version='1.0',
@@ -9,7 +8,7 @@ setup(name='opmd_viewer',
       description='Visualization tools for OpenPMD files',
       url='git@bitbucket.org:berkeleylab/opmd_viewer.git',
       install_requires=['numpy', 'scipy', 'matplotlib', 'h5py'],
-      packages = ['opmd_viewer', 'opmd_viewer.openpmd_timeseries', 
-                  'opmd_viewer.openpmd_timeseries.data_reader', 
-                  'opmd_viewer.addons', 'opmd_viewer.addons/pic' ]
+      packages = find_packages('./'),
+      package_data = {'opmd_viewer':['notebook_starter/*.ipynb']},
+      scripts = ['opmd_viewer/notebook_starter/openPMD_notebook']
       )

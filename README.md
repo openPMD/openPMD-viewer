@@ -45,8 +45,10 @@ The routines of openPMD viewer can be used in two ways :
 - Use the **interactive GUI inside the IPython Notebook**, in order to interactively
 visualize the data.
 
-The notebooks in the folder `tutorials/` demonstrate how to use these
-routines. You can view these notebooks online
+#### Tutorials
+
+The notebooks in the folder `tutorials/` demonstrate how to use both
+the API and the interactive GUI. You can view these notebooks online
 [here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials),
 or, alternatively, you can run them on your local computer by typing:
 
@@ -56,6 +58,17 @@ NB: For [NERSC](http://www.nersc.gov/) users, you can run the tutorials on a
 remote machine by logging in at
 [https://ipython.nersc.gov](https://ipython.nersc.gov), and by
 navigating to your personal copy of the directory `openPMD-viewer/tutorials`.
+
+#### Notebook quick-starter
+
+If you wish to use the **interactive GUI**, the installation of `openPMD-viewer` provides
+a convenient executable which automatically
+**creates a new pre-filled notebook** and **opens it in a
+browser**. To use this executable, simply type in a regular terminal:
+
+`openPMD_notebook`
+
+(This executable is installed by default when running `python setup.py install`.)
 
 ## Contributing to the openPMD-viewer
 
