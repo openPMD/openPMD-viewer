@@ -4,8 +4,6 @@ from setuptools import setup, find_packages
 # Get the package requirements from the requirements.txt file
 with open('requirements.txt') as f:
     install_requires = [ line.strip('\n') for line in f.readlines() ]
-# Wget is installed separately, since installing it with conda fails
-install_requires.append('wget')
     
 # Main setup command
 setup(name='opmd_viewer',
