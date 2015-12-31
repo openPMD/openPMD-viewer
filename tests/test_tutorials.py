@@ -64,10 +64,11 @@ def clean_ipython_features( script_name ):
     # using regular expressions
     for i in range(len(lines)):
 
-        # Discard the lines that activate matplotlib in a notebook
+        # Replace the lines that activate matplotlib in a notebook
+        # by a line that selects the Tkinter backend
         if re.match("[ ]*get_ipython\(\)\.magic\(u'matplotlib",
                     lines[i]) is not None:
-            lines[i] = ''
+            lines[i] = "import matplotlib; matplotlib.use('TkAgg')\n"
 
         # Discard the lines that use in-notebook documentation
         if re.match("[ ]*get_ipython\(\)\.magic\(u'pinfo",
