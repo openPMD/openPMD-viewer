@@ -32,6 +32,7 @@ def test_tutorials():
         os.system( 'ipython nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
         execfile( script_name )
+        os.remove( script_name )
 
 def clean_ipython_features( script_name ):
     """
