@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
+# Get the package requirements from the requirements.txt file
+with open('requirements.txt') as f:
+    install_requires = [ line.strip('\n') for line in f.readlines() ]
+# Wget is installed separately, since installing it with conda fails
+install_requires.append('wget')
+    
+# Main setup command
 setup(name='opmd_viewer',
       version='1.0',
       author='Remi Lehe',
@@ -10,7 +17,7 @@ setup(name='opmd_viewer',
       packages = find_packages('./'),
       package_data = {'opmd_viewer':['notebook_starter/*.ipynb']},
       scripts = ['opmd_viewer/notebook_starter/openPMD_notebook'],
-      install_requires=['wget', 'numpy', 'scipy', 'matplotlib', 'h5py'],
-      tests_require=['pytest'],
+      install_requires=install_requires,
+      tests_require=['pytest', 'jupyter'],
       setup_requires=['pytest-runner']
     )
