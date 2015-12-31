@@ -33,19 +33,6 @@ def test_tutorials():
         clean_ipython_features( script_name )
         execfile( script_name )
 
-        # Do a second pass where the full IPython features are executed.
-        # The notebook is executed by the OS, through `ipython nbconvert`
-        response = os.system( "ipython nbconvert --to=python "\
-            + "--ExecutePreprocessor.enabled=True %s" %notebook_name)
-        # Check the response from the OS
-        if response != 0:
-            raise OSError("The execution of the notebook %s by the OS "
-                          "with `ipython nbconvert` has failed.")
-
-        # Clean the produced script file
-        os.remove( script_name )
-
-
 def clean_ipython_features( script_name ):
     """
     Rewrites the Python script `script_name` by removing
