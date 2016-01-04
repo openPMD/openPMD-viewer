@@ -30,8 +30,14 @@ def test_tutorials():
         script_name = notebook_name[:-6] + '.py'
         os.system( 'ipython nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
-        response = os.system('python ' + script_name)
-        assert response==0
+        try:
+            response = os.system('python ' + script_name)
+            assert response==0
+        except:
+            # now we might want to know the script that was executed
+            print( open(script_name).read() )
+            # re-raise same exception to make test fail
+            raise
         os.remove( script_name )
 
 def clean_ipython_features( script_name ):
