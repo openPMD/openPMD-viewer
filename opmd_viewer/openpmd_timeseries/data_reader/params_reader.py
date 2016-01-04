@@ -50,7 +50,7 @@ def read_openPMD_params( filename ):
             if is_scalar_record(first_field):
                 Nm, _, _ = get_shape(first_field)
             else:
-                coord = first_field.keys()[0]
+                coord = list(first_field.keys())[0]
                 Nm, _, _ = get_shape(first_field[coord])
             params['avail_circ_modes'] = ['all'] + \
                 [ str(m) for m in range( int(Nm/2) + 1 ) ]
