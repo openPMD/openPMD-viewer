@@ -23,7 +23,7 @@ def get_bpath( f ):
     -----------
     f: am h5py.File object
     """
-    iteration = f['/data'].keys()[0]
+    iteration = list(f['/data'].keys())[0]
     return( '/data/%s' %iteration )
 
 def is_scalar_record( record ):
