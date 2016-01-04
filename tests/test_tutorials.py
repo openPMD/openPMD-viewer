@@ -10,8 +10,11 @@ $ python tests/test_tutorials.py
 $ py.test
 $ python setup.py test
 """
-import os, urllib, tarfile
-import re
+import os, sys, tarfile, re
+if sys.version_info[0] == 2:
+    from urllib import urlretrieve
+else:
+    from urllib.request import urlretrieve
 
 def test_tutorials():
     """Test all the tutorial notebooks"""
@@ -31,7 +34,13 @@ def test_tutorials():
         script_name = notebook_name[:-6] + '.py'
         os.system( 'ipython nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
-        execfile( script_name )
+        try:
+            exec( open(script_name).read() )
+        except:
+            # now we might want to know the script that was executed
+            print( open(script_name).read() )
+            # re-raise same exception to make test fail
+            raise
         os.remove( script_name )
 
 def clean_ipython_features( script_name ):
@@ -54,12 +63,12 @@ def clean_ipython_features( script_name ):
 
         # Replace the lines that activate matplotlib in a notebook
         # by a line that selects the PS backend
-        if re.match("[ ]*get_ipython\(\)\.magic\(u'matplotlib",
+        if re.match("[ ]*get_ipython\(\)\.magic\((.*)'matplotlib",
                     lines[i]) is not None:
             lines[i] = "import matplotlib; matplotlib.use('ps')\n"
 
         # Discard the lines that use in-notebook documentation
-        if re.match("[ ]*get_ipython\(\)\.magic\(u'pinfo",
+        if re.match("[ ]*get_ipython\(\)\.magic\((.*)'pinfo",
                     lines[i]) is not None:
             lines[i] = ''
 
