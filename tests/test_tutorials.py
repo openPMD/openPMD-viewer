@@ -10,11 +10,7 @@ $ python tests/test_tutorials.py
 $ py.test
 $ python setup.py test
 """
-import os, sys, tarfile, re
-if sys.version_info[0] == 2:
-    from urllib import urlretrieve
-else:
-    from urllib.request import urlretrieve
+import os, re
 
 def test_tutorials():
     """Test all the tutorial notebooks"""
@@ -34,13 +30,8 @@ def test_tutorials():
         script_name = notebook_name[:-6] + '.py'
         os.system( 'ipython nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
-        try:
-            exec( open(script_name).read() )
-        except:
-            # now we might want to know the script that was executed
-            print( open(script_name).read() )
-            # re-raise same exception to make test fail
-            raise
+        response = os.system('python ' + script_name)
+        assert response==0
         os.remove( script_name )
 
 def clean_ipython_features( script_name ):
