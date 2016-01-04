@@ -30,7 +30,7 @@ def test_tutorials():
         script_name = notebook_name[:-6] + '.py'
         os.system( 'ipython nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
-        reponse = os.system('python ' + script_name)
+        response = os.system('python ' + script_name)
         assert response==0
         os.remove( script_name )
 
