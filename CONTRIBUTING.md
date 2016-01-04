@@ -48,8 +48,14 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
   cd openPMD-viewer/
   pyflakes opmd_viewer
   ```
-  - Make sure that the notebooks in the
-  `tutorials/` directory run without any error.
+  - Make sure that the tests pass
+  ```
+  python setup.py test
+  ```
+  (Be patient: the `test_tutorials.py` can take approx. 20 seconds if
+  you already downloaded the example openPMD files that are required
+  in the tutorials. On the other hand, it can take several minutes if
+  you have not previously downloaded these files.)
 
 - Push the changes to your personal copy on Bitbucket
 ```

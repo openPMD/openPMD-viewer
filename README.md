@@ -9,28 +9,32 @@ contents of a set of [openPMD](http://www.openpmd.org/#/start) files
 
 ## Installation
 
+### Basic installation
+
 To install this package :
 
 - Clone this repository using `git`
 
-- `cd` into the directory `openPMD-viewer` and run `python setup.py install`
+- `cd` into the directory `openPMD-viewer` and run
+```
+python setup.py install
+```
 
-**Warning:** The **interactive GUI** for IPython Notebook is not
+### Installing the interactive GUI
+
+The **interactive GUI** for IPython Notebook is not
 operational by default.  
 This is because it requires dependencies that may be difficult to
 install on some systems. If you wish to have the interactive GUI
-working, install the following dependencies by hand:
-
-- [IPython Notebook](http://ipython.org/notebook.html)  (version 4.0
-or higher)  
-`pip install "ipython[notebook]"` or `pip install --upgrade "ipython[notebook]"`
-
-- [ipywidgets](https://pypi.python.org/pypi/ipywidgets/4.0.2)  
-`pip install ipywidgets`
+working, install the
+[IPython Notebook](http://ipython.org/notebook.html)
+(now part of the [Jupyter project](http://jupyter.org/)) by hand:  
+`conda install jupyter` (for the
+[Anaconda](https://www.continuum.io/downloads)
+distribution) or `pip install jupyter` (for the other Python distributions)
 
 NB: For [NERSC](http://www.nersc.gov/) users, it is not necessary to
-install the above two packages, as NERSC provides replacements for
-them, when logging to
+install the above package, as NERSC provides it when logging to
 [https://ipython.nersc.gov](https://ipython.nersc.gov).
 Therefore, NERSC users only need to install the `openPMD-viewer`
 package itself.
