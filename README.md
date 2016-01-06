@@ -1,6 +1,5 @@
 # openPMD viewer
 
-
 ## Overview
 
 This package contains a set of tools to load and visualize the
@@ -78,3 +77,5 @@ browser**. To use this executable, simply type in a regular terminal:
 
 We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
 guidelines on how to contribute.
+
+![travis badge](https://travis-ci.org/openPMD/openPMD-viewer.svg?branch=master)
