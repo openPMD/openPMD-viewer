@@ -17,6 +17,9 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
   - conda install --yes python=$TRAVIS_PYTHON_VERSION jupyter
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pyflakes
   - python setup.py install
+before_script :
+  - python -m pyflakes .
 script: 
   - "python setup.py test"
