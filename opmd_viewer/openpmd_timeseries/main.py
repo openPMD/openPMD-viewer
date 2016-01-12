@@ -24,6 +24,11 @@ except ImportError:
         'The opmd_viewer API is nonetheless working.')
     parent_class = object
 
+# Define a custom Exception
+class OpenPMDException(Exception):
+    "Exception raised for invalid use of the openPMD-viewer API"
+    pass
+
 # Define the OpenPMDTimeSeries class and have it inherit
 # from the parent class defined above
 
@@ -40,7 +45,7 @@ class OpenPMDTimeSeries(parent_class) :
     def __init__( self, path_to_dir ) :
         """
         Initialize an openPMD time series
-        
+
         More precisely, scan the directory and extract the openPMD files,
         as well as some useful openPMD parameters
 
@@ -60,10 +65,10 @@ class OpenPMDTimeSeries(parent_class) :
             print("Error: Found no HDF5 files in the specified directory.\n"
                 "Please check that this is the path to the HDF5 files.")
             return(None)
-            
+
         # Go through the files of the series, extract the time
         # and a few parameters.
-        N_files = len(self.h5_files) 
+        N_files = len(self.h5_files)
         self.t = np.zeros( N_files )
 
         # - Extract parameters from the first file
@@ -86,7 +91,7 @@ class OpenPMDTimeSeries(parent_class) :
                 if params != params0:
                     print("Warning: File %s has different openPMD parameters "
                         "than the rest of the time series." %self.h5_files[k])
-            
+
         # - Set the current iteration and time
         self.current_i = 0
         self.current_t = self.t[0]
@@ -118,7 +123,7 @@ class OpenPMDTimeSeries(parent_class) :
 
         species: string
             A string indicating the name of the species
-           
+
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
@@ -127,7 +132,7 @@ class OpenPMDTimeSeries(parent_class) :
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-           
+
         output : bool, optional
            Whether to return the requested quantity
 
@@ -157,14 +162,13 @@ class OpenPMDTimeSeries(parent_class) :
         """
         # Check that the species and quantity required are present
         if self.avail_species is None:
-            print('No particle data in this time series')
-            return(None)
+            raise OpenPMDException('No particle data in this time series')
         if (species in self.avail_species)==False:
             species_list = '\n - '.join( self.avail_species )
-            print("The argument `species` is missing or erroneous.\nThe "
-                "available species are: \n - %s" %species_list )
-            print("Please set the argument `species` accordingly.") 
-            return(None)
+            raise OpenPMDException(
+                "The argument `species` is missing or erroneous.\n
+                "The available species are: \n - %s\nPlease set the "
+                "argument `species` accordingly." %species_list)
 
         # Check the list of variables
         valid_var_list = True
@@ -176,12 +180,12 @@ class OpenPMDTimeSeries(parent_class) :
                     valid_var_list = False
         if valid_var_list == False:
             quantity_list = '\n - '.join( self.avail_ptcl_quantities )
-            print("The argument `var_list` is missing or erroneous.\nIt "
-                  "should be a list of strings representing particle "
-                  "quantities.\n The available quantities are: "
-                  "\n - %s" %quantity_list )
-            print("Please set the argument `var_list` accordingly.")
-            return(None)
+            raise OpenPMDException(
+                "The argument `var_list` is missing or erroneous.\n
+                "It should be a list of strings representing particle "
+                "quantities.\n The available quantities are: "
+                "\n - %s\nPlease set the argument `var_list` "
+                "accordingly." %quantity_list )
 
         # Check the selection quantities
         if select is not None:
@@ -194,11 +198,12 @@ class OpenPMDTimeSeries(parent_class) :
                         valid_select_list = False
             if valid_select_list == False:
                 quantity_list = '\n - '.join( self.avail_ptcl_quantities )
-                print("The argument `select` is erroneous.\nIt "
-                    "should be a dictionary whose keys represent particle "
+                raise OpenPMDException(
+                    "The argument `select` is erroneous.\n
+                    "It should be a dictionary whose keys represent particle "
                     "quantities.\n The available quantities are: "
-                    "\n - %s" %quantity_list )
-                print("Please set the argument `select` accordingly.")
+                    "\n - %s\nPlease set the argument `select` "
+                    "accordingly." %quantity_list )
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
@@ -209,7 +214,7 @@ class OpenPMDTimeSeries(parent_class) :
         # If a plot is request, add the weights to the extracted variables
         if plot:
             var_list.append('w')
-        
+
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
@@ -218,7 +223,7 @@ class OpenPMDTimeSeries(parent_class) :
         # Apply selection if needed
         if select is not None:
             data_list = apply_selection( data_list, select, species, filename )
-            
+
         # Plotting
         if plot :
             # Pop the weights from the quantity_list
@@ -233,7 +238,7 @@ class OpenPMDTimeSeries(parent_class) :
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d( data_list[0], data_list[1], w,
-                                     var_list[0], var_list[1], species, 
+                                     var_list[0], var_list[1], species,
                                      self.current_i, nbins, **kw )
         # Output
         if output :
@@ -241,7 +246,7 @@ class OpenPMDTimeSeries(parent_class) :
 
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=0., slicing_dir='y', 
+                  m='all', theta=0., slicing=0., slicing_dir='y',
                   output=True, plot=False, **kw ) :
         """
         Extract a given field from an HDF5 file in the OpenPMD format.
@@ -270,7 +275,7 @@ class OpenPMDTimeSeries(parent_class) :
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-        
+
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
@@ -288,7 +293,7 @@ class OpenPMDTimeSeries(parent_class) :
            Only used for 3dcartesian geometry
            The direction along which to slice the data
            Either 'x', 'y' or 'z'
-           
+
         output : bool, optional
            Whether to return the requested quantity
 
@@ -307,15 +312,14 @@ class OpenPMDTimeSeries(parent_class) :
         """
         # Check that the field required is present
         if self.avail_fields is None:
-            print('No field data in this time series')
-            return(None,None)
+            raise OpenPMDException('No field data in this time series')
         # Check the field type
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
-            print("The `field` argument is missing or erroneous.\nThe "
-                "available fields are: \n - %s" %(field_list))
-            print("Please set the `field` argument accordingly.")
-            return(None,None)
+            raise OpenPMDException(
+                "The `field` argument is missing or erroneous.\n
+                "The available fields are: \n - %s\nPlease set the `field` "
+                "argument accordingly." %field_list)
         # Check the coordinate (for vector fields)
         if self.avail_fields[field]=='vector':
             available_coord = ['x', 'y', 'z']
@@ -323,19 +327,19 @@ class OpenPMDTimeSeries(parent_class) :
                 available_coord += ['r', 't']
             if (coord in available_coord) == False:
                 coord_list = '\n - '.join( available_coord )
-                print("The field %s is a vector field, but the `coord` "
-                      "argument is missing or erroneous.\nThe available "
-                      "coordinates are: \n - %s" %(field, coord_list) ) 
-                print("Please set the `coord` argument accordingly.")
-                return(None,None)
+                raise OpenPMDException(
+                    "The field %s is a vector field, \nbut the `coord` "
+                    "argument is missing or erroneous.\nThe available "
+                    "coordinates are: \n - %s\nPlease set the `coord` "
+                    "argument accordingly." %(field, coord_list))
         # Check the mode (for thetaMode)
         if self.geometry=="thetaMode":
             if (str(m) in self.avail_circ_modes) == False:
                 mode_list = '\n - '.join(self.avail_circ_modes)
-                print("The requested mode '%s' is not available.\nThe "
-                    "available modes are: \n - %s" %(m, mode_list))
-                return(None,None)
-        
+                raise OpenPMDException(
+                    "The requested mode '%s' is not available.\n"
+                    "The available modes are: \n - %s" %(m, mode_list))
+
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
@@ -401,8 +405,9 @@ class OpenPMDTimeSeries(parent_class) :
         """
         # Check the arguments
         if (t is not None) and (iteration is not None):
-            raise ValueError("Please pass either a time (`t`) or an "
-                             "iteration (`iteration`), but not both.")
+            raise OpenPMDException(
+                "Please pass either a time (`t`) \nor an "
+                "iteration (`iteration`), but not both.")
         # If a time is requested
         elif (t is not None):
             # Make sur the time requested does not exceed the allowed bounds
@@ -415,15 +420,15 @@ class OpenPMDTimeSeries(parent_class) :
             # Find the last existing output
             else :
                 self.current_i = self.t[ self.t <= t ].argmax()
-        # If an iteration is requested 
+        # If an iteration is requested
         elif (iteration is not None):
             if (iteration in self.iterations):
                 self.current_i = self.iterations.index(iteration)
             else:
                 iter_list = '\n - '.join([ str(it) for it in self.iterations])
                 print("The requested iteration '%s' is not available.\nThe "
-                "available iterations are: \n - %s" %(iteration, iter_list))
-                print("The first iteration is used instead.")
+                "available iterations are: \n - %s\nThe first iteration is "
+                "used instead." %(iteration, iter_list))
                 self.current_i = 0
         else:
             pass # self.current_i retains its previous value
@@ -466,7 +471,7 @@ def list_h5_files( path_to_dir ) :
                     os.path.abspath( path_to_dir ), filename)
                 # Create list of tuples (which can be sorted together)
                 iters_and_names.append( (iteration, full_name) )
-                
+
     # Sort the list of tuples according to the iteration
     iters_and_names.sort()
     # Extract the list of filenames and iterations
@@ -522,5 +527,5 @@ def apply_selection( data_list, select, species, filename ):
     for i in range(len(data_list)):
         if len(data_list[i]) >1:  # Do not apply selection on scalar records
             data_list[i] = data_list[i][select_array]
-    
+
     return(data_list)
