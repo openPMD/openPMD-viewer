@@ -166,7 +166,7 @@ class OpenPMDTimeSeries(parent_class) :
         if (species in self.avail_species)==False:
             species_list = '\n - '.join( self.avail_species )
             raise OpenPMDException(
-                "The argument `species` is missing or erroneous.\n
+                "The argument `species` is missing or erroneous.\n"
                 "The available species are: \n - %s\nPlease set the "
                 "argument `species` accordingly." %species_list)
 
@@ -181,7 +181,7 @@ class OpenPMDTimeSeries(parent_class) :
         if valid_var_list == False:
             quantity_list = '\n - '.join( self.avail_ptcl_quantities )
             raise OpenPMDException(
-                "The argument `var_list` is missing or erroneous.\n
+                "The argument `var_list` is missing or erroneous.\n"
                 "It should be a list of strings representing particle "
                 "quantities.\n The available quantities are: "
                 "\n - %s\nPlease set the argument `var_list` "
@@ -199,7 +199,7 @@ class OpenPMDTimeSeries(parent_class) :
             if valid_select_list == False:
                 quantity_list = '\n - '.join( self.avail_ptcl_quantities )
                 raise OpenPMDException(
-                    "The argument `select` is erroneous.\n
+                    "The argument `select` is erroneous.\n"
                     "It should be a dictionary whose keys represent particle "
                     "quantities.\n The available quantities are: "
                     "\n - %s\nPlease set the argument `select` "
@@ -317,7 +317,7 @@ class OpenPMDTimeSeries(parent_class) :
         if (field in self.avail_fields)==False:
             field_list = '\n - '.join( self.avail_fields )
             raise OpenPMDException(
-                "The `field` argument is missing or erroneous.\n
+                "The `field` argument is missing or erroneous.\n"
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." %field_list)
         # Check the coordinate (for vector fields)
