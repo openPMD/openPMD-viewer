@@ -13,6 +13,9 @@ contents of a set of [openPMD](http://www.openpmd.org/#/start) files
 To install this package :
 
 - Clone this repository using `git`
+```
+git clone https://github.com/openPMD/openPMD-viewer.git
+```
 
 - `cd` into the directory `openPMD-viewer` and run
 ```
