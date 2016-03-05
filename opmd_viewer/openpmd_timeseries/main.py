@@ -211,24 +211,26 @@ class OpenPMDTimeSeries(parent_class) :
         # Get the corresponding filename
         filename = self.h5_files[ self.current_i ]
 
-        # If a plot is request, add the weights to the extracted variables
-        if plot:
-            var_list.append('w')
-
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
             data_list.append(read_particle( filename, species, quantity ))
-
         # Apply selection if needed
         if select is not None:
             data_list = apply_selection( data_list, select, species, filename )
 
         # Plotting
         if plot :
-            # Pop the weights from the quantity_list
-            # (not requested by user, but needed here)
-            w = data_list.pop()
+
+            # Extract the weights, if they are available
+            if 'w' in self.avail_ptcl_quantities:
+                w = read_particle( filename, species, 'w' )
+                if select is not None:
+                    w, = apply_selection( [w], select, species, filename )
+            # Otherwise consider that all particles have a weight of 1
+            else:
+                w = np.ones_like( data_list[0] )
+
             # - In the case of only one quantity
             if len(data_list) == 1:
                 # Do the plotting
