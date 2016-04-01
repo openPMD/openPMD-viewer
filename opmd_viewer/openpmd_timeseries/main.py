@@ -415,10 +415,8 @@ class OpenPMDTimeSeries(parent_class) :
             # Make sur the time requested does not exceed the allowed bounds
             if t < self.tmin :
                 self.current_i = 0
-                print('Reached first iteration')
             elif t > self.tmax :
                 self.current_i = len(self.t) -1
-                print('Reached last iteration')
             # Find the last existing output
             else :
                 self.current_i = self.t[ self.t <= t ].argmax()
