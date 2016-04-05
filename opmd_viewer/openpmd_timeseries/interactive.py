@@ -136,7 +136,6 @@ class InteractiveViewer(object):
             if self.current_i < len(self.t) - 1 :
                 self.current_t = self.t[self.current_i+1]
             else :
-                print("Reached last iteration.")
                 self.current_t = self.t[self.current_i]
             slider.value = self.current_t*1.e15
 
@@ -145,7 +144,6 @@ class InteractiveViewer(object):
             if self.current_t > 0 :
                 self.current_t = self.t[self.current_i-1]
             else :
-                print("Reached first iteration.")
                 self.current_t= self.t[self.current_i]
             slider.value = self.current_t*1.e15
 
