@@ -73,6 +73,61 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( mean_gamma, std_gamma )
 
+    def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
+                              select=None):
+        """
+        Calculate the standard deviation of gamma for particles in z-slices of
+        width dz
+
+        Parameters
+        ----------
+        dz : Width of slices in which to calculate sigma gamma
+
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : string
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
+        Returns
+        -------
+        A tuple of arrays:
+        - Sigma gamma in each slice
+        - Central z position of each slice
+
+        """
+        z, uz, ux, uy, w = self.get_particle(t=t, species=species, select=select,
+                                           var_list=['z','uz','ux','uy','w'],
+                                           iteration=iteration)
+        # Calculate gamma of each particle
+        gamma = np.sqrt(1+(uz**2+ux**2+uy**2))
+        z0 = min(z)
+        zend = max(z)
+        N = int((zend-z0)/dz)
+        spreads = np.zeros(N+1)
+        z_pos = np.linspace(z0, zend, N+1)
+        zi = z0 + dz/2.
+        i = 0
+        # Iterate over slices and calculate sigma gamma
+        while zi < zend:
+            z_filter = (z > zi - dz/2.) & (z < zi + dz/2.)
+            spreads[i] = wstd(gamma[z_filter], w[z_filter])
+            zi += dz
+            i += 1
+        return(spreads, z_pos)
+
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
         Calculate the charge of the selcted particles.
