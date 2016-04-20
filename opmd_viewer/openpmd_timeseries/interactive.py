@@ -116,7 +116,27 @@ class InteractiveViewer(object):
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value )
-                
+
+        def refresh_species(b):
+            """
+            Refresh the particle species buttons
+            """
+            # Get available records for this species (remove charge and
+            # mass as they are typically less interesting)
+            avail_records = [ q for q in \
+                        self.avail_record_components[ptcl_species_button.value]
+                        if (q in ['charge', 'mass'])==False ]
+            # Update the plotting buttons
+            ptcl_xaxis_button.options = avail_records
+            ptcl_xaxis_button.value = avail_records[0]
+            ptcl_yaxis_button.options = avail_records + ['None']
+            ptcl_yaxis_button.value = 'None'
+            # Update the selection widgets
+            for dropdown_button in ptcl_select_widget.quantity:
+                dropdown_button.options = avail_records
+            
+            refresh_ptcl()
+                    
         def refresh_ptcl_now(b):
             "Refresh the particles immediately"
             refresh_ptcl(force=True)
@@ -274,24 +294,26 @@ class InteractiveViewer(object):
             # Species selection
             ptcl_species_button = widgets.Dropdown( width=250,
                 options=self.avail_species )
-            ptcl_species_button.on_trait_change( refresh_ptcl )
-            # Remove charge and mass (less interesting) 
-            avail_ptcl_quantities = [ q for q in self.avail_ptcl_quantities \
+            ptcl_species_button.on_trait_change( refresh_species )
+            # Get available records for this species (remove charge and
+            # mass as they are typically less interesting)
+            avail_records = [ q for q in \
+                        self.avail_record_components[ptcl_species_button.value]
                         if (q in ['charge', 'mass'])==False ]
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(
-                value='z', options=avail_ptcl_quantities )
+                value='z', options=avail_records )
             ptcl_xaxis_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the y axis            
             ptcl_yaxis_button = widgets.ToggleButtons(
-                value='x', options=avail_ptcl_quantities+['None'] )
+                value='x', options=avail_records+['None'] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
             # Particle selection
             # ------------------
             # 3 selection rules at maximum
             ptcl_select_widget = ParticleSelectWidget(3,
-                                avail_ptcl_quantities, refresh_ptcl)
+                                avail_records, refresh_ptcl)
 
             # Plotting options
             # ----------------
