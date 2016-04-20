@@ -80,8 +80,10 @@ class OpenPMDTimeSeries(parent_class) :
             self.geometry = params0['geometry']
             self.avail_circ_modes = params0['avail_circ_modes']
         self.avail_species = params0['avail_species']
-        if self.avail_species is not None:
-            self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
+        self.avail_species_record_components = \
+            params0['avail_species_record_components']
+        # deprecated
+        self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
 
         # - Check that the other files have the same parameters
         for k in range( 1, N_files ):
@@ -176,16 +178,16 @@ class OpenPMDTimeSeries(parent_class) :
             valid_var_list = False
         else:
             for quantity in var_list:
-                if (quantity in self.avail_ptcl_quantities) == False:
+                if (quantity in self.avail_species_record_components[species]) == False:
                     valid_var_list = False
         if valid_var_list == False:
-            quantity_list = '\n - '.join( self.avail_ptcl_quantities )
+            quantity_list = '\n - '.join( self.avail_species_record_components[species] )
             raise OpenPMDException(
                 "The argument `var_list` is missing or erroneous.\n"
-                "It should be a list of strings representing particle "
-                "quantities.\n The available quantities are: "
+                "It should be a list of strings representing species record "
+                "components.\n The available quantities for species '%s' are:"
                 "\n - %s\nPlease set the argument `var_list` "
-                "accordingly." %quantity_list )
+                "accordingly." % species % quantity_list )
 
         # Check the selection quantities
         if select is not None:
@@ -194,10 +196,10 @@ class OpenPMDTimeSeries(parent_class) :
                 valid_select_list = False
             else:
                 for quantity in select.keys():
-                    if (quantity in self.avail_ptcl_quantities) == False:
+                    if (quantity in self.avail_species_record_components[species]) == False:
                         valid_select_list = False
             if valid_select_list == False:
-                quantity_list = '\n - '.join( self.avail_ptcl_quantities )
+                quantity_list = '\n - '.join( self.avail_species_record_components[species] )
                 raise OpenPMDException(
                     "The argument `select` is erroneous.\n"
                     "It should be a dictionary whose keys represent particle "
@@ -223,7 +225,7 @@ class OpenPMDTimeSeries(parent_class) :
         if plot :
 
             # Extract the weights, if they are available
-            if 'w' in self.avail_ptcl_quantities:
+            if 'w' in self.avail_species_record_components[species]:
                 w = read_particle( filename, species, 'w' )
                 if select is not None:
                     w, = apply_selection( [w], select, species, filename )
