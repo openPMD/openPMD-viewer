@@ -6,9 +6,10 @@ It defines the main OpenPMDTimeSeries class.
 import os
 import re
 import numpy as np
+import h5py as h5
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
-from .data_reader.particle_reader import read_particle
+from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_2d, \
      read_field_circ, read_field_3d
 
@@ -210,25 +211,26 @@ class OpenPMDTimeSeries(parent_class) :
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
         self._find_output( t, iteration )
-        # Get the corresponding filename
-        filename = self.h5_files[ self.current_i ]
+        # Get the corresponding file name & open the file
+        file_name = self.h5_files[ self.current_i ]
+        file_handle = h5.File( file_name, 'r' )
 
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
-            data_list.append(read_particle( filename, species, quantity ))
+            data_list.append(read_species_data( file_handle, species, quantity ))
         # Apply selection if needed
         if select is not None:
-            data_list = apply_selection( data_list, select, species, filename )
+            data_list = apply_selection( data_list, select, species, file_handle )
 
         # Plotting
         if plot :
 
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
-                w = read_particle( filename, species, 'w' )
+                w = read_species_data( file_handle, species, 'w' )
                 if select is not None:
-                    w, = apply_selection( [w], select, species, filename )
+                    w, = apply_selection( [w], select, species, file_handle )
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like( data_list[0] )
@@ -244,6 +246,9 @@ class OpenPMDTimeSeries(parent_class) :
                 self.plotter.hist2d( data_list[0], data_list[1], w,
                                      var_list[0], var_list[1], species,
                                      self.current_i, nbins, **kw )
+        # Close the file
+        file_handle.close()
+
         # Output
         if output :
             return( data_list )
@@ -482,7 +487,7 @@ def list_h5_files( path_to_dir ) :
 
     return( filenames, iterations )
 
-def apply_selection( data_list, select, species, filename ):
+def apply_selection( data_list, select, species, file_handle ):
     """
     Select the elements of each particle quantities in data_list,
     based on the selection rules in `select`
@@ -502,8 +507,8 @@ def apply_selection( data_list, select, species, filename ):
     species: string
        Name of the species being requested
 
-    filename: string
-       Name of the file (i.e. iteration) being requested
+    file_handle: h5py.File object
+        The HDF5 file from which to extract data
 
     Returns
     -------
@@ -517,7 +522,7 @@ def apply_selection( data_list, select, species, filename ):
 
     # Loop through the selection rules, and aggregate results in select_array
     for quantity in select.keys():
-        q = read_particle( filename, species, quantity )
+        q = read_species_data( file_handle, species, quantity )
         # Check lower bound
         if select[quantity][0] is not None:
             select_array = np.logical_and(select_array, q>select[quantity][0])
