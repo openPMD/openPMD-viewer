@@ -33,7 +33,6 @@ class InteractiveViewer(object):
         kw: dict
             Extra arguments to pass to matplotlib's imshow
         """
-
         # -----------------------
         # Define useful functions
         # -----------------------
@@ -71,7 +70,7 @@ class InteractiveViewer(object):
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value )
-                
+
         def refresh_ptcl(force=False) :
             "Refresh the current particle figure"
             
@@ -119,8 +118,14 @@ class InteractiveViewer(object):
 
         def refresh_species(b):
             """
-            Refresh the particle species buttons
+            Refresh the particle species buttons by populating them
+            with the available records for the current species
             """
+            # Deactivate the particle refreshing to avoid callback
+            # while modifying the widgets
+            saved_refresh_value = ptcl_refresh_toggle.value
+            ptcl_refresh_toggle.value = False
+            
             # Get available records for this species (remove charge and
             # mass as they are typically less interesting)
             avail_records = [ q for q in \
@@ -130,13 +135,15 @@ class InteractiveViewer(object):
             ptcl_xaxis_button.options = avail_records
             ptcl_xaxis_button.value = avail_records[0]
             ptcl_yaxis_button.options = avail_records + ['None']
-            ptcl_yaxis_button.value = 'None'
+            ptcl_yaxis_button.value = 'None'        
+
             # Update the selection widgets
             for dropdown_button in ptcl_select_widget.quantity:
                 dropdown_button.options = avail_records
-            
-            refresh_ptcl()
-                    
+
+            # Put back the previous value of the refreshing button
+            ptcl_refresh_button.value = saved_refresh_value
+                
         def refresh_ptcl_now(b):
             "Refresh the particles immediately"
             refresh_ptcl(force=True)
@@ -250,7 +257,7 @@ class InteractiveViewer(object):
             fld_color_button.on_trait_change( refresh_field )
             # Resfresh buttons
             fld_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True) 
+                description='Always refresh', value=True ) 
             fld_refresh_button = widgets.Button(
                 description='Refresh now!')
             fld_refresh_button.on_click( refresh_fld_now )            
@@ -295,26 +302,19 @@ class InteractiveViewer(object):
             ptcl_species_button = widgets.Dropdown( width=250,
                 options=self.avail_species )
             ptcl_species_button.on_trait_change( refresh_species )
-            # Get available records for this species (remove charge and
-            # mass as they are typically less interesting)
-            avail_records = [ q for q in \
-                        self.avail_record_components[ptcl_species_button.value]
-                        if (q in ['charge', 'mass'])==False ]
+            # Create empty ToggleButtons, but populate them later
             # Particle quantity on the x axis
-            ptcl_xaxis_button = widgets.ToggleButtons(
-                value='z', options=avail_records )
+            ptcl_xaxis_button = widgets.ToggleButtons( options=[] )
             ptcl_xaxis_button.on_trait_change( refresh_ptcl )
             # Particle quantity on the y axis            
-            ptcl_yaxis_button = widgets.ToggleButtons(
-                value='x', options=avail_records+['None'] )
+            ptcl_yaxis_button = widgets.ToggleButtons( options=[] )
             ptcl_yaxis_button.on_trait_change( refresh_ptcl )
 
             # Particle selection
             # ------------------
             # 3 selection rules at maximum
-            ptcl_select_widget = ParticleSelectWidget(3,
-                                avail_records, refresh_ptcl)
-
+            ptcl_select_widget = ParticleSelectWidget(3, refresh_ptcl)
+            
             # Plotting options
             # ----------------
             # Figure number
@@ -343,10 +343,14 @@ class InteractiveViewer(object):
             ptcl_use_button.on_trait_change( refresh_ptcl )
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True) 
+                description='Always refresh', value=True ) 
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
             ptcl_refresh_button.on_click( refresh_ptcl_now )
+
+            # Populate the empty selection and particle quantities widgets
+            # with the available quantities for the current species
+            refresh_species( ptcl_species_button )
             
             # Containers
             # ----------
@@ -372,7 +376,7 @@ class InteractiveViewer(object):
             container_ptcl =  widgets.VBox( width=370,
                 children=[ accord2, widgets.HBox(
                     children=[ ptcl_refresh_toggle, ptcl_refresh_button]) ])
-
+            
         # Global container
         if (self.avail_fields is not None) and \
           (self.avail_species is not None):
@@ -400,7 +404,7 @@ class ParticleSelectWidget(object):
     Class that groups the particle selection widgets.
     """
 
-    def __init__( self, n_rules, avail_ptcl_quantities, refresh_ptcl):
+    def __init__( self, n_rules, refresh_ptcl):
         """
         Initialize a set of particle selection widgets
 
@@ -408,9 +412,6 @@ class ParticleSelectWidget(object):
         -----------
         n_rules: int
             The number of selection rules to display
-
-        avail_ptcl_quantities: list of string
-            The particle quantities in the present openPMD timeseries
 
         refresh_ptcl: callable
             The callback function to execute when the widget is changed
@@ -421,7 +422,9 @@ class ParticleSelectWidget(object):
         self.active = [ widgets.Checkbox(value=False) \
                          for i in range(n_rules) ]
         # Create widgets that determines the quantity on which to select
-        self.quantity = [ widgets.Dropdown(options=avail_ptcl_quantities,
+        # (The Dropdown menu is empty, but is later populated by the
+        # function refresh_species)
+        self.quantity = [ widgets.Dropdown( options=[],
                             description='Select ') for i in range(n_rules) ]
         # Create widgets that determines the lower bound and upper bound
         self.low_bound = [ widgets.FloatText( value=-1.e-1, width = 90,
