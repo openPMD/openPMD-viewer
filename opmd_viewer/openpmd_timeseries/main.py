@@ -80,8 +80,8 @@ class OpenPMDTimeSeries(parent_class) :
             self.geometry = params0['geometry']
             self.avail_circ_modes = params0['avail_circ_modes']
         self.avail_species = params0['avail_species']
-        self.avail_species_record_components = \
-            params0['avail_species_record_components']
+        self.avail_record_components = \
+            params0['avail_record_components']
         # deprecated
         self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
 
@@ -178,10 +178,10 @@ class OpenPMDTimeSeries(parent_class) :
             valid_var_list = False
         else:
             for quantity in var_list:
-                if (quantity in self.avail_species_record_components[species]) == False:
+                if (quantity in self.avail_record_components[species]) == False:
                     valid_var_list = False
         if valid_var_list == False:
-            quantity_list = '\n - '.join( self.avail_species_record_components[species] )
+            quantity_list = '\n - '.join( self.avail_record_components[species] )
             raise OpenPMDException(
                 "The argument `var_list` is missing or erroneous.\n"
                 "It should be a list of strings representing species record "
@@ -196,10 +196,10 @@ class OpenPMDTimeSeries(parent_class) :
                 valid_select_list = False
             else:
                 for quantity in select.keys():
-                    if (quantity in self.avail_species_record_components[species]) == False:
+                    if (quantity in self.avail_record_components[species]) == False:
                         valid_select_list = False
             if valid_select_list == False:
-                quantity_list = '\n - '.join( self.avail_species_record_components[species] )
+                quantity_list = '\n - '.join( self.avail_record_components[species] )
                 raise OpenPMDException(
                     "The argument `select` is erroneous.\n"
                     "It should be a dictionary whose keys represent particle "
@@ -225,7 +225,7 @@ class OpenPMDTimeSeries(parent_class) :
         if plot :
 
             # Extract the weights, if they are available
-            if 'w' in self.avail_species_record_components[species]:
+            if 'w' in self.avail_record_components[species]:
                 w = read_particle( filename, species, 'w' )
                 if select is not None:
                     w, = apply_selection( [w], select, species, filename )
