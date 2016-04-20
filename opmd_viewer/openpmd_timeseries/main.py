@@ -43,20 +43,26 @@ class OpenPMDTimeSeries(parent_class) :
     - slider
     """
 
-    def __init__( self, path_to_dir ) :
+    def __init__( self, path_to_dir, check_all_files=True ):
         """
         Initialize an openPMD time series
 
         More precisely, scan the directory and extract the openPMD files,
         as well as some useful openPMD parameters
 
-        Parameter
-        ---------
-        path_to_dir : string
+        Parameters
+        ----------
+        path_to_dir: string
             The path to the directory where the openPMD files are.
             For the moment, only HDF5 files are supported. There should be
             one file per iteration, and the name of the files should end
             with the iteration number, followed by '.h5' (e.g. data0005000.h5)
+
+        check_all_files: bool, optional
+            Check that all the files in the timeseries are consistent
+            (i.e. that they contain the same fields and particles,
+            with the same metadata)
+            For fast access to the files, this can be changed to False.
         """
         # Extract the files and the iterations
         self.h5_files, self.iterations = list_h5_files( path_to_dir )
@@ -87,13 +93,15 @@ class OpenPMDTimeSeries(parent_class) :
         self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
 
         # - Check that the other files have the same parameters
-        for k in range( 1, N_files ):
-            t, params = read_openPMD_params( self.h5_files[k] )
-            self.t[k] = t
-            for key in params0.keys():
-                if params != params0:
-                    print("Warning: File %s has different openPMD parameters "
-                        "than the rest of the time series." %self.h5_files[k])
+        if check_all_files:
+            for k in range( 1, N_files ):
+                t, params = read_openPMD_params( self.h5_files[k] )
+                self.t[k] = t
+                for key in params0.keys():
+                    if params != params0:
+                        print("Warning: File %s has different openPMD "
+                            "parameters than the rest of the time series." \
+                            %self.h5_files[k] )
 
         # - Set the current iteration and time
         self.current_i = 0
@@ -182,7 +190,8 @@ class OpenPMDTimeSeries(parent_class) :
                 if (quantity in self.avail_record_components[species]) == False:
                     valid_var_list = False
         if valid_var_list == False:
-            quantity_list = '\n - '.join( self.avail_record_components[species] )
+            quantity_list = '\n - '.join(
+                self.avail_record_components[species])
             raise OpenPMDException(
                 "The argument `var_list` is missing or erroneous.\n"
                 "It should be a list of strings representing species record "
@@ -197,10 +206,12 @@ class OpenPMDTimeSeries(parent_class) :
                 valid_select_list = False
             else:
                 for quantity in select.keys():
-                    if (quantity in self.avail_record_components[species]) == False:
+                    if (quantity in self.avail_record_components[species]) \
+                      is False:
                         valid_select_list = False
             if valid_select_list == False:
-                quantity_list = '\n - '.join( self.avail_record_components[species] )
+                quantity_list = '\n - '.join(
+                    self.avail_record_components[species])
                 raise OpenPMDException(
                     "The argument `select` is erroneous.\n"
                     "It should be a dictionary whose keys represent particle "
