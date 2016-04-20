@@ -1,5 +1,13 @@
 # openPMD viewer
 
+![travis badge](https://travis-ci.org/openPMD/openPMD-viewer.svg?branch=master)
+
+[![Build Status master](https://img.shields.io/travis/openPMD/openPMD-viewer/master.svg?label=master)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
+[![Build Status dev](https://img.shields.io/travis/openPMD/openPMD-viewer/dev.svg?label=dev)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
+[![pypi version](https://img.shields.io/pypi/v/openPMD-viewer.svg)](https://pypi.python.org/pypi/openPMD-viewer)
+[![Number of PyPI Downloads](https://img.shields.io/pypi/dm/openPMD-viewer.svg)](https://pypi.python.org/pypi/openPMD-viewer)
+[![License](https://img.shields.io/pypi/l/openPMD-viewer.svg)](LICENSE.txt)
+
 ## Overview
 
 This package contains a set of tools to load and visualize the
@@ -80,5 +88,3 @@ browser**. To use this executable, simply type in a regular terminal:
 
 We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
 guidelines on how to contribute.
-
-![travis badge](https://travis-ci.org/openPMD/openPMD-viewer.svg?branch=master)
