@@ -75,7 +75,7 @@ class OpenPMDTimeSeries(parent_class) :
         t, params0 = read_openPMD_params( self.h5_files[0] )
         self.t[0] = t
         self.avail_fields = params0['avail_fields']
-        self.extension = params0['extension']
+        self.extensions = params0['extensions']
         if self.avail_fields is not None:
             self.geometry = params0['geometry']
             self.avail_circ_modes = params0['avail_circ_modes']

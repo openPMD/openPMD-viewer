@@ -5,6 +5,7 @@ It defines a function that can read standard parameters from an openPMD file.
 """
 import os
 import h5py
+import numpy as np
 from .utilities import is_scalar_record, get_shape, get_bpath
 
 def read_openPMD_params( filename ):
@@ -31,7 +32,20 @@ def read_openPMD_params( filename ):
         raise ValueError(
             "File %s is not supported: Invalid openPMD version: "
             "%s)" %( filename, version) )
-    params['extension'] = f.attrs['openPMDextension']
+
+    # Find out supported openPMD extensions claimed by this file
+    # note: a file might implement multiple extensions
+    known_extensions = {'ED-PIC': np.uint32(1)}
+    bitmask_all_extensions = f.attrs['openPMDextension']
+    params['extensions'] = []
+    for extension, bitmask in known_extensions.items():
+        # This uses a bitmask to identify activated extensions
+        # efficiently in static programming languages via
+        # a single attribute and a binary AND (&) operation.
+        # Standard: https://git.io/vwnMw
+        # Bitmasks: https://en.wikipedia.org/wiki/Mask_%28computing%29
+        if bitmask_all_extensions & bitmask == bitmask:
+            params['extensions'].append(extension)
 
     # Find the base path object, and extract the time
     bpath = f[ get_bpath(f) ]
