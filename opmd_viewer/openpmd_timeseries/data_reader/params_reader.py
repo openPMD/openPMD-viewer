@@ -89,24 +89,24 @@ def read_openPMD_params( filename ):
             species = bpath[os.path.join(particle_path, species_name)]
             species_record_components[species_name] = []
 
-            # Go through all the particle quantities of this species
-            for quantity_name in species.keys():
+            # Go through all the particle records of this species
+            for record_name in species.keys():
                 # Skip the particlePatches, which are not used here.
-                if quantity_name == 'particlePatches':
+                if record_name == 'particlePatches':
                     continue
-                quantity = species[quantity_name]
-                if is_scalar_record( quantity ):
+                record = species[record_name]
+                if is_scalar_record( record ):
                     # Add the name of the scalar record
                     species_record_components[species_name]. \
-                        append( quantity_name )
+                        append( record_name )
                 else:
                     # Add each component of the vector record
-                    for coord in quantity.keys():
+                    for coord in record.keys():
                         species_record_components[species_name]. \
-                            append(os.path.join(quantity_name, coord))
-            # Simplify the name of some standard openPMD quantities
+                            append(os.path.join(record_name, coord))
+            # Simplify the name of some standard openPMD records
             species_record_components[species_name] = \
-                simplify_quantities( species_record_components[species_name] )
+                simplify_record( species_record_components[species_name] )
         params['avail_species_record_components'] = species_record_components
         # deprecated
         first_species_name = next(iter(params['avail_species']))
@@ -124,47 +124,47 @@ def read_openPMD_params( filename ):
     return( t, params )
 
 
-def simplify_quantities( quantities ):
+def simplify_record( record_comps ) :
     """
-    Replace the names of some standard quantities by shorter names
+    Replace the names of some standard record by shorter names
 
     Parameter
     ---------
-    quantities: a list of strings
-        A list of available particle quantities
+    record_comps: a list of strings
+        A list of available particle record components
     
     Returns
     -------
     A list with shorter names, where applicable
     """
     # Replace the names of the positions
-    if ('position/x' in quantities) and ('positionOffset/x' in quantities):
-        quantities.remove('position/x')
-        quantities.remove('positionOffset/x')
-        quantities.append('x')
-    if ('position/y' in quantities) and ('positionOffset/y' in quantities):
-        quantities.remove('position/y')
-        quantities.remove('positionOffset/y')
-        quantities.append('y')
-    if ('position/z' in quantities) and ('positionOffset/z' in quantities):
-        quantities.remove('position/z')
-        quantities.remove('positionOffset/z')
-        quantities.append('z')
+    if ('position/x' in record_comps) and ('positionOffset/x' in record_comps):
+        record_comps.remove('position/x')
+        record_comps.remove('positionOffset/x')
+        record_comps.append('x')
+    if ('position/y' in record_comps) and ('positionOffset/y' in record_comps):
+        record_comps.remove('position/y')
+        record_comps.remove('positionOffset/y')
+        record_comps.append('y')
+    if ('position/z' in record_comps) and ('positionOffset/z' in record_comps):
+        record_comps.remove('position/z')
+        record_comps.remove('positionOffset/z')
+        record_comps.append('z')
 
     # Replace the names of the momenta
-    if 'momentum/x' in quantities:
-        quantities.remove('momentum/x')
-        quantities.append('ux')
-    if 'momentum/y' in quantities:
-        quantities.remove('momentum/y')
-        quantities.append('uy')
-    if 'momentum/z' in quantities:                
-        quantities.remove('momentum/z')
-        quantities.append('uz')
+    if 'momentum/x' in record_comps:
+        record_comps.remove('momentum/x')
+        record_comps.append('ux')
+    if 'momentum/y' in record_comps:
+        record_comps.remove('momentum/y')
+        record_comps.append('uy')
+    if 'momentum/z' in record_comps:
+        record_comps.remove('momentum/z')
+        record_comps.append('uz')
 
     # Replace the name for 'weights'
-    if 'weighting' in quantities:
-        quantities.remove('weighting')
-        quantities.append('w')
+    if 'weighting' in record_comps:
+        record_comps.remove('weighting')
+        record_comps.append('w')
 
-    return(quantities)
+    return(record_comps)
