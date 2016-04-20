@@ -83,11 +83,11 @@ def read_openPMD_params( filename ):
         for species_name in bpath[particle_path].keys():
             params['avail_species'].append(species_name)
         # dictionary with list of record components for each species
-        species_record_components = {}
+        record_components = {}
         # Go through all species
         for species_name in iter(params['avail_species']):
             species = bpath[os.path.join(particle_path, species_name)]
-            species_record_components[species_name] = []
+            record_components[species_name] = []
 
             # Go through all the particle records of this species
             for record_name in species.keys():
@@ -97,25 +97,25 @@ def read_openPMD_params( filename ):
                 record = species[record_name]
                 if is_scalar_record( record ):
                     # Add the name of the scalar record
-                    species_record_components[species_name]. \
+                    record_components[species_name]. \
                         append( record_name )
                 else:
                     # Add each component of the vector record
                     for coord in record.keys():
-                        species_record_components[species_name]. \
+                        record_components[species_name]. \
                             append(os.path.join(record_name, coord))
             # Simplify the name of some standard openPMD records
-            species_record_components[species_name] = \
-                simplify_record( species_record_components[species_name] )
-        params['avail_species_record_components'] = species_record_components
+            record_components[species_name] = \
+                simplify_record( record_components[species_name] )
+        params['avail_record_components'] = record_components
         # deprecated
         first_species_name = next(iter(params['avail_species']))
         params['avail_ptcl_quantities'] = \
-            species_record_components[first_species_name]
+            record_components[first_species_name]
     else :
         # Particles are absent
         params['avail_species'] = None
-        params['avail_species_record_components'] = None
+        params['avail_record_components'] = None
         # deprecated
         params['avail_ptcl_quantities'] = None
 
