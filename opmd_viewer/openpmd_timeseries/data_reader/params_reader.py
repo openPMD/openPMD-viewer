@@ -82,29 +82,42 @@ def read_openPMD_params( filename ):
         params['avail_species'] = []
         for species_name in bpath[particle_path].keys():
             params['avail_species'].append(species_name)
-        # Extract the available particle quantity, from the first species
-        first_species_path = next(iter(params['avail_species']))
-        first_species = bpath[os.path.join(particle_path, first_species_path)]
-        ptcl_quantities = []
-        # Go through all the particle quantities
-        for quantity_name in first_species.keys():
-            # Skip the particlePatches, which are not used here.
-            if quantity_name == 'particlePatches':
-                continue            
-            quantity = first_species[quantity_name]
-            if is_scalar_record( quantity ):
-                # Add the name of the scalar record
-                ptcl_quantities.append( quantity_name )
-            else:
-                # Add each component of the vector record
-                for coord in quantity.keys():
-                    ptcl_quantities.append(os.path.join(quantity_name, coord))
-        # Simplify the name of some standard openPMD quantities
-        ptcl_quantities = simplify_quantities( ptcl_quantities )
-        params['avail_ptcl_quantities'] = ptcl_quantities
+        # dictionary with list of record components for each species
+        species_record_components = {}
+        # Go through all species
+        for species_name in iter(params['avail_species']):
+            species = bpath[os.path.join(particle_path, species_name)]
+            species_record_components[species_name] = []
+
+            # Go through all the particle quantities of this species
+            for quantity_name in species.keys():
+                # Skip the particlePatches, which are not used here.
+                if quantity_name == 'particlePatches':
+                    continue
+                quantity = species[quantity_name]
+                if is_scalar_record( quantity ):
+                    # Add the name of the scalar record
+                    species_record_components[species_name]. \
+                        append( quantity_name )
+                else:
+                    # Add each component of the vector record
+                    for coord in quantity.keys():
+                        species_record_components[species_name]. \
+                            append(os.path.join(quantity_name, coord))
+            # Simplify the name of some standard openPMD quantities
+            species_record_components[species_name] = \
+                simplify_quantities( species_record_components[species_name] )
+        params['avail_species_record_components'] = species_record_components
+        # deprecated
+        first_species_name = next(iter(params['avail_species']))
+        params['avail_ptcl_quantities'] = \
+            species_record_components[first_species_name]
     else :
         # Particles are absent
         params['avail_species'] = None
+        params['avail_species_record_components'] = None
+        # deprecated
+        params['avail_ptcl_quantities'] = None
 
     # Close the file and return the parameters
     f.close()
