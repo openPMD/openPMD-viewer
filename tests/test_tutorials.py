@@ -28,7 +28,7 @@ def test_tutorials():
         # The notebook is converted to a standard Python script and
         # run directly with `execfile`
         script_name = notebook_name[:-6] + '.py'
-        os.system( 'ipython nbconvert --to=python %s' %notebook_name )
+        os.system( 'jupyter nbconvert --to=python %s' %notebook_name )
         clean_ipython_features( script_name )
         try:
             response = os.system('python ' + script_name)
