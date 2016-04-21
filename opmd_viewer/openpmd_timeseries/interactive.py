@@ -352,7 +352,8 @@ class InteractiveViewer(object):
             # Particle selection
             # ------------------
             # 3 selection rules at maximum
-            ptcl_select_widget = ParticleSelectWidget(3, refresh_ptcl)
+            ptcl_select_widget = ParticleSelectWidget(3,
+                                 avail_records, refresh_ptcl)
 
             # Plotting options
             # ----------------
@@ -446,7 +447,7 @@ class ParticleSelectWidget(object):
     Class that groups the particle selection widgets.
     """
 
-    def __init__(self, n_rules, refresh_ptcl):
+    def __init__(self, n_rules, avail_records, refresh_ptcl):
         """
         Initialize a set of particle selection widgets
 
@@ -454,6 +455,9 @@ class ParticleSelectWidget(object):
         -----------
         n_rules: int
             The number of selection rules to display
+
+        avail_records: list of strings
+            The list of available records for the current species
 
         refresh_ptcl: callable
             The callback function to execute when the widget is changed
@@ -466,7 +470,7 @@ class ParticleSelectWidget(object):
         # Create widgets that determines the quantity on which to select
         # (The Dropdown menu is empty, but is later populated by the
         # function refresh_species)
-        self.quantity = [widgets.Dropdown(options=[],
+        self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
         self.low_bound = [widgets.FloatText(value=-1.e-1, width=90,
