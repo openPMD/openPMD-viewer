@@ -346,7 +346,7 @@ class InteractiveViewer(object):
             ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
             # Particle quantity on the y axis
             ptcl_yaxis_button = widgets.ToggleButtons(
-                options=avail_records+['None'], value='None')
+                options=avail_records + ['None'], value='None')
             ptcl_yaxis_button.observe( refresh_ptcl, 'value', 'change')
 
             # Particle selection
@@ -386,7 +386,7 @@ class InteractiveViewer(object):
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
             ptcl_refresh_button.on_click( partial(refresh_ptcl, force=True) )
-            
+
             # Containers
             # ----------
             # Particle quantity container
