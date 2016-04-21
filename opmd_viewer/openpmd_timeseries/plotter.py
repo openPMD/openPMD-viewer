@@ -155,11 +155,13 @@ class Plotter(object):
         if geometry == "thetaMode":
             mode = str(m)
             plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
-                      % (field_label, mode, time_fs, iteration), fontsize=self.fontsize)
+                      % (field_label, mode, time_fs, iteration),
+                      fontsize=self.fontsize)
         # 2D Cartesian geometry
         elif geometry == "2dcartesian":
             plt.title("%s at %.1f fs   (iteration %d)"
-                      % (field_label, time_fs, iteration), fontsize=self.fontsize)
+                      % (field_label, time_fs, iteration),
+                      fontsize=self.fontsize)
         # 3D Cartesian geometry
         elif geometry == "3dcartesian":
             plt.title("%s sliced across %s at %.1f fs  (iteration %d)"

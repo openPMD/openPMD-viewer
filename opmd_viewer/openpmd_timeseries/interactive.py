@@ -27,8 +27,8 @@ class InteractiveViewer(object):
         """
         Navigate the simulation using a slider
 
-        Parameters :
-        ------------
+        Parameters:
+        -----------
         figsize: tuple
             Size of the figures
 
@@ -39,15 +39,15 @@ class InteractiveViewer(object):
         # Define useful functions
         # -----------------------
 
-        def refresh_field(sender_change=None, force=False) :
+        def refresh_field(sender_change=None, force=False):
             """
             Refresh the current field figure
 
             This can be called from various ipywidget events
             so we keep the (unused) sender object or change object
 
-            Parameters :
-            ------------
+            Parameters:
+            -----------
             sender_change: ipywidget sender object or change object
                 Depending on the event (change or click) this object is given,
                 see ipywidget event guide (we do not use it)
@@ -55,7 +55,7 @@ class InteractiveViewer(object):
             force: bool
                 force update
             """
-            
+
             # Determine whether to do the refresh
             do_refresh = False
             if (self.avail_fields is not None):
@@ -87,15 +87,15 @@ class InteractiveViewer(object):
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value)
 
-        def refresh_ptcl(sender_change=None, force=False) :
+        def refresh_ptcl(sender_change=None, force=False):
             """
             Refresh the current particle figure
 
             This can be called from various ipywidget events
             so we keep the (unused) sender object or change object
 
-            Parameters :
-            ------------
+            Parameters:
+            -----------
             sender_change: ipywidget sender object or change object
                 Depending on the event (change or click) this object is given,
                 see ipywidget event guide (we do not use it)
@@ -103,7 +103,7 @@ class InteractiveViewer(object):
             force: bool
                 force update
             """
-            
+
             # Determine whether to do the refresh
             do_refresh = False
             if self.avail_species is not None:
