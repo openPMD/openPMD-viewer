@@ -59,7 +59,7 @@ def read_species_data( file_handle, species, record_comp, extensions ) :
         record_dset = species_grp[ opmd_record ]
         macro_weighted = record_dset.attrs['macroWeighted']
         weighting_power = record_dset.attrs['weightingPower']
-        if (macro_weighted is True) and (weighting_power != 0):
+        if (macro_weighted == 1) and (weighting_power != 0):
             w = get_data( species_grp[ 'weighting' ] )
             data *= w ** (-weighting_power)
  
