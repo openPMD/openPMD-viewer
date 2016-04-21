@@ -234,27 +234,23 @@ class OpenPMDTimeSeries(parent_class):
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
-            data_list.append(
-                read_species_data(
-                    file_handle,
-                    species,
-                    quantity))
+            data_list.append(read_species_data(
+                file_handle, species, quantity, self.extensions))
         # Apply selection if needed
         if select is not None:
             data_list = apply_selection(
-                data_list,
-                select,
-                species,
-                file_handle)
+                file_handle, data_list, select, species, self.extensions)
 
         # Plotting
         if plot:
 
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
-                w = read_species_data(file_handle, species, 'w')
+                w = read_species_data(
+                    file_handle, species, 'w', self.extensions)
                 if select is not None:
-                    w, = apply_selection([w], select, species, file_handle)
+                    w, = apply_selection(
+                        file_handle, [w], select, species, self.extensions)
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])
@@ -513,13 +509,16 @@ def list_h5_files(path_to_dir):
     return(filenames, iterations)
 
 
-def apply_selection(data_list, select, species, file_handle):
+def apply_selection(file_handle, data_list, select, species, extensions):
     """
     Select the elements of each particle quantities in data_list,
     based on the selection rules in `select`
 
     Parameters
     ----------
+    file_handle: h5py.File object
+        The HDF5 file from which to extract data
+    
     data_list: list of 1darrays
         A list of arrays with one element per macroparticle, that represent
         different particle quantities
@@ -533,8 +532,8 @@ def apply_selection(data_list, select, species, file_handle):
     species: string
        Name of the species being requested
 
-    file_handle: h5py.File object
-        The HDF5 file from which to extract data
+    extensions: list of strings
+        The extensions that the current openPMDTimeseries complies with
 
     Returns
     -------
@@ -548,7 +547,7 @@ def apply_selection(data_list, select, species, file_handle):
 
     # Loop through the selection rules, and aggregate results in select_array
     for quantity in select.keys():
-        q = read_species_data(file_handle, species, quantity)
+        q = read_species_data(file_handle, species, quantity, extensions)
         # Check lower bound
         if select[quantity][0] is not None:
             select_array = np.logical_and(
