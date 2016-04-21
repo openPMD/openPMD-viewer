@@ -518,7 +518,7 @@ def apply_selection(file_handle, data_list, select, species, extensions):
     ----------
     file_handle: h5py.File object
         The HDF5 file from which to extract data
-    
+
     data_list: list of 1darrays
         A list of arrays with one element per macroparticle, that represent
         different particle quantities

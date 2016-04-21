@@ -8,6 +8,7 @@ import os
 from scipy import constants
 from .utilities import get_data, get_bpath
 
+
 def read_species_data(file_handle, species, record_comp, extensions):
     """
     Extract a given species' record_comp
@@ -18,7 +19,7 @@ def read_species_data(file_handle, species, record_comp, extensions):
     ----------
     file_handle: h5py.File object
         The HDF5 file from which to extract data
-    
+
     species: string
         The name of the species to extract (in the OpenPMD file)
 
@@ -47,7 +48,7 @@ def read_species_data(file_handle, species, record_comp, extensions):
     particles_path = file_handle.attrs['particlesPath'].decode()
 
     # Extract the right dataset
-    species_grp =  file_handle[ 
+    species_grp = file_handle[
         os.path.join(base_path, particles_path, species) ]
     data = get_data(species_grp[ opmd_record_comp ])
 
@@ -62,7 +63,7 @@ def read_species_data(file_handle, species, record_comp, extensions):
         if (macro_weighted == 1) and (weighting_power != 0):
             w = get_data( species_grp[ 'weighting' ] )
             data *= w ** (-weighting_power)
- 
+
     # - Return positions in microns, with an offset
     if record_comp in ['x', 'y', 'z']:
         offset = get_data(species_grp['positionOffset/%s' % record_comp])
