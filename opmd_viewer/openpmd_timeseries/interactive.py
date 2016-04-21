@@ -39,7 +39,7 @@ class InteractiveViewer(object):
         # Define useful functions
         # -----------------------
 
-        def refresh_field(change, force=False):
+        def refresh_field(change=None, force=False):
             """
             Refresh the current field figure
 
@@ -86,7 +86,7 @@ class InteractiveViewer(object):
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value)
 
-        def refresh_ptcl(change, force=False):
+        def refresh_ptcl(change=None, force=False):
             """
             Refresh the current particle figure
 
@@ -143,7 +143,7 @@ class InteractiveViewer(object):
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value)
 
-        def refresh_species(change):
+        def refresh_species(change=None):
             """
             Refresh the particle species buttons by populating them
             with the available records for the current species
@@ -182,8 +182,8 @@ class InteractiveViewer(object):
         def change_t(change):
             "Plot the result at the required time"
             self.current_t = 1.e-15 * change['new']
-            refresh_field( change )
-            refresh_ptcl( change )
+            refresh_field()
+            refresh_ptcl()
 
         def step_fw(b):
             "Plot the result one iteration further"
