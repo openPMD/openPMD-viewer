@@ -27,8 +27,8 @@ class InteractiveViewer(object):
         """
         Navigate the simulation using a slider
 
-        Parameters :
-        ------------
+        Parameters:
+        -----------
         figsize: tuple
             Size of the figures
 
@@ -39,7 +39,7 @@ class InteractiveViewer(object):
         # Define useful functions
         # -----------------------
 
-        def refresh_field(change, force=False) :
+        def refresh_field(change, force=False):
             """
             Refresh the current field figure
 
@@ -54,7 +54,7 @@ class InteractiveViewer(object):
             force: bool
                 Whether to force the update
             """
-            
+
             # Determine whether to do the refresh
             do_refresh = False
             if (self.avail_fields is not None):
@@ -86,7 +86,7 @@ class InteractiveViewer(object):
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value)
 
-        def refresh_ptcl(change, force=False) :
+        def refresh_ptcl(change, force=False):
             """
             Refresh the current particle figure
 
