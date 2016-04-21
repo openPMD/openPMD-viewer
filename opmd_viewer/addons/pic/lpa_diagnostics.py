@@ -108,8 +108,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - Central z position of each slice
 
         """
-        z, uz, ux, uy, w = self.get_particle(t=t, species=species, select=select,
-            var_list=['z', 'uz', 'ux', 'uy', 'w'],
+        z, uz, ux, uy, w = self.get_particle(t=t, species=species,
+            select=select, var_list=['z', 'uz', 'ux', 'uy', 'w'],
             iteration=iteration)
         # Calculate gamma of each particle
         gamma = np.sqrt(1 + (uz ** 2 + ux ** 2 + uy ** 2))
@@ -294,7 +294,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         A tuple of arrays containig
         - The current in each bin in Ampere
-        - A FieldMetaInformation object (See object's docstring for more details)
+        - A FieldMetaInformation object
+          (see object's docstring for more details)
 
         """
         # Get particle data
@@ -402,7 +403,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Restrict the metainformation to 1d if needed
         if index != 'all':
             info.restrict_to_1Daxis( info.axes[1] )
-            
+
         # Return the result
         return( envelope, info )
 
@@ -479,7 +480,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Extract the spectrum
         spectrum, info = self.get_spectrum( t, iteration, pol, m )
-        
+
         # Calculate the main frequency
         i_max = np.argmax( spectrum )
         omega0 = info.omega[i_max]
@@ -519,8 +520,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with:
-            - The 1D spectrum on axis        
-            - A FieldMetaInformation object 
+            - The 1D spectrum on axis
+            - A FieldMetaInformation object
         """
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
@@ -555,9 +556,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-        
+
         return( spectrum, spect_info )
-        
+
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
@@ -718,7 +719,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` method
-           
+
         Returns
         -------
         - A 2d array with spectrogram
@@ -772,7 +773,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             time_fs = 1.e15 * self.t[ self.current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
-            plt.title("Spectrogram at %.1f fs   (iteration %d)" \
+            plt.title("Spectrogram at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',

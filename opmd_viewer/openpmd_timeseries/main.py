@@ -179,7 +179,7 @@ class OpenPMDTimeSeries(parent_class):
         # Check that the species and quantity required are present
         if self.avail_species is None:
             raise OpenPMDException('No particle data in this time series')
-        if (species in self.avail_species) == False:
+        if species not in self.avail_species:
             species_list = '\n - '.join(self.avail_species)
             raise OpenPMDException(
                 "The argument `species` is missing or erroneous.\n"
@@ -192,9 +192,9 @@ class OpenPMDTimeSeries(parent_class):
             valid_var_list = False
         else:
             for quantity in var_list:
-                if (quantity in self.avail_record_components[species]) == False:
+                if quantity not in self.avail_record_components[species]:
                     valid_var_list = False
-        if valid_var_list == False:
+        if not valid_var_list:
             quantity_list = '\n - '.join(
                 self.avail_record_components[species])
             raise OpenPMDException(
@@ -214,7 +214,7 @@ class OpenPMDTimeSeries(parent_class):
                     if (quantity in self.avail_record_components[species]) \
                             is False:
                         valid_select_list = False
-            if valid_select_list == False:
+            if not valid_select_list:
                 quantity_list = '\n - '.join(
                     self.avail_record_components[species])
                 raise OpenPMDException(
@@ -346,7 +346,7 @@ class OpenPMDTimeSeries(parent_class):
         if self.avail_fields is None:
             raise OpenPMDException('No field data in this time series')
         # Check the field type
-        if (field in self.avail_fields) == False:
+        if field not in self.avail_fields:
             field_list = '\n - '.join(self.avail_fields)
             raise OpenPMDException(
                 "The `field` argument is missing or erroneous.\n"
@@ -357,7 +357,7 @@ class OpenPMDTimeSeries(parent_class):
             available_coord = ['x', 'y', 'z']
             if self.geometry == 'thetaMode':
                 available_coord += ['r', 't']
-            if (coord in available_coord) == False:
+            if coord not in available_coord:
                 coord_list = '\n - '.join(available_coord)
                 raise OpenPMDException(
                     "The field %s is a vector field, \nbut the `coord` "
@@ -366,7 +366,7 @@ class OpenPMDTimeSeries(parent_class):
                     "argument accordingly." % (field, coord_list))
         # Check the mode (for thetaMode)
         if self.geometry == "thetaMode":
-            if (str(m) in self.avail_circ_modes) == False:
+            if str(m) not in self.avail_circ_modes:
                 mode_list = '\n - '.join(self.avail_circ_modes)
                 raise OpenPMDException(
                     "The requested mode '%s' is not available.\n"
@@ -396,7 +396,8 @@ class OpenPMDTimeSeries(parent_class):
                 filename, field_path, slicing, slicing_dir)
         # - For thetaMode
         elif self.geometry == "thetaMode":
-            if (coord in ['x', 'y']) and (self.avail_fields[field] == 'vector'):
+            if (coord in ['x', 'y']) and \
+                    (self.avail_fields[field] == 'vector'):
                 # For Cartesian components, combine r and t components
                 Fr, info = read_field_circ(filename, field + '/r', m, theta)
                 Ft, info = read_field_circ(filename, field + '/t', m, theta)
@@ -416,7 +417,8 @@ class OpenPMDTimeSeries(parent_class):
             plot = False
         if plot:
             self.plotter.show_field(F, info, slicing_dir, m,
-                                    field_label, self.geometry, self.current_i, **kw)
+                                    field_label, self.geometry,
+                                    self.current_i, **kw)
 
         # Return the result
         return(F, info)
@@ -456,8 +458,8 @@ class OpenPMDTimeSeries(parent_class):
             else:
                 iter_list = '\n - '.join([str(it) for it in self.iterations])
                 print("The requested iteration '%s' is not available.\nThe "
-                      "available iterations are: \n - %s\nThe first iteration is "
-                      "used instead." % (iteration, iter_list))
+                      "available iterations are: \n - %s\nThe first iteration "
+                      "is used instead." % (iteration, iter_list))
                 self.current_i = 0
         else:
             pass  # self.current_i retains its previous value
@@ -493,8 +495,8 @@ def list_h5_files(path_to_dir):
             # Extract the iteration, using regular expressions (regex)
             regex_match = re.search('(\d+).h[df]*5', filename)
             if regex_match is None:
-                print('Ill-formated HDF5 file: %s\n File names should end '
-                      'with the iteration number, followed by ".h5"' % filename)
+                print('Ill-formated HDF5 file: %s\n File names should end with'
+                      ' the iteration number, followed by ".h5"' % filename)
             else:
                 iteration = int(regex_match.groups()[-1])
                 full_name = os.path.join(
