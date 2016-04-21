@@ -6,7 +6,7 @@ from an openPMD file
 """
 import os
 from scipy import constants
-from .utilities import get_data, get_bpath, get_metadata
+from .utilities import get_data, get_bpath
 
 def read_species_data( file_handle, species, record_comp, extensions ) :
     """
