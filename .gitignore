@@ -1,5 +1,6 @@
 *.pyc
 *.DS_Store
+*.egg
 build/
 dist/
 opmd_viewer.egg-info/

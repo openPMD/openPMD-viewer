@@ -57,8 +57,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle(
-                         var_list=['ux', 'uy', 'uz', 'w'], select=select,
-                         species=species, t=t, iteration=iteration )
+            var_list=['ux', 'uy', 'uz', 'w'], select=select,
+            species=species, t=t, iteration=iteration )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate weighted mean and average
@@ -72,6 +72,61 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         std_gamma = wstd(gamma, w)
         # Return the result
         return( mean_gamma, std_gamma )
+
+    def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
+                              select=None):
+        """
+        Calculate the standard deviation of gamma for particles in z-slices of
+        width dz
+
+        Parameters
+        ----------
+        dz : Width of slices in which to calculate sigma gamma
+
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : string
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
+        Returns
+        -------
+        A tuple of arrays:
+        - Sigma gamma in each slice
+        - Central z position of each slice
+
+        """
+        z, uz, ux, uy, w = self.get_particle(t=t, species=species,
+            select=select, var_list=['z', 'uz', 'ux', 'uy', 'w'],
+            iteration=iteration)
+        # Calculate gamma of each particle
+        gamma = np.sqrt(1 + (uz ** 2 + ux ** 2 + uy ** 2))
+        z0 = min(z)
+        zend = max(z)
+        N = int((zend - z0) / dz)
+        spreads = np.zeros(N + 1)
+        z_pos = np.linspace(z0, zend, N + 1)
+        zi = z0 + dz / 2.
+        i = 0
+        # Iterate over slices and calculate sigma gamma
+        while zi < zend:
+            z_filter = (z > zi - dz / 2.) & (z < zi + dz / 2.)
+            spreads[i] = wstd(gamma[z_filter], w[z_filter])
+            zi += dz
+            i += 1
+        return(spreads, z_pos)
 
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
@@ -103,9 +158,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Get particle data
         w, q = self.get_particle( var_list=['w', 'charge'], species=species,
-                                 select=select, t=t, iteration=iteration )
+            select=select, t=t, iteration=iteration )
         # Calculate charge
-        charge = np.sum(w*q)
+        charge = np.sum(w * q)
         # Return the result
         return( charge )
 
@@ -184,9 +239,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Get particle data
         x, y, ux, uy, w = self.get_particle(
-                                    var_list=['x', 'y', 'ux', 'uy', 'w'],
-                                    t=t, iteration=iteration,
-                                    species=species, select=select )
+            var_list=['x', 'y', 'ux', 'uy', 'w'],
+            t=t, iteration=iteration,
+            species=species, select=select )
         # Calculate the necessary RMS values
         x *= 1.e-6
         y *= 1.e-6
@@ -239,34 +294,35 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         A tuple of arrays containig
         - The current in each bin in Ampere
-        - A FieldMetaInformation object (See object's docstring for more details)
+        - A FieldMetaInformation object
+          (see object's docstring for more details)
 
         """
         # Get particle data
         z, uz, uy, ux, w, q = self.get_particle(
-                               var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
-                               t=t, iteration=iteration,
-                               species=species, select=select )
+            var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
+            t=t, iteration=iteration,
+            species=species, select=select )
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate particle velocities
         vz = uz / gamma * const.c
         # Length to be seperated in bins
         len_z = np.max(z) - np.min(z)
-        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz*w*q))
+        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
         # Calculete the current in each bin
         current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
-                    grid_spacing=(len_z/bins, ), grid_unitSI=1,
-                    global_offset=(np.min(z)+len_z/bins/2,), position=(0,))
+            grid_spacing=(len_z / bins, ), grid_unitSI=1,
+            global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
             iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15*self.t[ self.current_i ]
+            time_fs = 1.e15 * self.t[ self.current_i ]
             plt.plot( info.z, current, **kw)
             plt.title("Current at %.1f fs   (iteration %d)"
-                %(time_fs, iteration ), fontsize=self.plotter.fontsize)
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
         # Return the current and bin centers
@@ -347,7 +403,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Restrict the metainformation to 1d if needed
         if index != 'all':
             info.restrict_to_1Daxis( info.axes[1] )
-            
+
         # Return the result
         return( envelope, info )
 
@@ -424,7 +480,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         # Extract the spectrum
         spectrum, info = self.get_spectrum( t, iteration, pol, m )
-        
+
         # Calculate the main frequency
         i_max = np.argmax( spectrum )
         omega0 = info.omega[i_max]
@@ -464,8 +520,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with:
-            - The 1D spectrum on axis        
-            - A FieldMetaInformation object 
+            - The 1D spectrum on axis
+            - A FieldMetaInformation object
         """
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
@@ -475,24 +531,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = 0
         else:
             slicing_dir = 'x'
-            theta = np.pi/2.
+            theta = np.pi / 2.
 
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
         # Get central field lineout
-        field1d = field[field.shape[0]/2, :]
+        field1d = field[field.shape[0] / 2, :]
         # FFT of 1d data
-        dt = (info.z[1]-info.z[0])/const.c  # Integration step for the FFT
+        dt = (info.z[1] - info.z[0]) / const.c  # Integration step for the FFT
         fft_field = np.fft.fft(field1d) * dt
         # Take half of the data (positive frequencies only)
-        spectrum = abs( fft_field[ :len(fft_field)/2 ] )
+        spectrum = abs( fft_field[ :len(fft_field) / 2 ] )
         # Create a FieldMetaInformation object
-        T = (info.zmax-info.zmin)/const.c
-        spect_info = FieldMetaInformation( {0:'omega'}, spectrum.shape,
-                    grid_spacing=( 2*np.pi/T, ), grid_unitSI=1,
-                    global_offset=(0,), position=(0,))
+        T = (info.zmax - info.zmin) / const.c
+        spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
+            grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
+            global_offset=(0,), position=(0,))
 
         # Plot the field if required
         if plot:
@@ -500,9 +556,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-        
+
         return( spectrum, spect_info )
-        
+
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
@@ -533,7 +589,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = 0
         else:
             slicing_dir = 'x'
-            theta = np.pi/2.
+            theta = np.pi / 2.
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol, theta=theta,
@@ -574,7 +630,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = 0
         else:
             slicing_dir = 'x'
-            theta = np.pi/2.
+            theta = np.pi / 2.
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
@@ -663,7 +719,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` method
-           
+
         Returns
         -------
         - A 2d array with spectrogram
@@ -707,18 +763,18 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Find the time at which the wigner transform is the highest
         maxi, maxj = np.unravel_index(spectrogram.argmax(), spectrogram.shape)
         tmin = -(T - T / spectrogram.shape[1] * maxj)
-        info = FieldMetaInformation( {0:'omega', 1:'t'}, spectrogram.shape,
-                    grid_spacing=( 2*np.pi/T, dt/2. ), grid_unitSI=1,
-                    global_offset=(0, tmin), position=(0, 0))
+        info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
+            grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
+            global_offset=(0, tmin), position=(0, 0))
 
         # Plot the result if needed
         if plot:
             iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15*self.t[ self.current_i ]
+            time_fs = 1.e15 * self.t[ self.current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
-            plt.title("Spectrogram at %.1f fs   (iteration %d)" \
-                %(time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.title("Spectrogram at %.1f fs   (iteration %d)"
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
@@ -750,5 +806,5 @@ def wstd( a, weights ):
     else:
         # Calculate the weighted standard deviation
         average = np.average(a, weights=weights)
-        variance = np.average((a-average)**2, weights=weights)
+        variance = np.average((a - average) ** 2, weights=weights)
         return( np.sqrt(variance) )

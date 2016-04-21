@@ -21,4 +21,4 @@ with open('./openPMD-visualization.ipynb', 'w') as notebook_file:
     notebook_file.write( notebook_text )
 
 # Launch the corresponding notebook
-os.system('ipython notebook openPMD-visualization.ipynb')
+os.system('jupyter notebook openPMD-visualization.ipynb')
