@@ -15,6 +15,7 @@ from IPython.display import display, clear_output
 import math
 import matplotlib
 import matplotlib.pyplot as plt
+from functools import partial
 
 class InteractiveViewer(object):
 
@@ -37,8 +38,22 @@ class InteractiveViewer(object):
         # Define useful functions
         # -----------------------
 
-        def refresh_field(force=False) :
-            "Refresh the current field figure"
+        def refresh_field(sender_change=None, force=False) :
+            """
+            Refresh the current field figure
+
+            This can be called from various ipywidget events
+            so we keep the (unused) sender object or change object
+
+            Parameters :
+            ------------
+            sender_change: ipywidget sender object or change object
+                Depending on the event (change or click) this object is given,
+                see ipywidget event guide (we do not use it)
+
+            force: bool
+                force update
+            """
             
             # Determine whether to do the refresh
             do_refresh = False
@@ -71,8 +86,22 @@ class InteractiveViewer(object):
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value )
 
-        def refresh_ptcl(force=False) :
-            "Refresh the current particle figure"
+        def refresh_ptcl(sender_change=None, force=False) :
+            """
+            Refresh the current particle figure
+
+            This can be called from various ipywidget events
+            so we keep the (unused) sender object or change object
+
+            Parameters :
+            ------------
+            sender_change: ipywidget sender object or change object
+                Depending on the event (change or click) this object is given,
+                see ipywidget event guide (we do not use it)
+
+            force: bool
+                force update
+            """
             
             # Determine whether to do the refresh
             do_refresh = False
@@ -143,14 +172,6 @@ class InteractiveViewer(object):
 
             # Put back the previous value of the refreshing button
             ptcl_refresh_button.value = saved_refresh_value
-                
-        def refresh_ptcl_now(b):
-            "Refresh the particles immediately"
-            refresh_ptcl(force=True)
-
-        def refresh_fld_now(b):
-            "Refresh the fields immediately"
-            refresh_field(force=True)
 
         def change_t( name, value ) :
             "Plot the result at the required time"
@@ -260,7 +281,7 @@ class InteractiveViewer(object):
                 description='Always refresh', value=True ) 
             fld_refresh_button = widgets.Button(
                 description='Refresh now!')
-            fld_refresh_button.on_click( refresh_fld_now )            
+            fld_refresh_button.on_click( partial(refresh_field, force=True) )
 
             # Containers
             # ----------
@@ -346,7 +367,7 @@ class InteractiveViewer(object):
                 description='Always refresh', value=True ) 
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
-            ptcl_refresh_button.on_click( refresh_ptcl_now )
+            ptcl_refresh_button.on_click( partial(refresh_ptcl, force=True) )
 
             # Populate the empty selection and particle quantities widgets
             # with the available quantities for the current species
