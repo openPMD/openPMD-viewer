@@ -42,11 +42,13 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
 ```
 
 - Test and check your code:
-  - Use [pyflakes](https://pypi.python.org/pypi/pyflakes)  to detect
-  any potential bug:
+  - Use [pyflakes](https://pypi.python.org/pypi/pyflakes) and 
+[pep8](https://pypi.python.org/pypi/pep8) to detect any potential bug, and to 
+ensure that your code complies with some standard style conventions.
   ```
   cd openPMD-viewer/
   pyflakes opmd_viewer
+  pep8 --ignore=E201,E202,E122,E127,E128,E131 opmd_viewer
   ```
   - Make sure that the tests pass
   ```
@@ -65,7 +67,8 @@ git push -u origin <NewBranchName>
 - Go on your Github account and create a pull request between **your
   new feature branch** and the **dev branch of the main
   repository**. Please add some text to the pull request to describe
-  what feature you just implemented and why.
+  what feature you just implemented and why. Please also make sure that
+  the automated tests (on Github) return no error.
 
 ## Style and conventions
 
