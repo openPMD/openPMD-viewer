@@ -8,17 +8,18 @@ import os
 from scipy import constants
 from .utilities import get_data, get_bpath
 
-def read_species_data( file_handle, species, record_comp ) :
+
+def read_species_data(file_handle, species, record_comp):
     """
     Extract a given species' record_comp
-    
+
     In the case of positions, the result is returned in microns
-    
+
     Parameters
     ----------
     file_handle : h5py.File object
         The HDF5 file from which to extract data
-    
+
     species : string
         The name of the species to extract (in the OpenPMD file)
 
@@ -28,35 +29,38 @@ def read_species_data( file_handle, species, record_comp ) :
 
     """
     # Translate the record component to the OpenPMD format
-    dict_record_comp = { 'x' : 'position/x',
-                         'y' : 'position/y',
-                         'z' : 'position/z',
-                         'ux' : 'momentum/x',
-                         'uy' : 'momentum/y',
-                         'uz' : 'momentum/z',
-                         'w' : 'weighting'}
+    dict_record_comp = {'x': 'position/x',
+                        'y': 'position/y',
+                        'z': 'position/z',
+                        'ux': 'momentum/x',
+                        'uy': 'momentum/y',
+                        'uz': 'momentum/z',
+                        'w': 'weighting'}
     if record_comp in dict_record_comp:
         opmd_record_comp = dict_record_comp[record_comp]
     else:
         opmd_record_comp = record_comp
 
     # Open the HDF5 file
-    base_path =  get_bpath( file_handle )
+    base_path = get_bpath(file_handle)
     particles_path = file_handle.attrs['particlesPath'].decode()
 
     # Find the right dataset
-    species_grp =  file_handle[ os.path.join( base_path, particles_path, species ) ]
-    data = get_data( species_grp[ opmd_record_comp ] )
+    species_grp = file_handle[
+        os.path.join(
+            base_path,
+            particles_path,
+         species)]
+    data = get_data(species_grp[opmd_record_comp])
 
     # - Return positions in microns, with an offset
     if record_comp in ['x', 'y', 'z']:
-        offset = get_data( species_grp[ 'positionOffset/%s' %record_comp ] )
+        offset = get_data(species_grp['positionOffset/%s' % record_comp])
         data = 1.e6 * (data + offset)
     # - Return momentum in normalized units
-    elif record_comp in ['ux', 'uy', 'uz' ]:
-        norm_factor = 1./( get_data( species_grp['mass'] ) * constants.c )
+    elif record_comp in ['ux', 'uy', 'uz']:
+        norm_factor = 1. / (get_data(species_grp['mass']) * constants.c)
         data = data * norm_factor
 
     # Return the data
-    return( data )
-
+    return(data)
