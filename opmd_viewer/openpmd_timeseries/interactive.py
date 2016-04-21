@@ -39,21 +39,20 @@ class InteractiveViewer(object):
         # Define useful functions
         # -----------------------
 
-        def refresh_field(sender_change=None, force=False):
+        def refresh_field(change=None, force=False):
             """
             Refresh the current field figure
 
-            This can be called from various ipywidget events
-            so we keep the (unused) sender object or change object
-
-            Parameters:
-            -----------
-            sender_change: ipywidget sender object or change object
-                Depending on the event (change or click) this object is given,
-                see ipywidget event guide (we do not use it)
+            Parameters :
+            ------------
+            change: dictionary
+                Dictionary passed by the widget to a callback functions
+                whenever a change of a widget happens
+                (see docstring of ipywidgets.Widget.observe)
+                This is mainline a place holder ; not used in this function
 
             force: bool
-                force update
+                Whether to force the update
             """
 
             # Determine whether to do the refresh
@@ -87,23 +86,21 @@ class InteractiveViewer(object):
                     slicing_dir=slicing_dir_button.value,
                     vmin=vmin, vmax=vmax, cmap=fld_color_button.value)
 
-        def refresh_ptcl(sender_change=None, force=False):
+        def refresh_ptcl(change=None, force=False):
             """
             Refresh the current particle figure
 
-            This can be called from various ipywidget events
-            so we keep the (unused) sender object or change object
-
-            Parameters:
-            -----------
-            sender_change: ipywidget sender object or change object
-                Depending on the event (change or click) this object is given,
-                see ipywidget event guide (we do not use it)
+            Parameters :
+            ------------
+            change: dictionary
+                Dictionary passed by the widget to a callback functions
+                whenever a change of a widget happens
+                (see docstring of ipywidgets.Widget.observe)
+                This is mainline a place holder ; not used in this function
 
             force: bool
-                force update
+                Whether to force the update
             """
-
             # Determine whether to do the refresh
             do_refresh = False
             if self.avail_species is not None:
@@ -146,10 +143,17 @@ class InteractiveViewer(object):
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value)
 
-        def refresh_species(b):
+        def refresh_species(change=None):
             """
             Refresh the particle species buttons by populating them
             with the available records for the current species
+
+            Parameter
+            ---------
+            change: dictionary
+                Dictionary passed by the widget to a callback functions
+                whenever a change of a widget happens
+                (see docstring of ipywidgets.Widget.observe)
             """
             # Deactivate the particle refreshing to avoid callback
             # while modifying the widgets
@@ -173,11 +177,11 @@ class InteractiveViewer(object):
                 dropdown_button.options = avail_records
 
             # Put back the previous value of the refreshing button
-            ptcl_refresh_button.value = saved_refresh_value
+            ptcl_refresh_toggle.value = saved_refresh_value
 
-        def change_t(name, value):
+        def change_t(change):
             "Plot the result at the required time"
-            self.current_t = 1.e-15 * value
+            self.current_t = 1.e-15 * change['new']
             refresh_field()
             refresh_ptcl()
 
@@ -207,7 +211,7 @@ class InteractiveViewer(object):
             max=math.ceil(1.e15 * self.tmax),
             step=math.ceil(1.e15 * (self.tmax - self.tmin)) / 20.,
             description="t (fs)")
-        slider.on_trait_change(change_t, 'value')
+        slider.observe( change_t, names='value', type='change')
 
         # Forward button
         button_p = widgets.Button(description="+")
@@ -231,7 +235,7 @@ class InteractiveViewer(object):
             fieldtype_button = widgets.ToggleButtons(
                 description='Field:',
                 options=sorted(self.avail_fields.keys()))
-            fieldtype_button.on_trait_change(refresh_field)
+            fieldtype_button.observe( refresh_field )
 
             # Coord button
             if self.geometry == "thetaMode":
@@ -240,21 +244,21 @@ class InteractiveViewer(object):
             elif self.geometry in ["2dcartesian", "3dcartesian"]:
                 coord_button = widgets.ToggleButtons(
                     description='Coord:', options=['x', 'y', 'z'])
-            coord_button.on_trait_change(refresh_field)
+            coord_button.observe( refresh_field, 'value', 'change')
             # Mode and theta button (for thetaMode)
             mode_button = widgets.ToggleButtons(description='Mode:',
                                                 options=self.avail_circ_modes)
-            mode_button.on_trait_change(refresh_field)
+            mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider(width=140, value=0.,
                 description=r'Theta:', min=-math.pi / 2, max=math.pi / 2)
-            theta_button.on_trait_change(refresh_field)
+            theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(value='y',
                 description='Slicing direction:', options=['x', 'y', 'z'])
-            slicing_dir_button.on_trait_change(refresh_field)
+            slicing_dir_button.observe( refresh_field, 'value', 'change')
             slicing_button = widgets.FloatSlider(width=150,
                 description='Slicing:', min=-1., max=1., value=0.)
-            slicing_button.on_trait_change(refresh_field)
+            slicing_button.observe( refresh_field, 'value', 'change')
 
             # Plotting options
             # ----------------
@@ -264,20 +268,20 @@ class InteractiveViewer(object):
             # Range of values
             fld_range_button = widgets.FloatRangeSlider(
                 min=-10, max=10, width=220)
-            fld_range_button.on_trait_change(refresh_field)
+            fld_range_button.observe( refresh_field, 'value', 'change')
             # Order of magnitude
             fld_magnitude_button = widgets.IntText(
                 description='x 10^', value=9, width=50)
-            fld_magnitude_button.on_trait_change(refresh_field)
+            fld_magnitude_button.observe( refresh_field, 'value', 'change')
             # Use button
             fld_use_button = widgets.Checkbox(
                 description=' Use this range', value=False)
-            fld_use_button.on_trait_change(refresh_field)
+            fld_use_button.observe( refresh_field, 'value', 'change')
             # Colormap button
             fld_color_button = widgets.Select(
                 options=sorted(plt.cm.datad.keys()), height=50, width=200,
                 value='jet')
-            fld_color_button.on_trait_change(refresh_field)
+            fld_color_button.observe( refresh_field, 'value', 'change' )
             # Resfresh buttons
             fld_refresh_toggle = widgets.ToggleButton(
                 description='Always refresh', value=True)
@@ -328,21 +332,28 @@ class InteractiveViewer(object):
             # Particle quantities
             # -------------------
             # Species selection
-            ptcl_species_button = widgets.Dropdown(width=250,
-                                                   options=self.avail_species)
-            ptcl_species_button.on_trait_change(refresh_species)
-            # Create empty ToggleButtons, but populate them later
+            ptcl_species_button = widgets.Dropdown( width=250,
+                                                   options=self.avail_species )
+            ptcl_species_button.observe( refresh_species, 'value', 'change')
+            # Get available records for this species (remove charge and
+            # mass as they are typically less interesting)
+            avail_records = [q for q in
+                             self.avail_record_components[
+                                 ptcl_species_button.value]
+                             if q not in ['charge', 'mass']]
             # Particle quantity on the x axis
-            ptcl_xaxis_button = widgets.ToggleButtons(options=[])
-            ptcl_xaxis_button.on_trait_change(refresh_ptcl)
+            ptcl_xaxis_button = widgets.ToggleButtons(options=avail_records)
+            ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
             # Particle quantity on the y axis
-            ptcl_yaxis_button = widgets.ToggleButtons(options=[])
-            ptcl_yaxis_button.on_trait_change(refresh_ptcl)
+            ptcl_yaxis_button = widgets.ToggleButtons(
+                options=avail_records + ['None'], value='None')
+            ptcl_yaxis_button.observe( refresh_ptcl, 'value', 'change')
 
             # Particle selection
             # ------------------
             # 3 selection rules at maximum
-            ptcl_select_widget = ParticleSelectWidget(3, refresh_ptcl)
+            ptcl_select_widget = ParticleSelectWidget(3,
+                                 avail_records, refresh_ptcl)
 
             # Plotting options
             # ----------------
@@ -352,34 +363,30 @@ class InteractiveViewer(object):
             # Number of bins
             ptcl_bins_button = widgets.IntSlider(description='nbins:',
                 min=50, max=300, value=100, width=150)
-            ptcl_bins_button.on_trait_change(refresh_ptcl)
+            ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = widgets.Select(
                 options=sorted(plt.cm.datad.keys()), height=50, width=200,
                 value='Blues')
-            ptcl_color_button.on_trait_change(refresh_ptcl)
+            ptcl_color_button.observe( refresh_ptcl, 'value', 'change')
             # Range of values
             ptcl_range_button = widgets.FloatRangeSlider(
                 min=0, max=10, width=220, value=(0, 5))
-            ptcl_range_button.on_trait_change(refresh_ptcl)
+            ptcl_range_button.observe( refresh_ptcl, 'value', 'change')
             # Order of magnitude
             ptcl_magnitude_button = widgets.IntText(
                 description='x 10^', value=9, width=50)
-            ptcl_magnitude_button.on_trait_change(refresh_ptcl)
+            ptcl_magnitude_button.observe( refresh_ptcl, 'value', 'change')
             # Use button
             ptcl_use_button = widgets.Checkbox(
                 description=' Use this range', value=False)
-            ptcl_use_button.on_trait_change(refresh_ptcl)
+            ptcl_use_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
                 description='Always refresh', value=True)
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
             ptcl_refresh_button.on_click( partial(refresh_ptcl, force=True) )
-
-            # Populate the empty selection and particle quantities widgets
-            # with the available quantities for the current species
-            refresh_species(ptcl_species_button)
 
             # Containers
             # ----------
@@ -440,7 +447,7 @@ class ParticleSelectWidget(object):
     Class that groups the particle selection widgets.
     """
 
-    def __init__(self, n_rules, refresh_ptcl):
+    def __init__(self, n_rules, avail_records, refresh_ptcl):
         """
         Initialize a set of particle selection widgets
 
@@ -448,6 +455,9 @@ class ParticleSelectWidget(object):
         -----------
         n_rules: int
             The number of selection rules to display
+
+        avail_records: list of strings
+            The list of available records for the current species
 
         refresh_ptcl: callable
             The callback function to execute when the widget is changed
@@ -460,7 +470,7 @@ class ParticleSelectWidget(object):
         # Create widgets that determines the quantity on which to select
         # (The Dropdown menu is empty, but is later populated by the
         # function refresh_species)
-        self.quantity = [widgets.Dropdown(options=[],
+        self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
         self.low_bound = [widgets.FloatText(value=-1.e-1, width=90,
@@ -470,10 +480,10 @@ class ParticleSelectWidget(object):
 
         # Add the callback function refresh_ptcl to each widget
         for i in range(n_rules):
-            self.active[i].on_trait_change(refresh_ptcl)
-            self.quantity[i].on_trait_change(refresh_ptcl)
-            self.low_bound[i].on_trait_change(refresh_ptcl)
-            self.up_bound[i].on_trait_change(refresh_ptcl)
+            self.active[i].observe( refresh_ptcl, 'value', 'change' )
+            self.quantity[i].observe( refresh_ptcl, 'value', 'change' )
+            self.low_bound[i].observe( refresh_ptcl, 'value', 'change' )
+            self.up_bound[i].observe( refresh_ptcl, 'value', 'change' )
 
     def to_container(self):
         """

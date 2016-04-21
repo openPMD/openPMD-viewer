@@ -202,7 +202,7 @@ class OpenPMDTimeSeries(parent_class):
                 "It should be a list of strings representing species record "
                 "components.\n The available quantities for species '%s' are:"
                 "\n - %s\nPlease set the argument `var_list` "
-                "accordingly." % species % quantity_list)
+                "accordingly." % (species, quantity_list) )
 
         # Check the selection quantities
         if select is not None:
