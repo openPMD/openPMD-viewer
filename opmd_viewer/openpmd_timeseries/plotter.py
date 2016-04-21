@@ -6,13 +6,15 @@ It defines a set of methods which are useful for plotting
 """
 import matplotlib.pyplot as plt
 
+
 class Plotter(object):
+
     """
     Class which is used for plotting particles and fields
     (and labeling the plots)
     """
 
-    def __init__( self, t, iterations ):
+    def __init__(self, t, iterations):
         """
         Initialize the object
 
@@ -22,7 +24,7 @@ class Plotter(object):
            Time for each available iteration of the timeseries
 
         iterations: 1darray of ints
-           Iteration number for each available iteration of the timeseries      
+           Iteration number for each available iteration of the timeseries
         """
         # Default fontsize
         self.fontsize = 18
@@ -32,9 +34,8 @@ class Plotter(object):
         self.t = t
         self.iterations = iterations
 
-
-    def hist1d( self, q1, w, quantity1, species, current_i, nbins,
-                cmap='Blues', vmin=None, vmax=None, **kw ):
+    def hist1d(self, q1, w, quantity1, species, current_i, nbins,
+               cmap='Blues', vmin=None, vmax=None, **kw):
         """
         Plot a 1D histogram of the particle quantity q1
         Sets the proper labels
@@ -54,7 +55,7 @@ class Plotter(object):
 
         species: string
             The name of the species from which the data is taken
-            
+
         current_i: int
             The index of this iteration, within the iterations list
 
@@ -65,18 +66,17 @@ class Plotter(object):
            Additional options to be passed to matplotlib's hist
         """
         # Find the iteration and time
-        iteration = self.iterations[ current_i ]
-        time_fs = 1.e15*self.t[ current_i ]
+        iteration = self.iterations[current_i]
+        time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
-        plt.hist(q1, bins=nbins, weights=w, **kw )
+        plt.hist(q1, bins=nbins, weights=w, **kw)
         plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f fs    (iteration %d)" \
-                %(species, time_fs, iteration), fontsize=self.fontsize )
+        plt.title("%s:   t =  %.0f fs    (iteration %d)"
+                  % (species, time_fs, iteration), fontsize=self.fontsize)
 
-
-    def hist2d( self, q1, q2, w, quantity1, quantity2, species, current_i,
-                nbins, cmap='Blues', vmin=None, vmax=None, **kw ):
+    def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
+               nbins, cmap='Blues', vmin=None, vmax=None, **kw):
         """
         Plot a 2D histogram of the particle quantity q1
         Sets the proper labels
@@ -96,7 +96,7 @@ class Plotter(object):
 
         species: string
             The name of the species from which the data is taken
-            
+
         current_i: int
             The index of this iteration, within the iterations list
 
@@ -107,21 +107,20 @@ class Plotter(object):
            Additional options to be passed to matplotlib's hist
         """
         # Find the iteration and time
-        iteration = self.iterations[ current_i ]
-        time_fs = 1.e15*self.t[ current_i ]
+        iteration = self.iterations[current_i]
+        time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
         plt.hist2d(q1, q2, bins=nbins, cmap=cmap,
-                    vmin=vmin, vmax=vmax, weights=w, **kw )
+                   vmin=vmin, vmax=vmax, weights=w, **kw)
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f fs   (iteration %d)"  \
-                %(species, time_fs, iteration ), fontsize=self.fontsize )
+        plt.title("%s:   t =  %.1f fs   (iteration %d)"
+                  % (species, time_fs, iteration), fontsize=self.fontsize)
 
-
-    def show_field( self, F, info, slicing_dir, m,
-                    field_label, geometry, current_i, **kw ):
+    def show_field(self, F, info, slicing_dir, m,
+                   field_label, geometry, current_i, **kw):
         """
         Plot the given field in 2D
 
@@ -132,7 +131,7 @@ class Plotter(object):
 
         info: a FieldMetaInformation object
             Contains the information about the plotted field
-            
+
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
            The direction along which the data is sliced
@@ -148,30 +147,30 @@ class Plotter(object):
            Either "2dcartesian", "3dcartesian" or "thetaMode"
         """
         # Find the iteration and time
-        iteration = self.iterations[ current_i ]
-        time_fs = 1.e15*self.t[ current_i ]
+        iteration = self.iterations[current_i]
+        time_fs = 1.e15 * self.t[current_i]
 
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f fs   (iteration %d)" \
-            %(field_label, mode, time_fs, iteration ), fontsize=self.fontsize)
+            plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
+                      % (field_label, mode, time_fs, iteration), fontsize=self.fontsize)
         # 2D Cartesian geometry
-        elif geometry =="2dcartesian":
-            plt.title("%s at %.1f fs   (iteration %d)" \
-                %(field_label, time_fs, iteration ), fontsize=self.fontsize)
+        elif geometry == "2dcartesian":
+            plt.title("%s at %.1f fs   (iteration %d)"
+                      % (field_label, time_fs, iteration), fontsize=self.fontsize)
         # 3D Cartesian geometry
-        elif geometry=="3dcartesian":
-            plt.title("%s sliced across %s at %.1f fs  (iteration %d)" \
-                %(field_label, slicing_dir, time_fs, iteration ),
-                fontsize=self.fontsize)
+        elif geometry == "3dcartesian":
+            plt.title("%s sliced across %s at %.1f fs  (iteration %d)"
+                      % (field_label, slicing_dir, time_fs, iteration),
+                      fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' %info.axes[1], fontsize=self.fontsize )
-        plt.ylabel('$%s \;(\mu m)$' %info.axes[0], fontsize=self.fontsize )
+        plt.xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
+        plt.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow( F, extent=1.e6*info.imshow_extent, origin='lower',
-            interpolation='nearest', aspect='auto', **kw )
+        plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
+                   interpolation='nearest', aspect='auto', **kw)
         plt.colorbar()
