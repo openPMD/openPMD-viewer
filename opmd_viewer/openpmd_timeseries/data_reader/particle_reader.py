@@ -46,7 +46,6 @@ def read_species_data(file_handle, species, record_comp, extensions):
     base_path = get_bpath(file_handle)
     particles_path = file_handle.attrs['particlesPath'].decode()
 
-<<<<<<< HEAD
     # Extract the right dataset
     species_grp =  file_handle[ 
         os.path.join(base_path, particles_path, species) ]
