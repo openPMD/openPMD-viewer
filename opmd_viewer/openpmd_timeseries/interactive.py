@@ -1,9 +1,14 @@
 """
-This file is part of the OpenPMD viewer
+This file is part of the openPMD viewer.
 
 It defines an interactive interface for the viewer,
 based on the IPython notebook functionalities
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 try:
     from ipywidgets import widgets
 except ImportError:

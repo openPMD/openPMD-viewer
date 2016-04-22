@@ -2,7 +2,12 @@
 This file is part of the openPMD viewer.
 
 It defines a function that can read standard parameters from an openPMD file.
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import os
 import h5py
 import numpy as np
