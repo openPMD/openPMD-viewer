@@ -54,7 +54,6 @@ class InteractiveViewer(object):
             force: bool
                 Whether to force the update
             """
-
             # Determine whether to do the refresh
             do_refresh = False
             if (self.avail_fields is not None):
@@ -142,6 +141,24 @@ class InteractiveViewer(object):
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
                         nbins=ptcl_bins_button.value)
+
+        def refresh_field_type(change):
+            """
+            Refresh the field type and disable the coordinates buttons
+            if the field is scalar.
+
+            Parameter
+            ---------
+            change: dictionary
+                Dictionary passed by the widget to a callback functions
+                whenever a change of a widget happens
+                (see docstring of ipywidgets.Widget.observe)
+            """
+            if self.avail_fields[change['new']] == 'scalar':
+                coord_button.disabled = True
+            elif self.avail_fields[change['new']] == 'vector':
+                coord_button.disabled = False
+            refresh_field()
 
         def refresh_species(change=None):
             """
@@ -235,7 +252,7 @@ class InteractiveViewer(object):
             fieldtype_button = widgets.ToggleButtons(
                 description='Field:',
                 options=sorted(self.avail_fields.keys()))
-            fieldtype_button.observe( refresh_field )
+            fieldtype_button.observe( refresh_field_type, 'value', 'change' )
 
             # Coord button
             if self.geometry == "thetaMode":
