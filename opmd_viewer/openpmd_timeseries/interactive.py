@@ -378,8 +378,8 @@ class InteractiveViewer(object):
             ptcl_figure_button = widgets.IntText(description='Figure ',
                                                  value=1, width=50)
             # Number of bins
-            ptcl_bins_button = widgets.IntSlider(description='nbins:',
-                min=50, max=300, value=100, width=150)
+            ptcl_bins_button = widgets.IntText(description='nbins:',
+                                               value=100, width=100)
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = widgets.Select(
