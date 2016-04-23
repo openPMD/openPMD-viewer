@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-import opmd_viewer # In order to extract the version number
+import opmd_viewer  # In order to extract the version number
 
 # Get the package requirements from the requirements.txt file
 with open('requirements.txt') as f:
