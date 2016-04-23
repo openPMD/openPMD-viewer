@@ -89,7 +89,8 @@ def get_data(dset, i_slice=None, pos_slice=None):
             data = dset[:, :, i_slice]
 
     # Scale by the conversion factor
-    data = data * dset.attrs['unitSI']
+    if dset.attrs['unitSI'] != 1:
+        data *= dset.attrs['unitSI']
 
     return(data)
 
