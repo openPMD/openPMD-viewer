@@ -10,9 +10,9 @@ $ python tests/test_tutorials.py
 $ py.test
 $ python setup.py test
 
-__authors__ = "Remi Lehe, Axel Huebl"
-__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
-__license__ = "3-Clause-BSD-LBNL"
+Copyright 2015-2016, openPMD viewer contributors
+Authors: Remi Lehe, Axel Huebl
+License: 3-Clause-BSD-LBNL
 """
 
 import os

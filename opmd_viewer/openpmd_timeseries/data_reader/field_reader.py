@@ -3,9 +3,9 @@ This file is part of the openPMD viewer.
 
 It defines functions that can read the fields from an HDF5 file.
 
-__authors__ = "Remi Lehe"
-__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
-__license__ = "3-Clause-BSD-LBNL"
+Copyright 2015-2016, openPMD viewer contributors
+Author: Remi Lehe
+License: 3-Clause-BSD-LBNL
 """
 
 import os

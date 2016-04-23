@@ -5,9 +5,9 @@ It defines the main FieldMetaInformation class, which
 is returned by `get_field` along with the array of field values,
 and gathers information collected from the openPMD file.
 
-__authors__ = "Remi Lehe"
-__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
-__license__ = "3-Clause-BSD-LBNL"
+Copyright 2015-2016, openPMD viewer contributors
+Author: Remi Lehe
+License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
