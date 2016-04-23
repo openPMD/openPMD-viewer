@@ -23,7 +23,8 @@ class InteractiveViewer(object):
     def __init__(self):
         pass
 
-    def slider(self, figsize=(10, 10), **kw):
+    def slider(self, figsize=(8, 8),
+               exclude_particle_records=['charge', 'mass'], **kw):
         """
         Navigate the simulation using a slider
 
@@ -31,6 +32,10 @@ class InteractiveViewer(object):
         -----------
         figsize: tuple
             Size of the figures
+
+        exclude_particle_records: list of strings
+            List of particle quantities that should not be displayed
+            in the slider (typically because they are less interesting)
 
         kw: dict
             Extra arguments to pass to matplotlib's imshow
@@ -177,12 +182,11 @@ class InteractiveViewer(object):
             saved_refresh_value = ptcl_refresh_toggle.value
             ptcl_refresh_toggle.value = False
 
-            # Get available records for this species (remove charge and
-            # mass as they are typically less interesting)
+            # Get available records for this species
             avail_records = [q for q in
                              self.avail_record_components[
                                  ptcl_species_button.value]
-                             if q not in ['charge', 'mass']]
+                             if q not in exclude_particle_records]
             # Update the plotting buttons
             ptcl_xaxis_button.options = avail_records
             ptcl_xaxis_button.value = avail_records[0]
@@ -352,12 +356,11 @@ class InteractiveViewer(object):
             ptcl_species_button = widgets.Dropdown( width=250,
                                                    options=self.avail_species )
             ptcl_species_button.observe( refresh_species, 'value', 'change')
-            # Get available records for this species (remove charge and
-            # mass as they are typically less interesting)
+            # Get available records for this species
             avail_records = [q for q in
                              self.avail_record_components[
                                  ptcl_species_button.value]
-                             if q not in ['charge', 'mass']]
+                             if q not in exclude_particle_records]
             # Particle quantity on the x axis
             ptcl_xaxis_button = widgets.ToggleButtons(options=avail_records)
             ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
