@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
+import opmd_viewer # In order to extract the version number
 
 # Get the package requirements from the requirements.txt file
 with open('requirements.txt') as f:
@@ -9,7 +10,7 @@ install_requires.append('wget')
 
 # Main setup command
 setup(name='opmd_viewer',
-      version='1.0',
+      version=opmd_viewer.__version__,
       maintainer='Remi Lehe',
       maintainer_email='remi.lehe@lbl.gov',
       description='Visualization tools for OpenPMD files',
