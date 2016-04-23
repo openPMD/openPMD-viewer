@@ -1,32 +1,39 @@
 """
-This file is part of the OpenPMD viewer.
+This file is part of the openPMD viewer.
 
 It defines a set of helper data and functions which
 are used by the other files.
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import h5py
 import numpy as np
 
+
 # General dictionaries
-slice_dict = { 'x':0, 'y':1, 'z':2 }
+slice_dict = {'x': 0, 'y': 1, 'z': 2}
 
 
-def get_bpath( f ):
+def get_bpath(f):
     """
     Return a string that corresponds to the base path of the data.
 
     NB: For openPMD 1.0.0, the basePath is always of the form
     '/data/%T' where %T is replaced by the actual iteration which
-    is present in the file. 
-    
+    is present in the file.
+
     Parameters:
     -----------
     f: am h5py.File object
     """
     iteration = list(f['/data'].keys())[0]
-    return( '/data/%s' %iteration )
+    return('/data/%s' % iteration)
 
-def is_scalar_record( record ):
+
+def is_scalar_record(record):
     """
     Determine whether a record is a scalar record or a vector record
 
@@ -40,14 +47,14 @@ def is_scalar_record( record ):
     """
     scalar = False
     if 'value' in record.attrs:
-        scalar=True
-    elif type(record) is h5py.Dataset:
-        scalar=True
+        scalar = True
+    elif isinstance(record, h5py.Dataset):
+        scalar = True
 
     return(scalar)
 
 
-def get_data( dset, i_slice=None, pos_slice=None ) :
+def get_data(dset, i_slice=None, pos_slice=None):
     """
     Extract the data from a (possibly constant) dataset
     Slice the data according to the parameters i_slice and pos_slice
@@ -59,7 +66,7 @@ def get_data( dset, i_slice=None, pos_slice=None ) :
 
     i_slice: int, optional
        The index of the slice to be taken
-    
+
     pos_slice: int, optional
        The position at which to slice the array
        When None, no slice is performed
@@ -69,30 +76,32 @@ def get_data( dset, i_slice=None, pos_slice=None ) :
     An np.ndarray (non-constant dataset) or a single double (constant dataset)
     """
     # Case of a constant dataset
-    if type(dset) is h5py.Group:
+    if isinstance(dset, h5py.Group):
         shape = dset.attrs['shape']
         # Restrict the shape if slicing is enabled
         if pos_slice is not None:
-            shape = shape[:pos_slice] + shape[pos_slice+1:]
+            shape = shape[:pos_slice] + shape[pos_slice + 1:]
         # Create the corresponding dataset
-        data = dset.attrs['value'] * np.ones( shape )
+        data = dset.attrs['value'] * np.ones(shape)
     # Case of a non-constant dataset
-    elif type(dset) is h5py.Dataset:
+    elif isinstance(dset, h5py.Dataset):
         if pos_slice is None:
             data = dset[...]
-        elif pos_slice==0:
-            data = dset[i_slice,...]
-        elif pos_slice==1:
-            data = dset[:,i_slice,...]
-        elif pos_slice==2:
-            data = dset[:,:,i_slice]
-            
+        elif pos_slice == 0:
+            data = dset[i_slice, ...]
+        elif pos_slice == 1:
+            data = dset[:, i_slice, ...]
+        elif pos_slice == 2:
+            data = dset[:, :, i_slice]
+
     # Scale by the conversion factor
-    data = data * dset.attrs['unitSI']
+    if dset.attrs['unitSI'] != 1.0:
+        data *= dset.attrs['unitSI']
 
     return(data)
 
-def get_shape( dset ) :
+
+def get_shape(dset):
     """
     Extract the shape of a (possibly constant) dataset
 
@@ -106,10 +115,10 @@ def get_shape( dset ) :
     A tuple corresponding to the shape
     """
     # Case of a constant dataset
-    if type(dset) is h5py.Group:
+    if isinstance(dset, h5py.Group):
         shape = dset.attrs['shape']
     # Case of a non-constant dataset
-    elif type(dset) is h5py.Dataset:
+    elif isinstance(dset, h5py.Dataset):
         shape = dset.shape
 
     return(shape)

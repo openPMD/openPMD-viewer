@@ -9,6 +9,8 @@ matrix:
     - os: linux
       python: "2.7"
     - os: linux
+      python: "3.4"
+    - os: linux
       python: "3.5"
     - os: osx
       language: cpp
@@ -31,8 +33,15 @@ install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
   - conda install --yes python=$TRAVIS_PYTHON_VERSION jupyter
   - conda install --yes python=$TRAVIS_PYTHON_VERSION pyflakes
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION pep8
   - python setup.py install
+
 before_script :
+  # static code analysis
+  #   pyflakes: mainly warnings, unused code, etc.
   - python -m pyflakes .
+  #   pep8: style only, enforce PEP 8
+  - python -m pep8 --ignore=E201,E202,E122,E127,E128,E131 .
+
 script: 
   - "python setup.py test"

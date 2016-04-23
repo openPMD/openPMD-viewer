@@ -1,63 +1,83 @@
 """
-This file is part of the OpenPMD viewer.
+This file is part of the openPMD viewer.
 
-It defines a function that reads particle data from an openPMD file
+It defines a function that reads a species record component (data & meta)
+from an openPMD file
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import os
-import h5py
 from scipy import constants
 from .utilities import get_data, get_bpath
 
-def read_particle( filename, species, quantity ) :
+
+def read_species_data(file_handle, species, record_comp, extensions):
     """
-    Extract a given particle quantity
-    
+    Extract a given species' record_comp
+
     In the case of positions, the result is returned in microns
-    
+
     Parameters
     ----------
-    filename : string
-        The name of the file from which to extract data
-    
-    species : string
+    file_handle: h5py.File object
+        The HDF5 file from which to extract data
+
+    species: string
         The name of the species to extract (in the OpenPMD file)
 
-    quantity : string
-        The quantity to extract
+    record_comp: string
+        The record component to extract
         Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
 
+    extensions: list of strings
+        The extensions that the current openPMDTimeseries complies with
     """
-    # Translate the quantity to the OpenPMD format
-    dict_quantity = { 'x' : 'position/x',
-                      'y' : 'position/y',
-                      'z' : 'position/z',
-                      'ux' : 'momentum/x',
-                      'uy' : 'momentum/y',
-                      'uz' : 'momentum/z',
-                      'w' : 'weighting'}
-    if quantity in dict_quantity:
-        opmd_quantity = dict_quantity[quantity]
+    # Translate the record component to the OpenPMD format
+    dict_record_comp = {'x': 'position/x',
+                        'y': 'position/y',
+                        'z': 'position/z',
+                        'ux': 'momentum/x',
+                        'uy': 'momentum/y',
+                        'uz': 'momentum/z',
+                        'w': 'weighting'}
+    if record_comp in dict_record_comp:
+        opmd_record_comp = dict_record_comp[record_comp]
     else:
-        opmd_quantity = quantity
+        opmd_record_comp = record_comp
 
     # Open the HDF5 file
-    dfile = h5py.File( filename, 'r' )
-    base_path =  get_bpath( dfile )
-    particles_path = dfile.attrs['particlesPath'].decode()
+    base_path = get_bpath(file_handle)
+    particles_path = file_handle.attrs['particlesPath'].decode()
 
-    # Find the right dataset
-    species_grp =  dfile[ os.path.join( base_path, particles_path, species ) ]
-    data = get_data( species_grp[ opmd_quantity ] )
+    # Extract the right dataset
+    species_grp = file_handle[
+        os.path.join(base_path, particles_path, species) ]
+    data = get_data(species_grp[ opmd_record_comp ])
+
+    # For ED-PIC: if the data is weighted for a full macroparticle,
+    # divide by the weight with the proper power
+    # (Skip this if the current record component is the weight itself)
+    if 'ED-PIC' in extensions and opmd_record_comp != 'weighting':
+        opmd_record = opmd_record_comp.split('/')[0]
+        record_dset = species_grp[ opmd_record ]
+        macro_weighted = record_dset.attrs['macroWeighted']
+        weighting_power = record_dset.attrs['weightingPower']
+        if (macro_weighted == 1) and (weighting_power != 0):
+            w = get_data( species_grp[ 'weighting' ] )
+            data *= w ** (-weighting_power)
 
     # - Return positions in microns, with an offset
-    if quantity in ['x', 'y', 'z']:
-        offset = get_data( species_grp[ 'positionOffset/%s' %quantity ] )
-        data = 1.e6 * (data + offset)
+    if record_comp in ['x', 'y', 'z']:
+        offset = get_data(species_grp['positionOffset/%s' % record_comp])
+        data += offset
+        data *= 1.e6
     # - Return momentum in normalized units
-    elif quantity in ['ux', 'uy', 'uz' ]: 
-        norm_factor = 1./( get_data( species_grp['mass'] ) * constants.c )
-        data = data * norm_factor
+    elif record_comp in ['ux', 'uy', 'uz' ]:
+        norm_factor = 1. / (get_data(species_grp['mass']) * constants.c)
+        data *= norm_factor
 
-    # Close the HDF5 file and return the data
-    dfile.close()
-    return( data )
+    # Return the data
+    return(data)
