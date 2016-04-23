@@ -1,11 +1,17 @@
 """
-This file is part of the OpenPMD viewer.
+This file is part of the openPMD viewer.
 
 It defines a set of helper data and functions which
 are used by the other files.
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import h5py
 import numpy as np
+
 
 # General dictionaries
 slice_dict = {'x': 0, 'y': 1, 'z': 2}

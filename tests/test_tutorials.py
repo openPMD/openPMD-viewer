@@ -1,15 +1,20 @@
 """
-This test file is part of the openPMD-viewer.
+This test file is part of the openPMD viewer.
 
 It makes sure that the tutorial notebooks run without error.
 
 Usage:
-This file is meant to be run from the root directory of openPMD-viewer,
+This file is meant to be run from the root directory of openPMD viewer,
 by any of the following commands
 $ python tests/test_tutorials.py
 $ py.test
 $ python setup.py test
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import os
 import re
 

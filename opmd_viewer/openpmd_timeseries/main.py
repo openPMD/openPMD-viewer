@@ -1,8 +1,13 @@
 """
-This file is part of the OpenPMD viewer.
+This file is part of the openPMD viewer.
 
 It defines the main OpenPMDTimeSeries class.
+
+__authors__ = "Remi Lehe, Axel Huebl"
+__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
+__license__ = "3-Clause-BSD-LBNL"
 """
+
 import os
 import re
 import numpy as np
@@ -12,6 +17,7 @@ from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_2d, \
     read_field_circ, read_field_3d
+
 
 # Check wether the interactive interface can be loaded
 try:

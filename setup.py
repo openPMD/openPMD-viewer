@@ -10,8 +10,8 @@ install_requires.append('wget')
 # Main setup command
 setup(name='opmd_viewer',
       version='1.0',
-      author='Remi Lehe',
-      author_email='remi.lehe@lbl.gov',
+      maintainer='Remi Lehe',
+      maintainer_email='remi.lehe@lbl.gov',
       description='Visualization tools for OpenPMD files',
       url='git@bitbucket.org:berkeleylab/opmd_viewer.git',
       packages=find_packages('./'),
