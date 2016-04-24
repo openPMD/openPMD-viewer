@@ -9,13 +9,7 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
-try:
-    from ipywidgets import widgets
-except ImportError:
-    # If ipywidgets is not available, use the deprecated package
-    # IPython.html.widgets, so that the GUI still works
-    from IPython.html import widgets
-
+from ipywidgets import widgets
 from IPython.display import display, clear_output
 import math
 import matplotlib
