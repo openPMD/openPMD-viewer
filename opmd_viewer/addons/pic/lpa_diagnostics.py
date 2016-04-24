@@ -3,9 +3,9 @@ This file is part of the openPMD viewer.
 
 This file contains diagnostics relevant for laser-plasma acceleration
 
-__authors__ = "Soeren Jalas, Remi Lehe"
-__copyright__ = "Copyright 2015-2016, openPMD viewer contributors"
-__license__ = "3-Clause-BSD-LBNL"
+Copyright 2015-2016, openPMD viewer contributors
+Authors: Soeren Jalas, Remi Lehe
+License: 3-Clause-BSD-LBNL
 """
 
 # Class that inherits from OpenPMDTimeSeries, and implements
