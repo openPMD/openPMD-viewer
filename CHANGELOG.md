@@ -1,8 +1,8 @@
-# Change Log / Release Log for openPMD-viewer
+# Change Log / Release Log for openPMD viewer
 
 ## 0.1.0
 
-This is version `0.1.0` of openPMD-viewer. A number of minor changes and fixes have been made in order to make the package more general and to prepare it for a PyPI release. Here are the main changes:
+This is version `0.1.0` of openPMD viewer. A number of minor changes and fixes have been made in order to make the package more general and to prepare it for a PyPI release. Here are the main changes:
 
 - Support for the deprecated widget package `IPython.html` has been dropped. From now on, users need to install the widget package `ipywidgets`, for the GUI to work.
 - The initialization of an `OpenPMDTimeSeries` object can now be made faster by setting the optional argument `check_all_files` to `False`.
