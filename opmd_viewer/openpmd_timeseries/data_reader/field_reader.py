@@ -17,7 +17,7 @@ from .field_metainfo import FieldMetaInformation
 
 def read_field_2d( filename, field_path ):
     """
-    Extract a given field from an HDF5 file in the OpenPMD format,
+    Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 2d cartesian.
 
     Parameters
@@ -56,7 +56,7 @@ def read_field_2d( filename, field_path ):
 
 def read_field_circ( filename, field_path, m=0, theta=0. ):
     """
-    Extract a given field from an HDF5 file in the OpenPMD format,
+    Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 2d cartesian.
 
     Parameters
@@ -134,7 +134,7 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
 
 def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ):
     """
-    Extract a given field from an HDF5 file in the OpenPMD format,
+    Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 3d cartesian.
 
     Parameters

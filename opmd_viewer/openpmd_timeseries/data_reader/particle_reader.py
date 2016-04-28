@@ -26,16 +26,16 @@ def read_species_data(file_handle, species, record_comp, extensions):
         The HDF5 file from which to extract data
 
     species: string
-        The name of the species to extract (in the OpenPMD file)
+        The name of the species to extract (in the openPMD file)
 
     record_comp: string
         The record component to extract
         Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
 
     extensions: list of strings
-        The extensions that the current openPMDTimeseries complies with
+        The extensions that the current OpenPMDTimeSeries complies with
     """
-    # Translate the record component to the OpenPMD format
+    # Translate the record component to the openPMD format
     dict_record_comp = {'x': 'position/x',
                         'y': 'position/y',
                         'z': 'position/z',
