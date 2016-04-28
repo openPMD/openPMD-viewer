@@ -9,7 +9,7 @@ install_requires.append('wget')
 
 # Main setup command
 setup(name='opmd_viewer',
-      version='1.0',
+      version='0.1.0',
       author='Remi Lehe',
       author_email='remi.lehe@lbl.gov',
       description='Visualization tools for OpenPMD files',
