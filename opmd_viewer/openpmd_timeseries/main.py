@@ -129,7 +129,7 @@ class OpenPMDTimeSeries(parent_class):
                      plot=False, nbins=150, **kw):
         """
         Extract a list of particle variables
-        from an HDF5 file in the OpenPMD format.
+        from an HDF5 file in the openPMD format.
 
         In the case of positions, the result is returned in microns
 
@@ -283,7 +283,7 @@ class OpenPMDTimeSeries(parent_class):
                   m='all', theta=0., slicing=0., slicing_dir='y',
                   output=True, plot=False, **kw):
         """
-        Extract a given field from an HDF5 file in the OpenPMD format.
+        Extract a given field from an HDF5 file in the openPMD format.
 
         Parameters
         ----------
@@ -539,7 +539,7 @@ def apply_selection(file_handle, data_list, select, species, extensions):
        Name of the species being requested
 
     extensions: list of strings
-        The extensions that the current openPMDTimeseries complies with
+        The extensions that the current OpenPMDTimeSeries complies with
 
     Returns
     -------
