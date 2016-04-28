@@ -1,10 +1,10 @@
 """
-This file is part of the openPMD viewer.
+This file is part of the openPMD-viewer.
 
 It defines a set of methods which are useful for plotting
 (and labeling the plots).
 
-Copyright 2015-2016, openPMD viewer contributors
+Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """

@@ -1,11 +1,11 @@
 """
-This file is part of the openPMD viewer.
+This file is part of the openPMD-viewer.
 
 It defines the main FieldMetaInformation class, which
 is returned by `get_field` along with the array of field values,
 and gathers information collected from the openPMD file.
 
-Copyright 2015-2016, openPMD viewer contributors
+Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """

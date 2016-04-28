@@ -9,7 +9,7 @@ with open('requirements.txt') as f:
 install_requires.append('wget')
 
 # Main setup command
-setup(name='opmd_viewer',
+setup(name='openPMD-viewer',
       version=opmd_viewer.__version__,
       maintainer='Remi Lehe',
       maintainer_email='remi.lehe@lbl.gov',
@@ -37,5 +37,5 @@ setup(name='opmd_viewer',
           'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
-      ],
+      ]
       )

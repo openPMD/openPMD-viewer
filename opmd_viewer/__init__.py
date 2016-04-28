@@ -1,5 +1,5 @@
 """
-openPMD viewer
+openPMD-viewer
 
 Usage
 -----
