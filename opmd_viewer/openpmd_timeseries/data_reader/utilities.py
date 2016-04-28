@@ -1,10 +1,10 @@
 """
-This file is part of the openPMD viewer.
+This file is part of the openPMD-viewer.
 
 It defines a set of helper data and functions which
 are used by the other files.
 
-Copyright 2015-2016, openPMD viewer contributors
+Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """

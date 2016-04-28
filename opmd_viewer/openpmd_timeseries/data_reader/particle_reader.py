@@ -1,10 +1,10 @@
 """
-This file is part of the openPMD viewer.
+This file is part of the openPMD-viewer.
 
 It defines a function that reads a species record component (data & meta)
 from an openPMD file
 
-Copyright 2015-2016, openPMD viewer contributors
+Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """

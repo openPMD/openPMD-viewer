@@ -1,4 +1,4 @@
-# openPMD viewer
+# openPMD-viewer
 
 [![Build Status master](https://img.shields.io/travis/openPMD/openPMD-viewer/master.svg?label=master)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
 [![Build Status dev](https://img.shields.io/travis/openPMD/openPMD-viewer/dev.svg?label=dev)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
@@ -49,7 +49,7 @@ package itself.
 
 ## Usage
 
-The routines of openPMD viewer can be used in two ways :
+The routines of openPMD-viewer can be used in two ways :
 
 - Use the **Python API**, in order to write a script that loads the
   data and produces a set of pre-defined plots.
