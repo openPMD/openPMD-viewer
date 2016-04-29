@@ -31,12 +31,14 @@ python setup.py install
 ### Installing the interactive GUI
 
 The **interactive GUI** for IPython Notebook is not
-operational by default.  
+operational by default.
+
 This is because it requires dependencies that may be difficult to
 install on some systems. If you wish to have the interactive GUI
 working, install the
 [IPython Notebook](http://ipython.org/notebook.html)
-(now part of the [Jupyter project](http://jupyter.org/)) by hand:  
+(now part of the [Jupyter project](http://jupyter.org/)) by hand:
+
 `conda install jupyter` (for the
 [Anaconda](https://www.continuum.io/downloads)
 distribution) or `pip install jupyter` (for the other Python distributions)
@@ -57,7 +59,7 @@ The routines of openPMD-viewer can be used in two ways :
 - Use the **interactive GUI inside the IPython Notebook**, in order to interactively
 visualize the data.
 
-#### Tutorials
+### Tutorials
 
 The notebooks in the folder `tutorials/` demonstrate how to use both
 the API and the interactive GUI. You can view these notebooks online
@@ -71,7 +73,7 @@ remote machine by logging in at
 [https://ipython.nersc.gov](https://ipython.nersc.gov), and by
 navigating to your personal copy of the directory `openPMD-viewer/tutorials`.
 
-#### Notebook quick-starter
+### Notebook quick-starter
 
 If you wish to use the **interactive GUI**, the installation of `openPMD-viewer` provides
 a convenient executable which automatically

@@ -2,8 +2,13 @@ from setuptools import setup, find_packages
 import opmd_viewer  # In order to extract the version number
 
 # Get the long description
-with open('./README.md') as f:
-    long_description = f.read()
+# If possible, use pypandoc to convert the README from Markdown
+# to reStructuredText, as this is the only supported format on PyPI
+try:
+    import pypandoc
+    long_description = pypandoc.convert( './README.md', 'rst')
+except ImportError:
+    long_description = open('./README.md').read()
 # Get the package requirements from the requirements.txt file
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
