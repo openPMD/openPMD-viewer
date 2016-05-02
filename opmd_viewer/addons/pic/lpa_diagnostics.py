@@ -18,7 +18,7 @@ import scipy.constants as const
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
-    def __init__( self, path_to_dir ):
+    def __init__( self, path_to_dir, check_all_files=True ):
         """
         Initialize an OpenPMD time series with various methods to diagnose the
         data
@@ -31,7 +31,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             one file per iteration, and the name of the files should end
             with the iteration number, followed by '.h5' (e.g. data0005000.h5)
         """
-        OpenPMDTimeSeries.__init__( self, path_to_dir )
+        OpenPMDTimeSeries.__init__( self, path_to_dir, 
+                                    check_all_files=check_all_files )
 
     def get_mean_gamma( self, t=None, iteration=None, species=None,
                         select=None ):
