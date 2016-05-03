@@ -31,20 +31,16 @@ except ImportError:
           'The opmd_viewer API is nonetheless working.')
     parent_class = object
 
+
 # Define a custom Exception
-
-
 class OpenPMDException(Exception):
-
     "Exception raised for invalid use of the openPMD-viewer API"
     pass
 
+
 # Define the OpenPMDTimeSeries class and have it inherit
 # from the parent class defined above
-
-
 class OpenPMDTimeSeries(parent_class):
-
     """
     Main class for the exploration of an openPMD timeseries
 
@@ -100,19 +96,19 @@ class OpenPMDTimeSeries(parent_class):
         self.avail_species = params0['avail_species']
         self.avail_record_components = \
             params0['avail_record_components']
-        # deprecated
-        self.avail_ptcl_quantities = params0['avail_ptcl_quantities']
 
-        # - Check that the other files have the same parameters
-        if check_all_files:
-            for k in range(1, N_files):
-                t, params = read_openPMD_params(self.h5_files[k])
-                self.t[k] = t
+        # - Extract the time for each file and, if requested, check
+        #   that the other files have the same parameters
+        for k in range(1, N_files):
+            t, params = read_openPMD_params(self.h5_files[k], check_all_files)
+            self.t[k] = t
+            if check_all_files:
                 for key in params0.keys():
                     if params != params0:
                         print("Warning: File %s has different openPMD "
                               "parameters than the rest of the time series."
                               % self.h5_files[k])
+                        break
 
         # - Set the current iteration and time
         self.current_i = 0

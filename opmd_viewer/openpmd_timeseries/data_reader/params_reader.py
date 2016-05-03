@@ -14,7 +14,7 @@ import numpy as np
 from .utilities import is_scalar_record, get_shape, get_bpath
 
 
-def read_openPMD_params(filename):
+def read_openPMD_params(filename, extract_parameters=True):
     """
     Extract the time and some openPMD parameters from a file
 
@@ -23,14 +23,17 @@ def read_openPMD_params(filename):
     filename: string
         The path to the file from which parameters should be extracted
 
+    extract_parameters: bool, optional
+        Whether to extract all parameters or only the time
+        (Function execution is faster when extract_parameters is False)
+
     Returns
     -------
     A tuple with:
     - A float corresponding to the time of this iteration in SI units
     - A dictionary containing several parameters, such as the geometry, etc.
+      When extract_parameters is False, the second argument returned is None.
     """
-    params = {}
-
     # Open the file, and do a version check
     f = h5py.File(filename, 'r')
     version = f.attrs['openPMD'].decode()
@@ -38,6 +41,17 @@ def read_openPMD_params(filename):
         raise ValueError(
             "File %s is not supported: Invalid openPMD version: "
             "%s)" % (filename, version))
+
+    # Find the base path object, and extract the time
+    bpath = f[get_bpath(f)]
+    t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
+
+    # If the user did not request more parameters, exit now.
+    if not extract_parameters:
+        return(t, None)
+
+    # Otherwise, extract the rest of the parameters
+    params = {}
 
     # Find out supported openPMD extensions claimed by this file
     # note: a file might implement multiple extensions
@@ -52,10 +66,6 @@ def read_openPMD_params(filename):
         # Bitmasks: https://en.wikipedia.org/wiki/Mask_%28computing%29
         if bitmask_all_extensions & bitmask == bitmask:
             params['extensions'].append(extension)
-
-    # Find the base path object, and extract the time
-    bpath = f[get_bpath(f)]
-    t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
 
     # Find out whether fields are present and extract their geometry
     meshes_path = f.attrs['meshesPath'].decode().strip('/')
