@@ -7,7 +7,7 @@ import opmd_viewer  # In order to extract the version number
 try:
     import pypandoc
     long_description = pypandoc.convert( './README.md', 'rst')
-except ImportError, RunTimeError:
+except (ImportError, RunTimeError):
     long_description = open('./README.md').read()
 # Get the package requirements from the requirements.txt file
 with open('./requirements.txt') as f:
