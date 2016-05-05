@@ -27,7 +27,7 @@ try:
 except ImportError:
     # Otherwise, use the default parent class
     print('[opmd_viewer] Failed to import the interactive interface.\n'
-          '(Make sure that ipywidgets and IPython.display are installed.)\n'
+          '(Make sure that ipywidgets is installed.)\n'
           'The opmd_viewer API is nonetheless working.')
     parent_class = object
 
@@ -405,7 +405,7 @@ class OpenPMDTimeSeries(parent_class):
                 elif coord == 'y':
                     F = np.sin(theta) * Fr + np.cos(theta) * Ft
                 # Revert the sign below the axis
-                F[:len(F) / 2] *= -1
+                F[: int(F.shape[0] / 2)] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path, m, theta)

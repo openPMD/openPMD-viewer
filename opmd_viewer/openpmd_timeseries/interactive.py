@@ -10,7 +10,7 @@ License: 3-Clause-BSD-LBNL
 """
 
 from ipywidgets import widgets
-from IPython.display import display, clear_output
+from IPython.core.display import display, clear_output
 import math
 import matplotlib
 import matplotlib.pyplot as plt

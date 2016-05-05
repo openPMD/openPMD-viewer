@@ -74,7 +74,7 @@ def read_openPMD_params(filename, extract_parameters=True):
         first_field_path = next(iter(avail_fields))
         first_field = bpath[os.path.join(meshes_path, first_field_path)]
         params['geometry'] = first_field.attrs['geometry'].decode()
-        params['axis_labels'] = [ str(coord) for coord in
+        params['axis_labels'] = [ coord.decode() for coord in
                                   first_field.attrs['axisLabels'] ]
         if params['geometry'] == "thetaMode":
             # Check the available modes
