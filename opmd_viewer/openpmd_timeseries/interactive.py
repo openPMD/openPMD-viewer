@@ -188,9 +188,11 @@ class InteractiveViewer(object):
                              if q not in exclude_particle_records]
             # Update the plotting buttons
             ptcl_xaxis_button.options = avail_records
-            ptcl_xaxis_button.value = avail_records[0]
             ptcl_yaxis_button.options = avail_records + ['None']
-            ptcl_yaxis_button.value = 'None'
+            if ptcl_xaxis_button.value not in ptcl_xaxis_button.options:
+                ptcl_xaxis_button.value = avail_records[0]
+            if ptcl_yaxis_button.value not in ptcl_yaxis_button.options:
+                ptcl_yaxis_button.value = 'None'
 
             # Update the selection widgets
             for dropdown_button in ptcl_select_widget.quantity:
