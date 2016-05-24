@@ -76,7 +76,7 @@ def read_openPMD_params(filename, extract_parameters=True):
         params['geometry'] = first_field.attrs['geometry'].decode()
         params['axis_labels'] = [ coord.decode() for coord in
                                   first_field.attrs['axisLabels'] ]
-        # Swap the order of the labels if the code that wrote the HDF5 file 
+        # Swap the order of the labels if the code that wrote the HDF5 file
         # was Fortran order (i.e. reverse order with respect to Python)
         if first_field.attrs['dataOrder'].decode() == 'F':
             params['axis_labels'] = params['axis_labels'][::-1]
