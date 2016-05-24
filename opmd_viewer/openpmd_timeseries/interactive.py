@@ -182,9 +182,8 @@ class InteractiveViewer(object):
             ptcl_refresh_toggle.value = False
 
             # Get available records for this species
-            avail_records = [q for q in
-                             self.avail_record_components[
-                                 ptcl_species_button.value]
+            avail_records = [q for q in self.avail_record_components[
+                             ptcl_species_button.value]
                              if q not in exclude_particle_records]
             # Update the plotting buttons
             ptcl_xaxis_button.options = avail_records
