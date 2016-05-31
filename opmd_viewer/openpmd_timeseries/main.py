@@ -27,7 +27,7 @@ try:
 except ImportError:
     # Otherwise, use the default parent class
     print('[opmd_viewer] Failed to import the interactive interface.\n'
-          '(Make sure that ipywidgets and IPython.display are installed.)\n'
+          '(Make sure that ipywidgets is installed.)\n'
           'The opmd_viewer API is nonetheless working.')
     parent_class = object
 
@@ -92,6 +92,7 @@ class OpenPMDTimeSeries(parent_class):
         self.extensions = params0['extensions']
         if self.avail_fields is not None:
             self.geometry = params0['geometry']
+            self.axis_labels = params0['axis_labels']
             self.avail_circ_modes = params0['avail_circ_modes']
         self.avail_species = params0['avail_species']
         self.avail_record_components = \
@@ -387,11 +388,11 @@ class OpenPMDTimeSeries(parent_class):
         # Get the field data
         # - For 2D
         if self.geometry == "2dcartesian":
-            F, info = read_field_2d(filename, field_path)
+            F, info = read_field_2d(filename, field_path, self.axis_labels)
         # - For 3D
         elif self.geometry == "3dcartesian":
             F, info = read_field_3d(
-                filename, field_path, slicing, slicing_dir)
+                filename, field_path, self.axis_labels, slicing, slicing_dir)
         # - For thetaMode
         elif self.geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
@@ -404,7 +405,7 @@ class OpenPMDTimeSeries(parent_class):
                 elif coord == 'y':
                     F = np.sin(theta) * Fr + np.cos(theta) * Ft
                 # Revert the sign below the axis
-                F[:len(F) / 2] *= -1
+                F[: int(F.shape[0] / 2)] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path, m, theta)

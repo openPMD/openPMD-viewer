@@ -10,7 +10,7 @@ License: 3-Clause-BSD-LBNL
 """
 
 from ipywidgets import widgets
-from IPython.display import display, clear_output
+from IPython.core.display import display, clear_output
 import math
 import matplotlib
 import matplotlib.pyplot as plt
@@ -274,8 +274,9 @@ class InteractiveViewer(object):
                 description=r'Theta:', min=-math.pi / 2, max=math.pi / 2)
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
-            slicing_dir_button = widgets.ToggleButtons(value='y',
-                description='Slicing direction:', options=['x', 'y', 'z'])
+            slicing_dir_button = widgets.ToggleButtons(
+                value=self.axis_labels[1], options=self.axis_labels,
+                description='Slicing direction:')
             slicing_dir_button.observe( refresh_field, 'value', 'change')
             slicing_button = widgets.FloatSlider(width=150,
                 description='Slicing:', min=-1., max=1., value=0.)

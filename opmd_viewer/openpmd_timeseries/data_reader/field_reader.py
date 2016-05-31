@@ -7,15 +7,14 @@ Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
-
 import os
 import h5py
 import numpy as np
-from .utilities import slice_dict, get_shape, get_data, get_bpath
+from .utilities import get_shape, get_data, get_bpath
 from .field_metainfo import FieldMetaInformation
 
 
-def read_field_2d( filename, field_path ):
+def read_field_2d( filename, field_path, axis_labels ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 2d cartesian.
@@ -28,6 +27,9 @@ def read_field_2d( filename, field_path ):
     field_path : string
        The relative path to the requested field, from the openPMD meshes path
        (e.g. 'rho', 'E/r', 'B/x')
+
+    axis_labels: list of strings
+       The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     Returns
     -------
@@ -45,7 +47,8 @@ def read_field_2d( filename, field_path ):
     F = get_data( dset )
 
     # Extract the metainformation
-    info = FieldMetaInformation( { 0: 'x', 1: 'z' }, F.shape,
+    axes = { 0: axis_labels[0], 1: axis_labels[1] }
+    info = FieldMetaInformation( axes, F.shape,
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
         group.attrs['gridUnitSI'], dset.attrs['position'] )
 
@@ -132,7 +135,8 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
     return( F_total, info )
 
 
-def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ):
+def read_field_3d( filename, field_path, axis_labels,
+                   slicing=0., slicing_dir='y'):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 3d cartesian.
@@ -145,6 +149,9 @@ def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ):
     field_path : string
        The relative path to the requested field, from the openPMD meshes path
        (e.g. 'rho', 'E/r', 'B/x')
+
+    axis_labels: list of strings
+       The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     slicing : float, optional
         Only used for 3dcartesian geometry
@@ -173,36 +180,34 @@ def read_field_3d( filename, field_path, slicing=0., slicing_dir='y' ):
     group, dset = find_dataset( dfile, field_path )
 
     # Dimensions of the grid
-    Nx, Ny, Nz = get_shape( dset )
-    dx, dy, dz = group.attrs['gridSpacing']
-    xmin, ymin, zmin = group.attrs['gridGlobalOffset']
+    shape = list( get_shape( dset ) )
+    grid_spacing = list( group.attrs['gridSpacing'] )
+    global_offset = list( group.attrs['gridGlobalOffset'] )
     # Slice selection
     if slicing is not None:
+        # Get the integer that correspond to the slicing direction
+        slicing_index = axis_labels.index(slicing_dir)
         # Number of cells along the slicing direction
-        n_cells = dset.shape[ slice_dict[slicing_dir] ]
+        n_cells = shape[ slicing_index ]
         # Index of the slice (prevent stepping out of the array)
         i_cell = int( 0.5 * (slicing + 1.) * n_cells )
         i_cell = max( i_cell, 0 )
         i_cell = min( i_cell, n_cells - 1)
+        # Remove metainformation relative to the slicing index
+        shape.pop( slicing_index )
+        grid_spacing.pop( slicing_index )
+        global_offset.pop( slicing_index )
+        new_labels = axis_labels[:slicing_index] + \
+            axis_labels[slicing_index + 1:]
+        axes = { i: new_labels[i] for i in range(len(new_labels)) }
         # Extraction of the data
-        if slicing_dir == 'x':
-            F = get_data( dset, i_cell, 0 )
-            info = FieldMetaInformation( { 0: 'y', 1: 'z' }, (Ny, Nz),
-                (dy, dz), (ymin, zmin), group.attrs['gridUnitSI'],
-                dset.attrs['position'] )
-        elif slicing_dir == 'y':
-            F = get_data( dset, i_cell, 1 )
-            info = FieldMetaInformation( { 0: 'x', 1: 'z' }, (Nx, Nz),
-                (dx, dz), (xmin, zmin), group.attrs['gridUnitSI'],
-                dset.attrs['position'] )
-        elif slicing_dir == 'z':
-            F = get_data( dset, i_cell, 2 )
-            info = FieldMetaInformation( { 0: 'x', 1: 'y' }, (Nx, Ny),
-                (dx, dy), (xmin, ymin), group.attrs['gridUnitSI'],
-                dset.attrs['position'] )
+        F = get_data( dset, i_cell, slicing_index )
+        info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
+                group.attrs['gridUnitSI'], dset.attrs['position'] )
     else:
         F = get_data( dset )
-        info = FieldMetaInformation( { 0: 'x', 1: 'y', 2: 'z' }, F.shape,
+        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+        info = FieldMetaInformation( axes, F.shape,
             group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
             group.attrs['gridUnitSI'], dset.attrs['position'] )
 

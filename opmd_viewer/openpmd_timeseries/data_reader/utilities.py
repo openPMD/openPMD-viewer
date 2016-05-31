@@ -8,13 +8,8 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
-
 import h5py
 import numpy as np
-
-
-# General dictionaries
-slice_dict = {'x': 0, 'y': 1, 'z': 2}
 
 
 def get_bpath(f):
