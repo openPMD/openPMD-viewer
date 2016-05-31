@@ -19,6 +19,10 @@ git clone git@github.com:<YourUserLogin>/openPMD-viewer.git
 ```
 git checkout dev
 ```
+and install it
+```
+python setup.py install
+```
 
 - Start a new branch from the development branch, in order to
 implement a new feature. (Choose a branch name that is representative of the
@@ -52,6 +56,7 @@ ensure that your code complies with some standard style conventions.
   ```
   - Make sure that the tests pass
   ```
+  python setup.py install
   python setup.py test
   ```
   (Be patient: the `test_tutorials.py` can take approx. 20 seconds if
