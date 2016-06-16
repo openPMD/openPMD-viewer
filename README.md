@@ -20,6 +20,29 @@ The routines of `openPMD-viewer` can be used in two ways :
 - Use the **interactive GUI inside the Jupyter Notebook**, in order to interactively
 visualize the data.
 
+## Usage
+
+### Tutorials
+
+The notebooks in the folder `tutorials/` demonstrate how to use both
+the API and the interactive GUI. You can view these notebooks online
+[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
+
+You can also download and run these notebooks on your local computer
+(when viewing the notebooks with the above link, click on `Raw` to be able to
+save them to your local computer).
+
+### Notebook quick-starter
+
+If you wish to use the **interactive GUI**, the installation of
+`openPMD-viewer` provides a convenient executable which automatically
+**creates a new pre-filled notebook** and **opens it in a
+browser**. To use this executable, simply type in a regular terminal:
+
+`openPMD_notebook`
+
+(This executable is installed by default.)
+
 ## Installation
 
 ### Installation on a local computer, using Anaconda
@@ -54,29 +77,6 @@ GUI** and thus it does not need to be installed if you are only using
 the **Python API**.  For [NERSC](http://www.nersc.gov/) users, access to Jupyter
 notebooks is provided when logging to
 [https://ipython.nersc.gov](https://ipython.nersc.gov).
-
-## Usage
-
-### Tutorials
-
-The notebooks in the folder `tutorials/` demonstrate how to use both
-the API and the interactive GUI. You can view these notebooks online
-[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
-
-You can also download and run these notebooks on your local computer
-(when viewing the notebooks with the above link, click on `Raw` to be able to
-save them to your local computer).
-
-### Notebook quick-starter
-
-If you wish to use the **interactive GUI**, the installation of
-`openPMD-viewer` provides a convenient executable which automatically
-**creates a new pre-filled notebook** and **opens it in a
-browser**. To use this executable, simply type in a regular terminal:
-
-`openPMD_notebook`
-
-(This executable is installed by default.)
 
 ## Contributing to the openPMD-viewer
 
