@@ -30,8 +30,7 @@ before_install:
 
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION h5py
-  - pip install -r requirements.txt
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
   - python setup.py install
   - pip install wget
   - pip install pyflakes pep8 jupyter
