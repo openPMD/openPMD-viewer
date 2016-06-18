@@ -12,8 +12,6 @@ except (ImportError, RuntimeError):
 # Get the package requirements from the requirements.txt file
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
-# Since wget cannot be installed with conda, it is added separately here
-install_requires.append('wget')
 
 # Main setup command
 setup(name='openPMD-viewer',

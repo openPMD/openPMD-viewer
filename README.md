@@ -30,7 +30,9 @@ the API and the interactive GUI. You can view these notebooks online
 
 You can also download and run these notebooks on your local computer
 (when viewing the notebooks with the above link, click on `Raw` to be able to
-save them to your local computer).
+save them to your local computer). In order to run the notebook on
+your local computer, please install `openPMD-viewer` first (see
+below), as well as `wget` (`pip install wget`).
 
 ### Notebook quick-starter
 
@@ -41,7 +43,7 @@ browser**. To use this executable, simply type in a regular terminal:
 
 `openPMD_notebook`
 
-(This executable is installed by default.)
+(This executable is installed by default, when installing `openPMD-viewer`.)
 
 ## Installation
 

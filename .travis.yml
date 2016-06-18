@@ -32,6 +32,7 @@ before_install:
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION scipy matplotlib h5py jupyter
   - conda install --yes python=$TRAVIS_PYTHON_VERSION pyflakes pep8
+  - pip install wget
   - python setup.py install
 
 before_script :
