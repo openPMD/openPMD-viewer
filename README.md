@@ -47,24 +47,28 @@ browser**. To use this executable, simply type in a regular terminal:
 
 ## Installation
 
-### Installation on a local computer, using Anaconda
+### Installation on a local computer
 
-On a local computer, it is recommended to install the [Anaconda
-distribution](https://www.continuum.io/downloads), which enables an easy
-installation of the dependencies of `openPMD-viewer`.
+Before installing `openPMD-viewer`, please make sure that `h5py` is
+installed on your local computer. (If you are using the [Anaconda
+distribution](https://www.continuum.io/downloads), this can be done by
+typing `conda install h5py`. Otherwise, use `pip install h5py`, though
+this may require you to install `hdf5` separately.)
 
-Once Anaconda is installed, type
+Once `h5py` is installed, simply type
 ```
-conda install scipy matplolib h5py jupyter
 pip install openPMD-viewer
 ```
-The first line installs the dependencies, while the second line
-installs `openPMD-viewer` itself
+
+In addition, if you wish to use the interactive GUI, please type
+```
+pip install jupyter
+```
 
 ### Installation on a remote scientific cluster
 
 If you wish to install the `openPMD-viewer` on a remote scientific
-cluster, please make sure that packages `numpy`, `scipy` and `h5py`
+cluster, please make sure that the packages `numpy`, `scipy` and `h5py`
 are available in your environment. This is typically done by a set of
 `module load` commands (e.g. `module load h5py`) -- please refer to
 the documentation of your scientific cluster.

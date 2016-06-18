@@ -30,10 +30,11 @@ before_install:
 
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION scipy matplotlib h5py jupyter
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION pyflakes pep8
-  - pip install wget
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION h5py
+  - pip install -r requirements.txt
   - python setup.py install
+  - pip install wget
+  - pip install pyflakes pep8 jupyter
 
 before_script :
   # static code analysis
