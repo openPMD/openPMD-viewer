@@ -54,7 +54,7 @@ ensure that your code complies with some standard style conventions.
   pyflakes opmd_viewer
   pep8 --ignore=E201,E202,E122,E127,E128,E131 opmd_viewer
   ```
-  - Make sure that the tests pass
+  - Make sure that the tests pass (please install `wget` and `jupyter` before running the tests: `pip install wget jupyter`)
   ```
   python setup.py install
   python setup.py test
