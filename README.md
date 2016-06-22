@@ -12,77 +12,77 @@ This package contains a set of tools to load and visualize the
 contents of a set of [openPMD](http://www.openpmd.org/#/start) files
 (typically, a timeseries).
 
-## Installation
-
-### Basic installation
-
-To install this package :
-
-- Clone this repository using `git`
-```
-git clone https://github.com/openPMD/openPMD-viewer.git
-```
-
-- `cd` into the directory `openPMD-viewer` and run
-```
-python setup.py install
-```
-
-### Installing the interactive GUI
-
-The **interactive GUI** for IPython Notebook is not
-operational by default.
-
-This is because it requires dependencies that may be difficult to
-install on some systems. If you wish to have the interactive GUI
-working, install the
-[IPython Notebook](http://ipython.org/notebook.html)
-(now part of the [Jupyter project](http://jupyter.org/)) by hand:
-
-`conda install jupyter` (for the
-[Anaconda](https://www.continuum.io/downloads)
-distribution) or `pip install jupyter` (for the other Python distributions)
-
-NB: For [NERSC](http://www.nersc.gov/) users, it is not necessary to
-install the above package, as NERSC provides it when logging to
-[https://ipython.nersc.gov](https://ipython.nersc.gov).
-Therefore, NERSC users only need to install the `openPMD-viewer`
-package itself.
-
-## Usage
-
-The routines of openPMD-viewer can be used in two ways :
+The routines of `openPMD-viewer` can be used in two ways :
 
 - Use the **Python API**, in order to write a script that loads the
   data and produces a set of pre-defined plots.
 
-- Use the **interactive GUI inside the IPython Notebook**, in order to interactively
+- Use the **interactive GUI inside the Jupyter Notebook**, in order to interactively
 visualize the data.
+
+## Usage
 
 ### Tutorials
 
 The notebooks in the folder `tutorials/` demonstrate how to use both
 the API and the interactive GUI. You can view these notebooks online
-[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials),
-or, alternatively, you can run them on your local computer by typing:
+[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
 
-`ipython notebook tutorials/`
-
-NB: For [NERSC](http://www.nersc.gov/) users, you can run the tutorials on a
-remote machine by logging in at
-[https://ipython.nersc.gov](https://ipython.nersc.gov), and by
-navigating to your personal copy of the directory `openPMD-viewer/tutorials`.
+You can also download and run these notebooks on your local computer
+(when viewing the notebooks with the above link, click on `Raw` to be able to
+save them to your local computer). In order to run the notebook on
+your local computer, please install `openPMD-viewer` first (see
+below), as well as `wget` (`pip install wget`).
 
 ### Notebook quick-starter
 
-If you wish to use the **interactive GUI**, the installation of `openPMD-viewer` provides
-a convenient executable which automatically
+If you wish to use the **interactive GUI**, the installation of
+`openPMD-viewer` provides a convenient executable which automatically
 **creates a new pre-filled notebook** and **opens it in a
 browser**. To use this executable, simply type in a regular terminal:
 
 `openPMD_notebook`
 
-(This executable is installed by default when running `python setup.py install`.)
+(This executable is installed by default, when installing `openPMD-viewer`.)
+
+## Installation
+
+### Installation on a local computer
+
+Before installing `openPMD-viewer`, please make sure that `h5py` is
+installed on your local computer. (If you are using the [Anaconda
+distribution](https://www.continuum.io/downloads), this can be done by
+typing `conda install h5py`. Otherwise, use `pip install h5py`, though
+this may require you to install `hdf5` separately.)
+
+Once `h5py` is installed, simply type
+```
+pip install openPMD-viewer
+```
+
+In addition, if you wish to use the interactive GUI, please type
+```
+pip install jupyter
+```
+
+### Installation on a remote scientific cluster
+
+If you wish to install the `openPMD-viewer` on a remote scientific
+cluster, please make sure that the packages `numpy`, `scipy` and `h5py`
+are available in your environment. This is typically done by a set of
+`module load` commands (e.g. `module load h5py`) -- please refer to
+the documentation of your scientific cluster.
+
+Then type
+```
+pip install openPMD-viewer --user
+```
+
+Note: The package `jupyter` is only required for the **interactive
+GUI** and thus it does not need to be installed if you are only using
+the **Python API**.  For [NERSC](http://www.nersc.gov/) users, access to Jupyter
+notebooks is provided when logging to
+[https://ipython.nersc.gov](https://ipython.nersc.gov).
 
 ## Contributing to the openPMD-viewer
 
