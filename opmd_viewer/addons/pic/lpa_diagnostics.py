@@ -16,6 +16,7 @@ import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
 
+
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def __init__( self, path_to_dir, check_all_files=True ):
@@ -713,16 +714,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         w0 = np.sqrt(2) * wstd(trans_pos, trans_slice)
         if method == 'rms':
             return( w0 )
-        
+
         # Compute waist with Gaussian fit
-        elif method=='fit':
+        elif method == 'fit':
             # Get initial guess for the amplitude
             E0 = field[ itrans_max, iz_max ]
             # Perform the fit
             params, _ = curve_fit( gaussian_profile, trans_pos,
                                    trans_slice, p0=[ E0, w0 ])
             return( params[1] )
-            
+
         else:
             raise ValueError('Unknown method: {:s}'.format(method))
 
@@ -869,5 +870,4 @@ def gaussian_profile( x, E0, w0 ):
     -------
     A 1darray of floats, of the same length as x
     """
-    return( E0*np.exp( -x**2/w0**2 ) )
-    
+    return( E0 * np.exp( -x**2 / w0**2 ) )
