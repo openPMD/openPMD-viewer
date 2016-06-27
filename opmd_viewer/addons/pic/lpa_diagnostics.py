@@ -694,13 +694,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                                 pol=pol, index='all',
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
-
-        # Find the maximum of the envelope along the transverse axis
-        trans_max = np.amax(field, axis=1)
+        # Find the indices of the maximum field, and
+        # pick the corresponding transverse slice
+        _, iz_max = np.unravel_index( np.argmax( field ), dims=field.shape )
+        trans_slice = field[ :, iz_max ]
         # Get transverse positons
         trans_pos = getattr(info, info.axes[0])
         # Calculate standard deviation
-        sigma_r = wstd(trans_pos, trans_max)
+        sigma_r = wstd(trans_pos, trans_slice)
         # Return the laser waist = sqrt(2) * sigma_r
         return(np.sqrt(2) * sigma_r)
 
