@@ -14,6 +14,7 @@ from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
+from scipy.optimize import curve_fit
 
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
@@ -658,7 +659,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( np.sqrt(2) * sigma )
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing_dir='y' ):
+                         slicing_dir='y', method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -685,6 +686,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            The direction along which to slice the data
            Either 'x', 'y'
 
+        method : str, optional
+           The method which is used to compute the waist
+           'fit': Gaussian fit of the transverse profile
+           'rms': RMS radius, weighted by the transverse profile
+           ('rms' tends to give more weight to the "wings" of the pulse)
+
         Returns
         -------
         Float with laser waist in meters
@@ -694,15 +701,31 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                                 pol=pol, index='all',
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
-
-        # Find the maximum of the envelope along the transverse axis
-        trans_max = np.amax(field, axis=1)
+        # Find the indices of the maximum field, and
+        # pick the corresponding transverse slice
+        itrans_max, iz_max = np.unravel_index(
+            np.argmax( field ), dims=field.shape )
+        trans_slice = field[ :, iz_max ]
         # Get transverse positons
         trans_pos = getattr(info, info.axes[0])
-        # Calculate standard deviation
-        sigma_r = wstd(trans_pos, trans_max)
-        # Return the laser waist = sqrt(2) * sigma_r
-        return(np.sqrt(2) * sigma_r)
+
+        # Compute waist with RMS value
+        # (serves as initial guess when method=='fit')
+        w0 = np.sqrt(2) * wstd(trans_pos, trans_slice)
+        if method == 'rms':
+            return( w0 )
+
+        # Compute waist with Gaussian fit
+        elif method == 'fit':
+            # Get initial guess for the amplitude
+            E0 = field[ itrans_max, iz_max ]
+            # Perform the fit
+            params, _ = curve_fit( gaussian_profile, trans_pos,
+                                   trans_slice, p0=[ E0, w0 ])
+            return( params[1] )
+
+        else:
+            raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
                           slicing_dir='y', plot=False, **kw ):
@@ -825,3 +848,26 @@ def wstd( a, weights ):
         average = np.average(a, weights=weights)
         variance = np.average((a - average) ** 2, weights=weights)
         return( np.sqrt(variance) )
+
+
+def gaussian_profile( x, E0, w0 ):
+    """
+    Returns a Gaussian profile with amplitude E0 and waist w0.
+    (Used in order to fit the transverse laser profile and find the waist.)
+
+    Parameters
+    ----------
+    x: 1darray of floats
+        An array of transverse positions (in meters)
+
+    E0: float
+        The amplitude at the peak of the profile
+
+    w0: float
+        The waist of the profile
+
+    Returns
+    -------
+    A 1darray of floats, of the same length as x
+    """
+    return( E0 * np.exp( -x**2 / w0**2 ) )
