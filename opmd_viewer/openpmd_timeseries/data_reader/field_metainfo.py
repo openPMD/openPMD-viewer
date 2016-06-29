@@ -33,6 +33,12 @@ class FieldMetaInformation(object):
         the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
         then these variables will be called xmin, xmax, ymin, ymax.
 
+    - dx, dz: double
+        Scalars that indicate the resolution of the grid on each axis.
+        Notice that the name of these variables change according to
+        the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
+        then these variables will be called dx and dy.
+
      - x, z: 1darrays of double
         The position of all the gridpoints, along each axis
         Notice that the name of these variables change according to
@@ -74,6 +80,7 @@ class FieldMetaInformation(object):
             # Register the results in the object
             axis_name = axes[axis]
             setattr(self, axis_name, axis_points)
+            setattr(self, 'd' + axis_name, step)
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
             # Fill the imshow_extent in reverse order, so as to match
