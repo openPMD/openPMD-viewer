@@ -618,7 +618,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         a0 = Emax * const.e / (const.m_e * const.c * omega)
         return( a0 )
 
-    def get_ctau( self, t=None, iteration=None, pol=None ):
+    def get_ctau( self, t=None, iteration=None, pol=None, method='fit' ):
         """
         Calculate the length of a (gaussian) laser pulse. Here 'length' means
         the 'longitudinal waist' (i.e sqrt(2) * sigma_z).
@@ -637,6 +637,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         pol : string
             Polarization of the field. Options are 'x', 'y'
 
+        method : str, optional
+           The method which is used to compute the waist
+           'fit': Gaussian fit of the transverse profile
+           'rms': RMS radius, weighted by the transverse profile
+           ('rms' tends to give more weight to the "wings" of the pulse)
+
         Returns
         -------
         Float with ctau in meters
@@ -653,10 +659,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
-        # Calculate standard deviation
-        sigma = wstd(info.z, E)
-        # Return ctau = sqrt(2) * sigma
-        return( np.sqrt(2) * sigma )
+        # Calculate ctau with RMS value
+        ctau = np.sqrt(2) * wstd(info.z, E)
+        if method == 'rms':
+            return( ctau )
+
+        # Calculate ctau from Gaussian fit
+        elif method == 'fit':
+            # Start value for E0 in fit
+            E0 = np.amax( E )
+            # Perform the fit
+            params, _ = curve_fit( gaussian_profile, info.z,
+                                   E, p0=[ E0, ctau ])
+            return( params[1] )
+
+        else:
+            raise ValueError('Unknown method: {:s}'.format(method))
+
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
                          slicing_dir='y', method='fit' ):
