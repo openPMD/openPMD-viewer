@@ -618,7 +618,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         a0 = Emax * const.e / (const.m_e * const.c * omega)
         return( a0 )
 
-    def get_ctau( self, t=None, iteration=None, pol=None ):
+    def get_ctau( self, t=None, iteration=None, pol=None, method='fit' ):
         """
         Calculate the length of a (gaussian) laser pulse. Here 'length' means
         the 'longitudinal waist' (i.e sqrt(2) * sigma_z).
@@ -637,6 +637,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         pol : string
             Polarization of the field. Options are 'x', 'y'
 
+        method : str, optional
+           The method which is used to compute ctau
+           'fit': Gaussian fit of the longitudinal profile
+           'rms': RMS radius, weighted by the longitudinal profile
+           ('rms' tends to give more weight to the "wings" of the pulse)
+
         Returns
         -------
         Float with ctau in meters
@@ -653,10 +659,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
-        # Calculate standard deviation
-        sigma = wstd(info.z, E)
-        # Return ctau = sqrt(2) * sigma
-        return( np.sqrt(2) * sigma )
+        # Calculate ctau with RMS value
+        ctau = np.sqrt(2) * wstd(info.z, E)
+        if method == 'rms':
+            return( ctau )
+
+        # Calculate ctau from Gaussian fit
+        elif method == 'fit':
+            # Start value for E0 and x0 in fit
+            E0 = np.amax( E )
+            z0 = info.z[np.argmax( E )]
+            # Perform the fit
+            params, _ = curve_fit( gaussian_profile, info.z,
+                                   E, p0=[ z0, E0, ctau ])
+            return( params[2] )
+
+        else:
+            raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
                          slicing_dir='y', method='fit' ):
@@ -719,10 +738,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         elif method == 'fit':
             # Get initial guess for the amplitude
             E0 = field[ itrans_max, iz_max ]
+            # Assume that the pulse is centered
+            x0 = 0
             # Perform the fit
             params, _ = curve_fit( gaussian_profile, trans_pos,
-                                   trans_slice, p0=[ E0, w0 ])
-            return( params[1] )
+                                   trans_slice, p0=[x0, E0, w0 ])
+            return( params[2] )
 
         else:
             raise ValueError('Unknown method: {:s}'.format(method))
@@ -850,7 +871,7 @@ def wstd( a, weights ):
         return( np.sqrt(variance) )
 
 
-def gaussian_profile( x, E0, w0 ):
+def gaussian_profile( x, x0, E0, w0 ):
     """
     Returns a Gaussian profile with amplitude E0 and waist w0.
     (Used in order to fit the transverse laser profile and find the waist.)
@@ -859,6 +880,9 @@ def gaussian_profile( x, E0, w0 ):
     ----------
     x: 1darray of floats
         An array of transverse positions (in meters)
+
+    x0: float
+        Position of the peak of the profile
 
     E0: float
         The amplitude at the peak of the profile
@@ -870,4 +894,4 @@ def gaussian_profile( x, E0, w0 ):
     -------
     A 1darray of floats, of the same length as x
     """
-    return( E0 * np.exp( -x**2 / w0**2 ) )
+    return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
