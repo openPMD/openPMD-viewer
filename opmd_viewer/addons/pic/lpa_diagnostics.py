@@ -638,9 +638,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Polarization of the field. Options are 'x', 'y'
 
         method : str, optional
-           The method which is used to compute the waist
-           'fit': Gaussian fit of the transverse profile
-           'rms': RMS radius, weighted by the transverse profile
+           The method which is used to compute ctau
+           'fit': Gaussian fit of the longitudinal profile
+           'rms': RMS radius, weighted by the longitudinal profile
            ('rms' tends to give more weight to the "wings" of the pulse)
 
         Returns
@@ -676,7 +676,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         else:
             raise ValueError('Unknown method: {:s}'.format(method))
-
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
                          slicing_dir='y', method='fit' ):
@@ -872,7 +871,7 @@ def wstd( a, weights ):
         return( np.sqrt(variance) )
 
 
-def gaussian_profile( x,x0, E0, w0 ):
+def gaussian_profile( x, x0, E0, w0 ):
     """
     Returns a Gaussian profile with amplitude E0 and waist w0.
     (Used in order to fit the transverse laser profile and find the waist.)
@@ -895,4 +894,4 @@ def gaussian_profile( x,x0, E0, w0 ):
     -------
     A 1darray of floats, of the same length as x
     """
-    return( E0 * np.exp( -(x-x0)**2 / w0**2 ) )
+    return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
