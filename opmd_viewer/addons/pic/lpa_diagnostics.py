@@ -515,7 +515,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             # Guess start values for fit
             f0 = omega0
             fmax = np.amax( spectrum )
-            fsigma = wstd(spectrum, info.omega)
+            fsigma = info.omegamax - info.omegamin
             params, _ = curve_fit( gaussian_profile, info.omega,
                                    spectrum, p0=[f0, fmax, fsigma])
             return( params[0] )
