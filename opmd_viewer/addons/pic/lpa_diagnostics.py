@@ -468,10 +468,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope )
 
-    def get_main_frequency( self, t=None, iteration=None, pol=None, m='all'):
+    def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
+                            method='fit'):
         """
         Calculate the angular frequency of a laser pulse.
-        (Defined as the frequency for which the spectrum is maximum)
 
         Parameters
         ----------
@@ -492,6 +492,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
+        method : string, optional
+            Method which is used to calculate the frequency of the pulse
+            'fit' : Fit a Gaussian curve to find central frequency
+            'max' : Take frequency with highest intensity in the spectrum
+
         Returns
         -------
         A float with mean angular frequency
@@ -500,9 +505,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         spectrum, info = self.get_spectrum( t, iteration, pol, m )
 
         # Calculate the main frequency
+        # Use the maximum
         i_max = np.argmax( spectrum )
         omega0 = info.omega[i_max]
-        return( omega0 )
+        if method == 'max':
+            return( omega0 )
+        # Gaussian fit
+        elif method == 'fit':
+            # Guess start values for fit
+            f0 = omega0
+            fmax = np.amax( spectrum )
+            fsigma = wstd(spectrum, info.omega)
+            params, _ = curve_fit( gaussian_profile, info.omega,
+                                   spectrum, p0=[f0, fmax, fsigma])
+            return( params[0] )
+        else:
+            raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrum( self, t=None, iteration=None, pol=None,
                       m='all', plot=False, **kw ):
