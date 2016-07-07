@@ -92,7 +92,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( mean_gamma, std_gamma )
 
     def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
-                              select=None):
+                              select=None, plot=False, **kw):
         """
         Calculate the standard deviation of gamma for particles in z-slices of
         width dz
@@ -119,6 +119,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
 
+        plot : bool, optional
+           Whether to plot the requested quantity
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` method
+
         Returns
         -------
         A tuple of arrays:
@@ -144,6 +150,17 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             spreads[i] = wstd(gamma[z_filter], w[z_filter])
             zi += dz
             i += 1
+        # Plot the result if needed
+        if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15 * self.t[ self.current_i ]
+            plt.plot( z_pos, spreads, **kw)
+            plt.title("Slice energy spread at %.1f fs   (iteration %d)"
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            plt.ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
+                        fontsize=self.plotter.fontsize)
+
         return(spreads, z_pos)
 
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
@@ -348,7 +365,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
-                            slicing_dir='y' ):
+                            slicing_dir='y', plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -391,6 +408,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            The direction along which to slice the data
            Either 'x', 'y'
 
+        plot : bool, optional
+           Whether to plot the requested quantity
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot`(1D) or
+           `imshow` (2D) method
+
         Returns
         -------
         A tuple with:
@@ -421,6 +445,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Restrict the metainformation to 1d if needed
         if index != 'all':
             info.restrict_to_1Daxis( info.axes[1] )
+
+        # Plot the result if needed
+        if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15 * self.t[ self.current_i ]
+            if index != 'all':
+                plt.plot( info.z, envelope, **kw)
+                plt.ylabel('$E_%s \;(V/m)$' % pol,
+                           fontsize=self.plotter.fontsize)
+            else:
+                plt.imshow( envelope, extent=info.imshow_extent,
+                            aspect='auto', **kw)
+                plt.colorbar()
+                plt.ylabel('$%s \;(\mu m)$' % pol,
+                            fontsize=self.plotter.fontsize)
+            plt.title("Laser envelope at %.1f fs   (iteration %d)"
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
 
         # Return the result
         return( envelope, info )
@@ -570,11 +612,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
+            iteration = self.iterations[ self.current_i ]
+            time_fs = 1.e15 * self.t[ self.current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-
+            plt.title("Spectrum at %.1f fs   (iteration %d)"
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
