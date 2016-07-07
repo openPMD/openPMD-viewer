@@ -96,7 +96,7 @@ def read_openPMD_params(filename, extract_parameters=True):
                 params['geometry'] = "2dcartesian"
             elif dim == 3:
                 params['geometry'] = "3dcartesian"
-            params['avail_circ_modes'] = None
+            params['avail_circ_modes'] = []
         # For each field, check whether it is vector or scalar
         # Store the information in a dictionary
         params['avail_fields'] = {}
