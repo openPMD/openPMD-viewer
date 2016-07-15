@@ -142,6 +142,7 @@ class OpenPMDTimeSeries(parent_class):
 
         species: string
             A string indicating the name of the species
+            This is optional if there is only one species
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
@@ -179,9 +180,12 @@ class OpenPMDTimeSeries(parent_class):
         A list of 1darray corresponding to the data requested in `var_list`
         (one 1darray per element of 'var_list', returned in the same order)
         """
-        # Check that the species and quantity required are present
+        # Check that the species required are present
         if self.avail_species is None:
             raise OpenPMDException('No particle data in this time series')
+        # If there is only one species, infer that the user asks for that one
+        if species is None and len(self.avail_species) == 1:
+            species = self.avail_species[0]
         if species not in self.avail_species:
             species_list = '\n - '.join(self.avail_species)
             raise OpenPMDException(
