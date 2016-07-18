@@ -99,7 +99,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         Parameters
         ----------
-        dz : Width of slices in which to calculate sigma gamma
+        dz : float (in micrometers)
+            Width of slices in which to calculate sigma gamma
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
@@ -451,11 +452,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             iteration = self.iterations[ self.current_i ]
             time_fs = 1.e15 * self.t[ self.current_i ]
             if index != 'all':
-                plt.plot( info.z, envelope, **kw)
+                plt.plot( 1.e6 * info.z, envelope, **kw)
                 plt.ylabel('$E_%s \;(V/m)$' % pol,
                            fontsize=self.plotter.fontsize)
             else:
-                plt.imshow( envelope, extent=info.imshow_extent,
+                plt.imshow( envelope, extent=1.e6 * info.imshow_extent,
                             aspect='auto', **kw)
                 plt.colorbar()
                 plt.ylabel('$%s \;(\mu m)$' % pol,
