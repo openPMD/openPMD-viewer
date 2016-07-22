@@ -512,7 +512,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( envelope )
 
     def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
-                            method='fit'):
+                            method='max'):
         """
         Calculate the angular frequency of a laser pulse.
 
