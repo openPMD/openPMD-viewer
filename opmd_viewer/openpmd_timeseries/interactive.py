@@ -304,7 +304,7 @@ class InteractiveViewer(object):
             # Use button
             fld_use_button = widgets.Checkbox(
                 description=' Use this range', value=False)
-            set_widget_dimensions( fld_use_button, width=100 )
+            set_widget_dimensions( fld_use_button, left_margin=100 )
             fld_use_button.observe( refresh_field, 'value', 'change')
             # Colormap button
             fld_color_button = widgets.Select(
@@ -392,21 +392,23 @@ class InteractiveViewer(object):
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = widgets.Select(
-                options=sorted(plt.cm.datad.keys()), height=50, width=200,
-                value='Blues')
-            set_widget_dimensions( ptcl_color_button, width=100 )
+                options=sorted(plt.cm.datad.keys()), value='Blues')
+            set_widget_dimensions( ptcl_color_button, height=50, width=200 )
             ptcl_color_button.observe( refresh_ptcl, 'value', 'change')
             # Range of values
-            ptcl_range_button = widgets.FloatRangeSlider(
-                min=0, max=10, width=220, value=(0, 5))
+            ptcl_range_button = widgets.IntRangeSlider(
+                min=0, max=10, value=(0, 5))
+            set_widget_dimensions( ptcl_range_button, width=220 )
             ptcl_range_button.observe( refresh_ptcl, 'value', 'change')
             # Order of magnitude
             ptcl_magnitude_button = widgets.IntText(
-                description='x 10^', value=9, width=50)
+                description='x 10^', value=9 )
+            set_widget_dimensions( ptcl_magnitude_button, width=50 )
             ptcl_magnitude_button.observe( refresh_ptcl, 'value', 'change')
             # Use button
             ptcl_use_button = widgets.Checkbox(
                 description=' Use this range', value=False)
+            set_widget_dimensions( ptcl_use_button, left_margin=100 )
             ptcl_use_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
@@ -418,22 +420,20 @@ class InteractiveViewer(object):
             # Containers
             # ----------
             # Particle quantity container
-            container_ptcl_quantities = widgets.VBox(width=310,
-                children=[
+            container_ptcl_quantities = widgets.VBox( children=[
                     ptcl_species_button, ptcl_xaxis_button,
                     ptcl_yaxis_button])
+            set_widget_dimensions( container_ptcl_quantities, width=310 )
             # Particle selection container
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
-            container_ptcl_plots = widgets.VBox(width=310,
-                children=[
+            container_ptcl_magnitude= widgets.HBox( children=[
+                            ptcl_magnitude_button, ptcl_use_button ] )
+            set_widget_dimensions( container_ptcl_magnitude, height=50 )
+            container_ptcl_plots = widgets.VBox( children=[
                     ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
-                    widgets.HBox(
-                        children=[
-                            ptcl_magnitude_button,
-                            ptcl_use_button],
-                        height=50),
-                    ptcl_color_button])
+                    container_ptcl_magnitude, ptcl_color_button])
+            set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
                 children=[container_ptcl_quantities, container_ptcl_select,
@@ -442,9 +442,9 @@ class InteractiveViewer(object):
             accord2.set_title(1, 'Particle selection')
             accord2.set_title(2, 'Plotting options')
             # Complete particle container
-            container_ptcl = widgets.VBox(width=370,
-                children=[accord2, widgets.HBox(
+            container_ptcl = widgets.VBox( children=[accord2, widgets.HBox(
                     children=[ptcl_refresh_toggle, ptcl_refresh_button])])
+            set_widget_dimensions( container_ptcl, width=370 )
 
         # Global container
         if (self.avail_fields is not None) and \
@@ -500,9 +500,9 @@ class ParticleSelectWidget(object):
         self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
-        self.low_bound = [widgets.FloatText(value=-1.e-1, width=90,
+        self.low_bound = [widgets.FloatText(value=-1.e-1, 
             description='from ') for i in range(n_rules)]
-        self.up_bound = [widgets.FloatText(value=1.e-1, width=90,
+        self.up_bound = [widgets.FloatText(value=1.e-1, 
             description='to ') for i in range(n_rules)]
 
         # Add the callback function refresh_ptcl to each widget
@@ -519,12 +519,18 @@ class ParticleSelectWidget(object):
         """
         containers = []
         for i in range(self.n_rules):
-            containers.append(widgets.HBox(height=40,
+            set_widget_dimensions( self.active[i], width=20 )
+            set_widget_dimensions( self.low_bound[i], height=50, width=90 )
+            set_widget_dimensions( self.up_bound[i], height=50,
+                                       width=90, left_margin=40 )
+            containers.append(widgets.HBox(
                 children=[self.active[i], self.quantity[i]]))
-            containers.append(widgets.HBox(height=50,
+            containers.append(widgets.HBox(
                 children=[self.low_bound[i], self.up_bound[i]]))
 
-        return(widgets.VBox(children=containers, width=310))
+        final_container = widgets.VBox(children=containers)
+        set_widget_dimensions( final_container, width=310 )
+        return( final_container )
 
     def to_dict(self):
         """
@@ -547,7 +553,7 @@ class ParticleSelectWidget(object):
             return(None)
 
 
-def set_widget_dimensions( widget, height=None, width=None ):
+def set_widget_dimensions( widget, height=None, width=None, left_margin=None ):
     """
     Set the dimensions of the widget, using the proper API
     (which depends on the version of ipywidgets)
@@ -558,12 +564,18 @@ def set_widget_dimensions( widget, height=None, width=None ):
 
     height, width: integer, optional
         The height and width in number of points
+
+    left_margin: integer, optional
+        Only used for ipywidgets version > 5
+        The left margin of a widget (avoids collisions with other widgets)
     """
     if ipywidgets_version >= 5:
         if height is not None:
             widget.layout.height = str(height) + 'px'
         if width is not None:
             widget.layout.width = str(width) + 'px'
+        if left_margin is not None:
+            widget.layout.margin = "0px 0px 0px " + str(left_margin) + "px"
     else:
         if height is not None:
             widget.height = height
