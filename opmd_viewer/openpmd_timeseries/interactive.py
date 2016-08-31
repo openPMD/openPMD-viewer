@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from functools import partial
 ipywidgets_version = int(__version__[0])
 
+
 class InteractiveViewer(object):
 
     def __init__(self):
@@ -234,7 +235,7 @@ class InteractiveViewer(object):
             description="t (fs)")
         slider.observe( change_t, names='value', type='change')
         set_widget_dimensions( slider, width=500 )
-        
+
         # Forward button
         button_p = widgets.Button(description="+")
         set_widget_dimensions( button_p, width=40 )
@@ -274,7 +275,7 @@ class InteractiveViewer(object):
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
-                description=r'Theta:', min=-math.pi/2, max=math.pi/2)
+                description=r'Theta:', min=-math.pi / 2, max=math.pi / 2)
             set_widget_dimensions( theta_button, width=250 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
@@ -334,7 +335,7 @@ class InteractiveViewer(object):
                         slicing_dir_button, slicing_button])
             set_widget_dimensions( container_fields, width=260 )
             # Plotting options container
-            container_fld_magnitude =  widgets.HBox(
+            container_fld_magnitude = widgets.HBox(
                 children=[ fld_magnitude_button, fld_use_button])
             set_widget_dimensions( container_fld_magnitude, height=50 )
             container_fld_plots = widgets.VBox(
@@ -348,7 +349,7 @@ class InteractiveViewer(object):
             accord1.set_title(1, 'Plotting options')
             # Complete field container
             container_fld = widgets.VBox( children=[accord1, widgets.HBox(
-                    children=[fld_refresh_toggle, fld_refresh_button])])
+                children=[fld_refresh_toggle, fld_refresh_button])])
             set_widget_dimensions( container_fld, width=300 )
 
         # Particle widgets
@@ -421,18 +422,17 @@ class InteractiveViewer(object):
             # ----------
             # Particle quantity container
             container_ptcl_quantities = widgets.VBox( children=[
-                    ptcl_species_button, ptcl_xaxis_button,
-                    ptcl_yaxis_button])
+                ptcl_species_button, ptcl_xaxis_button, ptcl_yaxis_button])
             set_widget_dimensions( container_ptcl_quantities, width=310 )
             # Particle selection container
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
-            container_ptcl_magnitude= widgets.HBox( children=[
-                            ptcl_magnitude_button, ptcl_use_button ] )
+            container_ptcl_magnitude = widgets.HBox( children=[
+                ptcl_magnitude_button, ptcl_use_button ] )
             set_widget_dimensions( container_ptcl_magnitude, height=50 )
             container_ptcl_plots = widgets.VBox( children=[
-                    ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
-                    container_ptcl_magnitude, ptcl_color_button])
+                ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
+                container_ptcl_magnitude, ptcl_color_button])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
@@ -443,7 +443,7 @@ class InteractiveViewer(object):
             accord2.set_title(2, 'Plotting options')
             # Complete particle container
             container_ptcl = widgets.VBox( children=[accord2, widgets.HBox(
-                    children=[ptcl_refresh_toggle, ptcl_refresh_button])])
+                children=[ptcl_refresh_toggle, ptcl_refresh_button])])
             set_widget_dimensions( container_ptcl, width=370 )
 
         # Global container
@@ -500,9 +500,9 @@ class ParticleSelectWidget(object):
         self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
-        self.low_bound = [widgets.FloatText(value=-1.e-1, 
+        self.low_bound = [widgets.FloatText(value=-1.e-1,
             description='from ') for i in range(n_rules)]
-        self.up_bound = [widgets.FloatText(value=1.e-1, 
+        self.up_bound = [widgets.FloatText(value=1.e-1,
             description='to ') for i in range(n_rules)]
 
         # Add the callback function refresh_ptcl to each widget
@@ -520,9 +520,8 @@ class ParticleSelectWidget(object):
         containers = []
         for i in range(self.n_rules):
             set_widget_dimensions( self.active[i], width=20 )
-            set_widget_dimensions( self.low_bound[i], height=50, width=90 )
-            set_widget_dimensions( self.up_bound[i], height=50,
-                                       width=90, left_margin=40 )
+            set_widget_dimensions( self.low_bound[i], width=90 )
+            set_widget_dimensions( self.up_bound[i], width=90, left_margin=40 )
             containers.append(widgets.HBox(
                 children=[self.active[i], self.quantity[i]]))
             containers.append(widgets.HBox(
