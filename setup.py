@@ -27,7 +27,7 @@ setup(name='openPMD-viewer',
       scripts=['opmd_viewer/notebook_starter/openPMD_notebook'],
       install_requires=install_requires,
       tests_require=['pytest', 'jupyter'],
-#      setup_requires=['pytest-runner'],
+      setup_requires=['pytest-runner'],
       platforms='any',
       classifiers=[
           'Programming Language :: Python',
