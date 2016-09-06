@@ -142,7 +142,7 @@ repository = https://pypi.python.org/pypi
 username = <yourPypiUsername>
   ```
 
-- Make sure that the release number in `opmd_viewer/__init__.py`
+- Make sure that the version number in `setup.py`
   corresponds to the new release, and that the corresponding changes have been
   documented in `CHANGELOG.md`.
 

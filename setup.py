@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import opmd_viewer  # In order to extract the version number
 
 # Get the long description
 # If possible, use pypandoc to convert the README from Markdown
@@ -15,7 +14,7 @@ with open('./requirements.txt') as f:
 
 # Main setup command
 setup(name='openPMD-viewer',
-      version=opmd_viewer.__version__,
+      version=0.2.1,
       description='Visualization tools for openPMD files',
       long_description=long_description,
       url='https://github.com/openPMD/openPMD-viewer.git',
