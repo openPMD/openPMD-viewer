@@ -14,7 +14,7 @@ with open('./requirements.txt') as f:
 
 # Main setup command
 setup(name='openPMD-viewer',
-      version=0.2.1,
+      version='0.2.1',
       description='Visualization tools for openPMD files',
       long_description=long_description,
       url='https://github.com/openPMD/openPMD-viewer.git',
