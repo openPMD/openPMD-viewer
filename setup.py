@@ -14,6 +14,7 @@ except (ImportError, RuntimeError):
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
 
+
 # Define a custom class to run the py.test with `python setup.py test`
 class PyTest(TestCommand):
 
