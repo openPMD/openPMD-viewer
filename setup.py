@@ -25,7 +25,7 @@ class PyTest(TestCommand):
 
 # Main setup command
 setup(name='openPMD-viewer',
-      version='0.3.0',
+      version='0.3.1',
       description='Visualization tools for openPMD files',
       long_description=long_description,
       url='https://github.com/openPMD/openPMD-viewer.git',
