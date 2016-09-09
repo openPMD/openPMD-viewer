@@ -10,11 +10,18 @@ requirements:
   build:
     - python
     - setuptools
-    - pytest_runner
     - numpy
     - scipy
     - matplotlib
     - h5py
+    - jupyter
+  run:
+    - python
+    - numpy
+    - scipy
+    - matplotlib
+    - h5py
+    - jupyter
 
 test:
   imports:
