@@ -63,21 +63,14 @@ replace `pypi` by `pypitest` in the above set of commands)
 - `cd` into the folder `conda_recipe` and make sure that the version
   number in `meta.yaml` matches the current version.
 
-- Still in the folder `conda_recipe`, build the package for python 2.7:
+- Still in the folder `conda_recipe`, build the package for python 2.7
+and python 3.5, and convert them for all available OS, by using the
+following commands
 ```
 conda build --python=2.7 .
-```
-At the end of the build, the prompt indicates at path after `anaconda
-upload`. Copy that path and type
-```
-conda convert <copied path> -p all
-```
-in order to convert the package for multiple OS.
-
-- Similarly, build the package for python3.5:
-```
+conda convert $(conda build --python=2.7 . --output) -p all
 conda build --python=3.5 .
-conda convert <new copied path> -p all
+conda convert $(conda build --python=3.5 . --output) -p all
 ```
 
 - Upload the differents versions to Anaconda.org
