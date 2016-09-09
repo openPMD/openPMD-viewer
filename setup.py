@@ -1,4 +1,6 @@
+import sys
 from setuptools import setup, find_packages
+from setuptools.command.test import test as TestCommand
 
 # Get the long description
 # If possible, use pypandoc to convert the README from Markdown
@@ -12,6 +14,15 @@ except (ImportError, RuntimeError):
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
 
+
+# Define a custom class to run the py.test with `python setup.py test`
+class PyTest(TestCommand):
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main([])
+        sys.exit(errcode)
+
 # Main setup command
 setup(name='openPMD-viewer',
       version='0.3.0',
@@ -24,9 +35,9 @@ setup(name='openPMD-viewer',
       packages=find_packages('./'),
       package_data={'opmd_viewer': ['notebook_starter/*.ipynb']},
       scripts=['opmd_viewer/notebook_starter/openPMD_notebook'],
-      install_requires=install_requires,
       tests_require=['pytest', 'jupyter'],
-      setup_requires=['pytest-runner'],
+      install_requires=install_requires,
+      cmdclass={'test': PyTest},
       platforms='any',
       classifiers=[
           'Programming Language :: Python',
