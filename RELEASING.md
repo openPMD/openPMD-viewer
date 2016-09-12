@@ -1,7 +1,8 @@
 # Creating a new release
 
-This document explains how to create a new release. In future
-versions of this packages, some of the steps below will be automatized.
+This document is only relevant for maintainers of openPMD-viewer. It
+explains how to create a new release. In future versions of this
+packages, some of the steps below will be automatized.
 
 ## Preparing your environment for a release
 
@@ -73,7 +74,7 @@ conda build --python=3.5 .
 conda convert $(conda build --python=3.5 . --output) -p all
 ```
 
-- Upload the differents versions to Anaconda.org
+- Upload the different versions to Anaconda.org
 ```
 anaconda login
 anaconda upload osx-64/*
