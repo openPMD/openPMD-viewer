@@ -1,5 +1,13 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.3.2
+
+This is version `0.3.2` of openPMD-viewer. The following changes were introduced:
+
+- The conda recipe in `conda_recipe/` was simplified and streamlined.
+- The documentation now explains how to install openPMD-viewer with `conda`, the instructions to release the package was put into a document `RELEASING.md`.
+- A file `MANIFEST.in` was added, to avoid issues with pip and Python 3.
+
 ## 0.3.1
 
 This is version `0.3.1` of openPMD-viewer. This version introduces minor changes in the way the tests are run in `setup.py`. The aim of these changes are to prepare a conda release.
