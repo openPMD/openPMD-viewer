@@ -1,5 +1,11 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.3.3
+
+This is version `0.3.3` of openPMD-viewer.
+
+This version fixed a bug with the executable `openPMD_notebook`. More precisely, the executable was not installed, when using `pip` or `conda`. In addition, it was failing with Python 3.
+
 ## 0.3.2
 
 This is version `0.3.2` of openPMD-viewer. The following changes were introduced:
