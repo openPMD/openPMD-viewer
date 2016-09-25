@@ -69,8 +69,8 @@ and python 3.5, and convert them for all available OS, by using the
 following commands
 ```
 conda build --python=2.7 .
-conda convert $(conda build --python=2.7 . --output) -p all
 conda build --python=3.5 .
+conda convert $(conda build --python=2.7 . --output) -p all
 conda convert $(conda build --python=3.5 . --output) -p all
 ```
 
