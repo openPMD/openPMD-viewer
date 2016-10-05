@@ -64,7 +64,7 @@ ensure that your code complies with some standard style conventions.
   in the tutorials. On the other hand, it can take several minutes if
   you have not previously downloaded these files.)
 
-- Push the changes to your personal copy on Bitbucket
+- Push the changes to your personal copy on Github
 ```
 git push -u origin <NewBranchName>
 ```
