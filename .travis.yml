@@ -16,8 +16,8 @@ matrix:
       language: cpp
       env: TRAVIS_PYTHON_VERSION=2.7
 
-# Setup anaconda
 before_install:
+  # Setup anaconda
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
       wget https://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh;
     fi
@@ -27,10 +27,13 @@ before_install:
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=$HOME/miniconda2/bin:$PATH
+  # Create a virtual environment with the right version of python
+  - conda create -n testing python=$TRAVIS_PYTHON_VERSION --yes
+  - source activate testing
 
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION --file requirements.txt
+  - conda install --yes --file requirements.txt
   - python setup.py install
   - pip install wget
   - pip install pyflakes pep8 jupyter
