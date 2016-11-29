@@ -33,8 +33,8 @@ username = <yourPypiUsername>
 
 ## Creating a release on Github
 
-- Make sure that the version number in `setup.py`
-  corresponds to the new release, and that the corresponding changes have been
+- Make sure that the version number in `setup.py` and `opmd_viewer/__init__.py`
+  correspond to the new release, and that the corresponding changes have been
   documented in `CHANGELOG.md`.
 
 - If everything works fine, then merge the `dev` version into `master`
