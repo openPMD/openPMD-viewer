@@ -10,3 +10,4 @@ from .openpmd_timeseries import OpenPMDTimeSeries, FieldMetaInformation
 
 # Define the version number
 __version__ = "0.3.3"
+__all__ = ['OpenPMDTimeSeries', 'FieldMetaInformation', '__version__']
