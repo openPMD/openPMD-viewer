@@ -9,5 +9,5 @@ See the class OpenPMDTimeSeries to open a set of openPMD files
 from .openpmd_timeseries import OpenPMDTimeSeries, FieldMetaInformation
 
 # Define the version number
-__version__ = "0.3.3"
+from .__version__ import __version__
 __all__ = ['OpenPMDTimeSeries', 'FieldMetaInformation', '__version__']
