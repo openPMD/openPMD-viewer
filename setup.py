@@ -14,6 +14,10 @@ except (ImportError, RuntimeError):
 with open('./requirements.txt') as f:
     install_requires = [line.strip('\n') for line in f.readlines()]
 
+# Read the version number, by executing the file opmd_viewer/__version__.py
+# This defines the variable __version__
+with open('./opmd_viewer/__version__.py') as f:
+    exec( f.read() )
 
 # Define a custom class to run the py.test with `python setup.py test`
 class PyTest(TestCommand):
@@ -25,7 +29,7 @@ class PyTest(TestCommand):
 
 # Main setup command
 setup(name='openPMD-viewer',
-      version='0.3.3',
+      version=__version__,
       description='Visualization tools for openPMD files',
       long_description=long_description,
       url='https://github.com/openPMD/openPMD-viewer.git',
