@@ -90,8 +90,10 @@ def read_openPMD_params(filename, extract_parameters=True):
             params['avail_circ_modes'] = ['all'] + \
                 [str(m) for m in range(int(Nm / 2) + 1)]
         elif params['geometry'] == "cartesian":
-            # Check if this a 2d or 3d Cartesian timeseries
+            # Check if this a 1d, 2d or 3d Cartesian timeseries
             dim = len(first_field.attrs['axisLabels'])
+            if dim == 1:
+                params['geometry'] = "1dcartesian"
             if dim == 2:
                 params['geometry'] = "2dcartesian"
             elif dim == 3:
