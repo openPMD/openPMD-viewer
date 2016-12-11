@@ -115,3 +115,55 @@ def apply_selection(file_handle, data_list, select, species, extensions):
             data_list[i] = data_list[i][select_array]
 
     return(data_list)
+
+
+def fit_bins_to_grid( hist_size, grid_size, grid_range ):
+    """
+    Given a tentative number of bins `hist_size` for a histogram over
+    the range `grid_range`, return a modified number of bins `hist_size`
+    and a modified range `hist_range` so that the spacing of the histogram
+    bins is an integer multiple (or integer divisor) of the grid spacing.
+
+    Parameters:
+    ----------
+    hist_size: integer
+        The number of bins in the histogram along the considered direction
+
+    grid_size: integer
+        The number of cells in the grid
+
+    grid_range: list of floats (in meters)
+        The extent of the grid
+
+    Returns:
+    --------
+    hist_size: integer
+        The new number of bins
+
+    hist_range: list of floats (in microns)
+        The new range of the histogram
+    """
+    # The new histogram range is the same as the grid range
+    hist_range = grid_range
+
+    # Calculate histogram tentative spacing, and grid spacing
+    hist_spacing = ( hist_range[1] - hist_range[0] ) * 1. / hist_size
+    grid_spacing = ( grid_range[1] - grid_range[0] ) * 1. / grid_size
+
+    # Modify the histogram spacing, so that either:
+    if hist_spacing >= grid_spacing:
+        # - The histogram spacing is an integer multiple of the grid spacing
+        hist_spacing = int( hist_spacing / grid_spacing ) * grid_spacing
+    else:
+        # - The histogram spacing is an integer divisor of the grid spacing
+        hist_spacing = grid_spacing / int( grid_spacing / hist_spacing )
+
+    # Get the corresponding new number of bins, and the new range
+    hist_size = int( ( hist_range[1] - hist_range[0] ) / hist_spacing )
+    hist_range[1] = hist_range[0] + hist_size * hist_spacing
+
+    # Convert the range to microns (since this is how particle positions
+    # are returned in the openPMD-viewer)
+    hist_range = [ 1.e6 * hist_range[0], 1.e6 * hist_range[1] ]
+
+    return( hist_size, hist_range )

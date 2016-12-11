@@ -253,3 +253,53 @@ def find_dataset( dfile, field_path ):
     group = dfile[ full_group_path ]
 
     return( group, dset )
+
+
+def get_grid_parameters( dfile, avail_fields ):
+    """
+    Return the parameters of the spatial grid (grid size and grid range)
+    in two dictionaries
+
+    Parameters:
+    -----------
+    dfile: an h5Py.File object
+       The file from which to extract the information
+
+    avail_fields: dictionary
+       A dictionary listing the available fields and whether they are
+       vectors or scalars
+       (e.g. {'B':'vector', 'E':'vector', 'rho':'scalar'})
+
+    Returns:
+    --------
+    A tuple with `grid_size_dict` and `grid_range_dict`
+    Both objects are dictionaries, with their keys being the labels of the axis
+    of the grid (e.g. 'x', 'y', 'z')
+    The values of `grid_size_dict` are the number of gridpoints along each axis
+    The values of `grid_range_dict` are lists of two floats, which correspond
+    to the min and max of the grid, along each axis.
+    """
+    # Pick the first field, extract the group and dataset
+    first_field = list(avail_fields.keys())[0]
+    group, dset = find_dataset( dfile, first_field )
+    if avail_fields[first_field] == 'vector':
+        # For field vector, extract the first coordinate, to get the dataset
+        first_coord = next(iter(group.keys()))
+        dset = group[first_coord]
+
+    # Extract relevant quantities
+    labels = group.attrs['axisLabels']
+    grid_spacing = group.attrs['gridSpacing'] * group.attrs['gridUnitSI']
+    grid_offset = group.attrs['gridGlobalOffset'] * group.attrs['gridUnitSI']
+    grid_size = dset.shape
+
+    # Build the dictionaries grid_size_dict and grid_range_dict
+    grid_size_dict = {}
+    grid_range_dict = {}
+    for i in range(len(labels)):
+        coord = labels[i].decode()
+        grid_size_dict[coord] = grid_size[i]
+        grid_range_dict[coord] = \
+            [ grid_offset[i], grid_offset[i] + grid_size[i] * grid_spacing[i] ]
+
+    return( grid_size_dict, grid_range_dict )

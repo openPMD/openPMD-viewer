@@ -39,7 +39,7 @@ class Plotter(object):
         self.t = t
         self.iterations = iterations
 
-    def hist1d(self, q1, w, quantity1, species, current_i, nbins,
+    def hist1d(self, q1, w, quantity1, species, current_i, nbins, hist_range,
                cmap='Blues', vmin=None, vmax=None, **kw):
         """
         Plot a 1D histogram of the particle quantity q1
@@ -64,8 +64,11 @@ class Plotter(object):
         current_i: int
             The index of this iteration, within the iterations list
 
-        nbins : int, optional
+        nbins : int
            Number of bins for the histograms
+
+        hist_range : list of 2 floats
+           Extent of the histogram
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's hist
@@ -75,13 +78,14 @@ class Plotter(object):
         time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
-        plt.hist(q1, bins=nbins, weights=w, **kw)
+        plt.hist(q1, bins=nbins, range=hist_range, weights=w, **kw)
+        plt.xlim(hist_range)
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f fs    (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
-               nbins, cmap='Blues', vmin=None, vmax=None, **kw):
+                nbins, hist_range, cmap='Blues', vmin=None, vmax=None, **kw):
         """
         Plot a 2D histogram of the particle quantity q1
         Sets the proper labels
@@ -105,8 +109,11 @@ class Plotter(object):
         current_i: int
             The index of this iteration, within the iterations list
 
-        nbins : int, optional
-           Number of bins for the histograms
+        nbins : list of 2 ints
+           Number of bins along each direction, for the histograms
+
+        hist_range : list contains 2 lists of 2 floats
+           Extent of the histogram along each direction
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's hist
@@ -116,7 +123,7 @@ class Plotter(object):
         time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
-        plt.hist2d(q1, q2, bins=nbins, cmap=cmap,
+        plt.hist2d(q1, q2, bins=nbins, cmap=cmap, range=hist_range,
                    vmin=vmin, vmax=vmax, weights=w, **kw)
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
