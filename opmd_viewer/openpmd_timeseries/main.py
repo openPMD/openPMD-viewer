@@ -290,7 +290,7 @@ class OpenPMDTimeSeries(parent_class):
             if use_field_mesh and self.avail_fields is not None:
                 # Extract the grid resolution
                 grid_size_dict, grid_range_dict = get_grid_parameters(
-                    file_handle, self.avail_fields )
+                    file_handle, self.avail_fields, self.geometry )
                 # For each direction, modify the number of bins, so that
                 # the resolution is a multiple of the grid resolution
                 for i_var in range(len(var_list)):
