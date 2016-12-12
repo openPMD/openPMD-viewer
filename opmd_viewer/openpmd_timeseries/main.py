@@ -278,7 +278,12 @@ class OpenPMDTimeSeries(parent_class):
 
             # Determine the size of the histogram bins
             # - First pick default values
-            hist_range = [ [ data.min(), data.max() ] for data in data_list ]
+            hist_range = []
+            for data in data_list:
+                if len(data) != 0:
+                    hist_range.append( [ data.min(), data.max() ] )
+                else:
+                    hist_range.append( [ -1., 1. ] )
             hist_bins = [ nbins for data in data_list ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
