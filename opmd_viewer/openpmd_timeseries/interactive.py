@@ -136,7 +136,8 @@ class InteractiveViewer(object):
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
-                        nbins=ptcl_bins_button.value)
+                        nbins=ptcl_bins_button.value,
+                        use_field_mesh=ptcl_use_field_button.value )
                 else:
                     # 2D histogram
                     self.get_particle(t=self.current_t, output=False,
@@ -145,7 +146,8 @@ class InteractiveViewer(object):
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
-                        nbins=ptcl_bins_button.value)
+                        nbins=ptcl_bins_button.value,
+                        use_field_mesh=ptcl_use_field_button.value )
 
         def refresh_field_type(change):
             """
@@ -389,7 +391,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
             ptcl_bins_button = widgets.IntText(description='nbins:', value=100)
-            set_widget_dimensions( ptcl_bins_button, width=100 )
+            set_widget_dimensions( ptcl_bins_button, width=80 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = widgets.Select(
@@ -411,6 +413,11 @@ class InteractiveViewer(object):
                 description=' Use this range', value=False)
             set_widget_dimensions( ptcl_use_button, left_margin=100 )
             ptcl_use_button.observe( refresh_ptcl, 'value', 'change')
+            # Use field mesh buttons
+            ptcl_use_field_button = widgets.Checkbox(
+                description=' Use field mesh', value=True)
+            set_widget_dimensions( ptcl_use_field_button, left_margin=90 )
+            ptcl_use_field_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
                 description='Always refresh', value=True)
@@ -427,12 +434,14 @@ class InteractiveViewer(object):
             # Particle selection container
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
+            container_ptcl_bins = widgets.HBox( children=[
+                ptcl_bins_button, ptcl_use_field_button ] )
             container_ptcl_magnitude = widgets.HBox( children=[
                 ptcl_magnitude_button, ptcl_use_button ] )
             set_widget_dimensions( container_ptcl_magnitude, height=50 )
             container_ptcl_plots = widgets.VBox( children=[
-                ptcl_figure_button, ptcl_bins_button, ptcl_range_button,
-                container_ptcl_magnitude, ptcl_color_button])
+                ptcl_figure_button, container_ptcl_bins, ptcl_range_button,
+                container_ptcl_magnitude, ptcl_color_button ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
