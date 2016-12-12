@@ -11,12 +11,12 @@ License: 3-Clause-BSD-LBNL
 import os
 import numpy as np
 import h5py as h5
-from .utilities import list_h5_files, apply_selection
+from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_2d, \
-    read_field_circ, read_field_3d
+    read_field_circ, read_field_3d, get_grid_parameters
 
 
 # Check wether the interactive interface can be loaded
@@ -123,7 +123,7 @@ class OpenPMDTimeSeries(parent_class):
 
     def get_particle(self, var_list=None, species=None, t=None,
                      iteration=None, select=None, output=True,
-                     plot=False, nbins=150, **kw):
+                     plot=False, nbins=150, use_field_mesh=True, **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -169,7 +169,21 @@ class OpenPMDTimeSeries(parent_class):
            quantities (i.e. when var_list is of length 1 or 2)
 
         nbins : int, optional
+           (Only used when `plot` is True)
            Number of bins for the histograms
+
+        use_field_mesh: bool, optional
+           (Only used when `plot` is True)
+           Whether to use the information of the spatial mesh (whenever
+           possible) in order to choose the parameters of the histograms.
+           More precisely, when this is True:
+           - The extent of the histogram (along any spatial dimension) is
+             automatically chosen to be roughly the extent of the spatial mesh.
+           - The number of bins (along any spatial dimension) is slightly
+             modified (from the value `nbins` provided by the user) so that
+             the spacing of the histogram is an integer multiple of the grid
+             spacing. This avoids artifacts in the plot, whenever particles
+             are regularly spaced in each cell of the spatial mesh.
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's
@@ -249,7 +263,7 @@ class OpenPMDTimeSeries(parent_class):
                 file_handle, data_list, select, species, self.extensions)
 
         # Plotting
-        if plot:
+        if plot and len(var_list) in [1, 2]:
 
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
@@ -262,17 +276,36 @@ class OpenPMDTimeSeries(parent_class):
             else:
                 w = np.ones_like(data_list[0])
 
+            # Determine the size of the histogram bins
+            # - First pick default values
+            hist_range = [ [ data.min(), data.max() ] for data in data_list ]
+            hist_bins = [ nbins for data in data_list ]
+            # - Then, if required by the user, modify this values by
+            #   fitting them to the spatial grid
+            if use_field_mesh and self.avail_fields is not None:
+                # Extract the grid resolution
+                grid_size_dict, grid_range_dict = get_grid_parameters(
+                    file_handle, self.avail_fields )
+                # For each direction, modify the number of bins, so that
+                # the resolution is a multiple of the grid resolution
+                for i_var in range(len(var_list)):
+                    var = var_list[i_var]
+                    if var in grid_size_dict.keys():
+                        hist_bins[i_var], hist_range[i_var] = \
+                            fit_bins_to_grid(hist_bins[i_var],
+                            grid_size_dict[var], grid_range_dict[var] )
+
             # - In the case of only one quantity
             if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                                    self.current_i, nbins, **kw)
+                        self.current_i, hist_bins[0], hist_range[0], **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d(data_list[0], data_list[1], w,
-                                    var_list[0], var_list[1], species,
-                                    self.current_i, nbins, **kw)
+                    var_list[0], var_list[1], species,
+                    self.current_i, hist_bins, hist_range, **kw)
         # Close the file
         file_handle.close()
 
