@@ -33,7 +33,7 @@ def read_field_1d( filename, field_path, axis_labels ):
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field
+       F : a 1darray containing the required field
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
