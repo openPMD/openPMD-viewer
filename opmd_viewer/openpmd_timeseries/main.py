@@ -278,14 +278,19 @@ class OpenPMDTimeSeries(parent_class):
 
             # Determine the size of the histogram bins
             # - First pick default values
-            hist_range = [ [ data.min(), data.max() ] for data in data_list ]
+            hist_range = []
+            for data in data_list:
+                if len(data) != 0:
+                    hist_range.append( [ data.min(), data.max() ] )
+                else:
+                    hist_range.append( [ -1., 1. ] )
             hist_bins = [ nbins for data in data_list ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
             if use_field_mesh and self.avail_fields is not None:
                 # Extract the grid resolution
                 grid_size_dict, grid_range_dict = get_grid_parameters(
-                    file_handle, self.avail_fields )
+                    file_handle, self.avail_fields, self.geometry )
                 # For each direction, modify the number of bins, so that
                 # the resolution is a multiple of the grid resolution
                 for i_var in range(len(var_list)):

@@ -255,7 +255,7 @@ def find_dataset( dfile, field_path ):
     return( group, dset )
 
 
-def get_grid_parameters( dfile, avail_fields ):
+def get_grid_parameters( dfile, avail_fields, geometry ):
     """
     Return the parameters of the spatial grid (grid size and grid range)
     in two dictionaries
@@ -269,6 +269,9 @@ def get_grid_parameters( dfile, avail_fields ):
        A dictionary listing the available fields and whether they are
        vectors or scalars
        (e.g. {'B':'vector', 'E':'vector', 'rho':'scalar'})
+
+    geometry: string
+      Either '2dcartesian', '3dcartesian' or 'thetaMode'
 
     Returns:
     --------
@@ -292,6 +295,10 @@ def get_grid_parameters( dfile, avail_fields ):
     grid_spacing = group.attrs['gridSpacing'] * group.attrs['gridUnitSI']
     grid_offset = group.attrs['gridGlobalOffset'] * group.attrs['gridUnitSI']
     grid_size = dset.shape
+    if geometry == 'thetaMode':
+        # In thetaMode: skip the first number of dset.shape, as this
+        # corresponds to the number of modes
+        grid_size = dset.shape[1:]
 
     # Build the dictionaries grid_size_dict and grid_range_dict
     grid_size_dict = {}

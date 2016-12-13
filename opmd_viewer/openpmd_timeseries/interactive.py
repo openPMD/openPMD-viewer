@@ -391,7 +391,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
             ptcl_bins_button = widgets.IntText(description='nbins:', value=100)
-            set_widget_dimensions( ptcl_bins_button, width=80 )
+            set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = widgets.Select(
@@ -416,7 +416,7 @@ class InteractiveViewer(object):
             # Use field mesh buttons
             ptcl_use_field_button = widgets.Checkbox(
                 description=' Use field mesh', value=True)
-            set_widget_dimensions( ptcl_use_field_button, left_margin=90 )
+            set_widget_dimensions( ptcl_use_field_button, left_margin=100 )
             ptcl_use_field_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
