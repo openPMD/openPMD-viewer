@@ -296,7 +296,7 @@ def get_grid_parameters( dfile, avail_fields, geometry ):
     grid_offset = group.attrs['gridGlobalOffset'] * group.attrs['gridUnitSI']
     grid_size = dset.shape
     if geometry == 'thetaMode':
-        # In thetaMode: skip the first number of dset.shape, as this 
+        # In thetaMode: skip the first number of dset.shape, as this
         # corresponds to the number of modes
         grid_size = dset.shape[1:]
 
