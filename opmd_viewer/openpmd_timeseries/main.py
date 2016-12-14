@@ -15,7 +15,7 @@ from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
 from .plotter import Plotter
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_2d, \
+from .data_reader.field_reader import read_field_1d, read_field_2d, \
     read_field_circ, read_field_3d, get_grid_parameters
 
 
@@ -428,6 +428,9 @@ class OpenPMDTimeSeries(parent_class):
             field_label = field + coord
 
         # Get the field data
+        # - For 1D
+        if self.geometry == "1dcartesian":
+            F, info = read_field_1d(filename, field_path, self.axis_labels)
         # - For 2D
         if self.geometry == "2dcartesian":
             F, info = read_field_2d(filename, field_path, self.axis_labels)
