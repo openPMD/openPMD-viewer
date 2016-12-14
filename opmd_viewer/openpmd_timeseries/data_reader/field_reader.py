@@ -13,6 +13,48 @@ import numpy as np
 from .utilities import get_shape, get_data, get_bpath
 from .field_metainfo import FieldMetaInformation
 
+def read_field_1d( filename, field_path, axis_labels ):
+    """
+    Extract a given field from an HDF5 file in the openPMD format,
+    when the geometry is 1d cartesian.
+
+    Parameters
+    ----------
+    filename : string
+       The absolute path to the HDF5 file
+
+    field_path : string
+       The relative path to the requested field, from the openPMD meshes path
+       (e.g. 'rho', 'E/r', 'B/x')
+
+    axis_labels: list of strings
+       The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
+
+    Returns
+    -------
+    A tuple with
+       F : a 1darray containing the required field
+       info : a FieldMetaInformation object
+       (contains information about the grid; see the corresponding docstring)
+    """
+    # Open the HDF5 file
+    dfile = h5py.File( filename, 'r' )
+    # Extract the dataset and and corresponding group
+    group, dset = find_dataset( dfile, field_path )
+
+    # Extract the data in 1D Cartesian
+    F = get_data( dset )
+
+    # Extract the metainformation
+    axes = { 0: axis_labels[0]}
+    info = FieldMetaInformation( axes, F.shape,
+        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+        group.attrs['gridUnitSI'], dset.attrs['position'] )
+
+    # Close the file
+    dfile.close()
+    return( F, info )
+
 
 def read_field_2d( filename, field_path, axis_labels ):
     """

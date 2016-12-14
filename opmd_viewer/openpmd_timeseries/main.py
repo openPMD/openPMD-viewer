@@ -428,6 +428,9 @@ class OpenPMDTimeSeries(parent_class):
             field_label = field + coord
 
         # Get the field data
+        # - For 1D 
+        if self.geometry == "1dcartesian":
+            F, info = read_field_1d(filename, field_path, self.axis_labels)
         # - For 2D
         if self.geometry == "2dcartesian":
             F, info = read_field_2d(filename, field_path, self.axis_labels)
