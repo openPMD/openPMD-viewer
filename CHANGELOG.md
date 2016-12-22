@@ -1,5 +1,16 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.4.0
+
+This is version `0.4.0` of openPMD-viewer.
+
+This new version includes:
+- support for 1D data
+- an additional option `use_field_mesh` when plotting the particle. When set
+to `True`, this option uses information from the field mesh to choose the parameters of the particle histograms (esp. the bins). This is useful in order to avoid plotting/binning artifacts (aliasing) when the particles are evenly spaced.
+
+In addition, the package `opmd_viewer` now has an attribute `__version__`.
+
 ## 0.3.3
 
 This is version `0.3.3` of openPMD-viewer.
@@ -35,4 +46,3 @@ This is version `0.2.0` of openPMD-viewer. A number of minor changes and fixes h
 - The package does not assume anymore that all species contain the same particle quantities. For instance, the package will support a file that contains the positions of ions, and the positions, momenta and weighting of electrons. As part of this, the attribute `OpenPMDTimeSeries.avail_ptcl_quantities` has been replaced by a dictionary `OpenPMDTimeSeries.avail_record_components`.
 - This release introduces automatic PEP8 verification as part of the automatic tests that are run on Travis CI (see CONTRIBUTING.md).
 - The evaluation of the waist and duration of the laser is now based on Gaussian fit of the transverse and longtudinal profile respectively.
-
