@@ -131,7 +131,45 @@ class Plotter(object):
         plt.title("%s:   t =  %.1f fs   (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
-    def show_field(self, F, info, slicing_dir, m,
+    def show_field_1d( self, F, info, field_label, current_i,
+                            vmin=None, vmax=None, **kw ):
+        """
+        Plot the given field in 1D
+
+        Parameters
+        ----------
+        F: 1darray of floats
+            Contains the field to be plotted
+
+        info: a FieldMetaInformation object
+            Contains the information about the plotted field
+
+        field_label: string
+           The name of the field plotted (for labeling purposes)
+
+        vmin, vmax: floats or None
+           The amplitude of the field
+        """
+        # Find the iteration and time
+        iteration = self.iterations[current_i]
+        time_fs = 1.e15 * self.t[current_i]
+
+        # Get the title and labels
+        plt.title("%s at %.1f fs   (iteration %d)"
+                % (field_label, time_fs, iteration), fontsize=self.fontsize)
+
+        # Add the name of the axes
+        plt.xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        # Get the x axis in microns
+        xaxis = 1.e6 * getattr( info, info.axes[0] )
+        # Plot the data
+        plt.plot( xaxis, F )
+        # Get the limits of the plot
+        plt.xlim( xaxis.min(), xaxis.max() )
+        if (vmin is not None) and (vmax is not None):
+            plt.ylim( vmin, vmax )
+
+    def show_field_2d(self, F, info, slicing_dir, m,
                    field_label, geometry, current_i, **kw):
         """
         Plot the given field in 2D

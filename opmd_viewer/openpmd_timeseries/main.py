@@ -460,7 +460,11 @@ class OpenPMDTimeSeries(parent_class):
         if (self.geometry == "3dcartesian") and (slicing is None):
             plot = False
         if plot:
-            self.plotter.show_field(F, info, slicing_dir, m,
+            if self.geometry == "1dcartesian":
+                self.plotter.show_field_1d(F, info, field_label,
+                                    self.current_i, **kw)
+            else:
+                self.plotter.show_field_2d(F, info, slicing_dir, m,
                                     field_label, self.geometry,
                                     self.current_i, **kw)
 

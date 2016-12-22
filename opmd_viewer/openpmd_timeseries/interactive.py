@@ -268,7 +268,8 @@ class InteractiveViewer(object):
             if self.geometry == "thetaMode":
                 coord_button = widgets.ToggleButtons(
                     description='Coord:', options=['x', 'y', 'z', 'r', 't'])
-            elif self.geometry in ["2dcartesian", "3dcartesian"]:
+            elif self.geometry in \
+                    ["1dcartesian", "2dcartesian", "3dcartesian"]:
                 coord_button = widgets.ToggleButtons(
                     description='Coord:', options=['x', 'y', 'z'])
             coord_button.observe( refresh_field, 'value', 'change')
@@ -282,7 +283,7 @@ class InteractiveViewer(object):
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(
-                value=self.axis_labels[1], options=self.axis_labels,
+                value=self.axis_labels[0], options=self.axis_labels,
                 description='Slicing direction:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider(
@@ -328,7 +329,7 @@ class InteractiveViewer(object):
                 container_fields = widgets.VBox(
                     children=[fieldtype_button, coord_button,
                         mode_button, theta_button])
-            elif self.geometry == "2dcartesian":
+            elif self.geometry in ["1dcartesian", "2dcartesian"]:
                 container_fields = widgets.VBox(
                     children=[fieldtype_button, coord_button])
             elif self.geometry == "3dcartesian":
@@ -340,8 +341,13 @@ class InteractiveViewer(object):
             container_fld_magnitude = widgets.HBox(
                 children=[ fld_magnitude_button, fld_use_button])
             set_widget_dimensions( container_fld_magnitude, height=50 )
-            container_fld_plots = widgets.VBox(
-                children=[ fld_figure_button, fld_range_button,
+            if self.geometry == "1dcartesian":
+                container_fld_plots = widgets.VBox(
+                    children=[ fld_figure_button, fld_range_button,
+                    container_fld_magnitude])
+            else:
+                container_fld_plots = widgets.VBox(
+                    children=[ fld_figure_button, fld_range_button,
                     container_fld_magnitude, fld_color_button])
             set_widget_dimensions( container_fld_plots, width=260 )
             # Accordion for the field widgets
