@@ -49,7 +49,7 @@ def is_scalar_record(record):
     return(scalar)
 
 
-def get_data(dset, i_slice=None, pos_slice=None):
+def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     """
     Extract the data from a (possibly constant) dataset
     Slice the data according to the parameters i_slice and pos_slice
@@ -65,6 +65,9 @@ def get_data(dset, i_slice=None, pos_slice=None):
     pos_slice: int, optional
        The position at which to slice the array
        When None, no slice is performed
+
+    output_type: a numpy type
+       The type to which the returned array should be converted
 
     Returns:
     --------
@@ -89,11 +92,13 @@ def get_data(dset, i_slice=None, pos_slice=None):
         elif pos_slice == 2:
             data = dset[:, :, i_slice]
 
-    # Convert to float and scale by the conversion factor
-    if data.dtype != np.float64:
-        data = data.astype(np.float64)
-    if dset.attrs['unitSI'] != 1.0:
-        data *= dset.attrs['unitSI']
+    # Convert to the right type
+    if data.dtype != output_type:
+        data = data.astype( output_type )
+    # Scale by the conversion factor
+    if output_type is np.float64:
+        if dset.attrs['unitSI'] != 1.0:
+            data *= dset.attrs['unitSI']
 
     return(data)
 
