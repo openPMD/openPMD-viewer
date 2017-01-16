@@ -15,13 +15,16 @@ try:
 except ImportError:
     numba_available = False
 
+
 class ParticleTracker( object ):
     """
     TODO: Finish docstring, explain usage
+Say this requires that the id are output
+
     """
 
-    def __init__( self, ts, species=None, t=None,
-                    iteration=None, select=None, preserve_particle_index=True ):
+    def __init__(self, ts, species=None, t=None,
+                iteration=None, select=None, preserve_particle_index=True):
         """
         TODO: Finish docstring + explain preserve_particle_index
 
@@ -51,8 +54,8 @@ class ParticleTracker( object ):
             'uz' : [5., None]  (Particles with uz above 5 mc)
         """
         # Extract the particle id and sort them
-        self.selected_pid, = ts.get_particle( ['id'], species=species, select=select,
-                                    t=t, iteration=iteration )
+        self.selected_pid, = ts.get_particle(['id'], species=species,
+                                select=select, t=t, iteration=iteration)
         self.selected_pid.sort()
 
         # Register a few metadata
@@ -95,10 +98,9 @@ class ParticleTracker( object ):
         for i in range(len(data_list)):
             if len(data_list[i]) > 1:  # Do not apply selection on scalars
                 data_list[i] = self.extract_quantity(
-                                    data_list[i], selected_indices )
+                    data_list[i], selected_indices )
 
         return( data_list )
-
 
     def extract_quantity( self, q, selected_indices ):
         """
@@ -108,19 +110,18 @@ class ParticleTracker( object ):
         if self.preserve_particle_index:
             if q.dtype in [ np.float64, np.float32 ]:
                 # Fill the position of absent particles by NaNs
-                selected_q = np.where(selected_indices== -1, np.nan, selected_q)
+                selected_q = np.where( selected_indices == -1,
+                                        np.nan, selected_q)
             else:
                 # The only non-float quantity in openPMD-viewer is  particle id
                 selected_q = self.selected_pid
         return( selected_q )
-
 
     def get_extraction_indices( self, pid ):
         """
         TODO: Do docstring
         """
         # TODO: Explain the algorithmic approach: how to avoid N x N_selected
-
         # Sort the pid, and keep track of the original index
         # at which each pid was
         original_indices = pid.argsort()
@@ -130,12 +131,11 @@ class ParticleTracker( object ):
         # in self.sselected_pid (i.e. which correpond to one
         # of the original particles)
         selected_indices = np.empty( self.N_selected, dtype=np.int64 )
-        N_extracted = extract_indices(
-                    original_indices, selected_indices,
-                    sorted_pid, self.selected_pid, self.preserve_particle_index)
+        N_extracted = extract_indices( original_indices, selected_indices,
+            sorted_pid, self.selected_pid, self.preserve_particle_index)
 
         # If there are less particles then self.N_selected
-        # (meaning that not all the pid in self.selected_pid were in sorted_pid)
+        # (i.e. not all the pid in self.selected_pid were in sorted_pid)
         if N_extracted < self.N_selected:
             if self.preserve_particle_index:
                 # Finish filling the array and indicate that absent particles

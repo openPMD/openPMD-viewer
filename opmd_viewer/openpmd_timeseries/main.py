@@ -234,7 +234,7 @@ class OpenPMDTimeSeries(parent_class):
             # Dictionary: Check that all selection quantities are available
             valid_select_list = True
             for quantity in select.keys():
-                if (quantity in self.avail_record_components[species]) is False:
+                if not (quantity in self.avail_record_components[species]):
                     valid_select_list = False
             if not valid_select_list:
                 quantity_list = '\n - '.join(
@@ -246,9 +246,8 @@ class OpenPMDTimeSeries(parent_class):
                     "\n - %s\nPlease set the argument `select` "
                     "accordingly." % quantity_list)
         else:
-            raise OpenPMDException(
-                "The argument `select` is erroneous.\n"
-                "It should be either a dictionary or a ParticleTracker object.")
+            raise OpenPMDException("The argument `select` is erroneous.\n"
+            "It should be either a dictionary or a ParticleTracker object.")
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)

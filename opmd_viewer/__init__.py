@@ -11,4 +11,5 @@ from .openpmd_timeseries import OpenPMDTimeSeries, FieldMetaInformation, \
 
 # Define the version number
 from .__version__ import __version__
-__all__ = ['OpenPMDTimeSeries', 'FieldMetaInformation', '__version__']
+__all__ = ['OpenPMDTimeSeries', 'FieldMetaInformation',
+           'ParticleTracker', '__version__']
