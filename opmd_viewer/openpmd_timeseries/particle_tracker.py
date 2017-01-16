@@ -24,7 +24,7 @@ Say this requires that the id are output
     """
 
     def __init__(self, ts, species=None, t=None,
-                iteration=None, select=None, preserve_particle_index=True):
+                iteration=None, select=None, preserve_particle_index=False):
         """
         TODO: Finish docstring + explain preserve_particle_index
 
