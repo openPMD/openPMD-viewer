@@ -9,6 +9,11 @@ License: 3-Clause-BSD-LBNL
 """
 import numpy as np
 from .data_reader.particle_reader import read_species_data
+try:
+    import numba
+    numba_available = True
+except ImportError:
+    numba_available = False
 
 class ParticleTracker( object ):
     """
@@ -171,3 +176,8 @@ def extract_indices( original_indices, selected_indices,
                 i_fill += 1
 
     return( i_fill )
+
+if numba_available:
+    # Compile the Python function, to avoid bottleneck
+    # (all other operations are numpy operations)
+    extract_indices = numba.jit( extract_indices, nopython=True )
