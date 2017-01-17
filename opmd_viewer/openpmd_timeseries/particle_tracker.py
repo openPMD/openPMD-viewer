@@ -18,15 +18,38 @@ except ImportError:
 
 class ParticleTracker( object ):
     """
-    TODO: Finish docstring, explain usage
-Say this requires that the id are output
+    Class that allows to select particles at a given iteration
+    (by initializing an instance of this class) and then
+    to return the same particles at another iteration (by passing
+    this instance as the argument `select` of the method `get_particle`
+    of an `OpenPMDTimeSeries`)
 
+    Usage
+    -----
+    Here is a minimal example of how this class is used.
+    In this example, all the particles in the simulation box at iteration 300
+    are selected, and then the position of the same particles at iteration 400
+    (or at least of those particles that remained in the simulation box at
+    iteration 400) are returned.
+    ```
+    >>> ts = OpenPMDTimeSeries('./hdf5_directory/')
+    >>> pt = ParticleTracker( ts, iteration=300 )
+    >>> x, = ts.get_particle( ['x'], select=pt, iteration=400 )
+    ```
+    For more details on the API of ParticleTracker, see the docstring of
+    the `__init__` method of this class.
+
+    Note
+    ----
+    `ParticleTracker` requires the `id` of the particles
+    to be stored in the openPMD files.
     """
 
     def __init__(self, ts, species=None, t=None,
                 iteration=None, select=None, preserve_particle_index=False):
         """
-        TODO: Finish docstring + explain preserve_particle_index
+        Initialize an instance of `ParticleTracker`: select particles at
+        a given iteration, so that they can be retrieved at a later iteration.
 
         Parameters
         ----------
@@ -52,6 +75,23 @@ Say this requires that the id are output
             'x' : [-4., 10.]  (Particles having x between -4 and 10 microns)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
+
+        preserve_particle_index: bool, optional
+            When retrieving particles at a several iterations,
+            (for instance, with:
+            ```
+            >>> x1, = ts.get_particle( ['x'], select=pt, iteration=400 )
+            >>> x2, = ts.get_particle( ['x'], select=pt, iteration=500 )
+            ```
+            it is sometimes important that the same individual particle has
+            the same index in the array `x1` and `x2`.
+            Using `preserve_particle_index=True` ensures that this is the case.
+            However, this means that, for a particle that becomes absent at
+            a later iteration, its index in the array has to be filled also.
+            In this case, a NaN is returned at the index of this particle.
+            When `preserve_particle_index=False`, no NaN is returned (the
+            returned array is simply smaller when particles are absent) but
+            then it is not garanteed that a given particle keeps the same index
         """
         # Extract the particle id and sort them
         self.selected_pid, = ts.get_particle(['id'], species=species,
@@ -86,9 +126,10 @@ Say this requires that the id are output
 
         Returns
         -------
-        A list of 1darrays that correspond to data_list, but were only the
-        macroparticles that are tracked are kept
-        # TODO: Say more about the NaNs
+        A list of 1darrays that correspond to data_list, but where only the
+        particles that are tracked are kept. (NaNs may or may not be returned
+        depending on whether `preserve_particle_index` was chosen at
+        initialization)
         """
         # Extract the particle id, and get the extraction indices
         pid = read_species_data(file_handle, species, 'id', extensions)
@@ -104,24 +145,70 @@ Say this requires that the id are output
 
     def extract_quantity( self, q, selected_indices ):
         """
-        TODO: Do docstring
+        Select the elements of the array `q`, so as to only return those
+        that correspond to the tracked particles.
+
+        Parameters
+        ----------
+        q: 1d array of floats or ints
+            A particle quantity (one element per particle)
+
+        selected_indices: 1d array of ints
+            The indices (in array q) of the particles to be selected.
+            If `preserve_particle_index` was selected to be True, this array
+            contains -1 at the position of particles that are no longer present
+
+        Returns
+        -------
+        selected_q: 1d array of floats or ints
+            A particle quantity (one element per particles)
+            where only the tracked particles are kept
         """
+        # Extract the selected elements
         selected_q = q[ selected_indices ]
+
+        # Handle the absent particles
         if self.preserve_particle_index:
             if q.dtype in [ np.float64, np.float32 ]:
                 # Fill the position of absent particles by NaNs
                 selected_q = np.where( selected_indices == -1,
                                         np.nan, selected_q)
             else:
-                # The only non-float quantity in openPMD-viewer is  particle id
+                # The only non-float quantity in openPMD-viewer is particle id
                 selected_q = self.selected_pid
+
         return( selected_q )
 
     def get_extraction_indices( self, pid ):
         """
-        TODO: Do docstring
+        For each tracked particle (i.e. for each element of self.selected_pid)
+        find the index of the same particle in the array `pid`
+
+        Return these indices in an array, so that it can then be used to
+        extract quantities (position, momentum, etc.) for the tracked particles
+
+        Parameters
+        ----------
+        pid: 1darray of ints
+            The id of each particle (one element per particle)
+
+        Returns
+        -------
+        selected_indices: 1d array of ints
+            The index of the tracked particles in the array `pid`
+            If `preserve_particle_index` was selected to be True, this array
+            contains -1 at the position of particles that are no longer present
+
+        Note on the implementation
+        --------------------------
+        This could be implemented in brute force (i.e. for each element of
+        `self.selected_pid`, search the entire array `pid` for the same
+        element), but would be very costly.
+        Instead, we sort the array `pid` (and keep track of the original
+        pid, so as to be able to retrieve the indices) and use the fact
+        that it is sorted in order to rapidly extract the elements
+        that are also in `self.selected_pid` (which is also sorted)
         """
-        # TODO: Explain the algorithmic approach: how to avoid N x N_selected
         # Sort the pid, and keep track of the original index
         # at which each pid was
         original_indices = pid.argsort()
@@ -138,7 +225,7 @@ Say this requires that the id are output
         # (i.e. not all the pid in self.selected_pid were in sorted_pid)
         if N_extracted < self.N_selected:
             if self.preserve_particle_index:
-                # Finish filling the array and indicate that absent particles
+                # Finish filling the array with absent particles
                 selected_indices[N_extracted:] = -1
             else:
                 # Resize the array
@@ -150,7 +237,13 @@ Say this requires that the id are output
 
 def extract_indices( original_indices, selected_indices,
                         pid, selected_pid, preserve_particle_index ):
-    # TODO: Explain algorithm: both set of pids are sorted
+    """
+    Go through the sorted arrays `pid` and `selected_pid`, and record
+    the indices (of the array `pid`) where they match, by storing them
+    in the array `selected_indices` (this array is thus modified in-place)
+
+    Return the number of elements that were filled in `selected_indices`
+    """
     i = 0
     i_select = 0
     i_fill = 0

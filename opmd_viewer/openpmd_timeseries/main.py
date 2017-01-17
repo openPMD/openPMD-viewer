@@ -158,12 +158,14 @@ class OpenPMDTimeSeries(parent_class):
            Whether to return the requested quantity
 
         select: dict or ParticleTracker object, optional
-            TODO: Complete documentation
-            Either None or a dictionary of rules
-            to select the particles, of the form
+            - If `select` is a dictionary:
+            then it lists a set of rules to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
+            - If `select` is a ParticleTracker object:
+            then it returns particles that have been selected at another
+            iteration ; see the docstring of `ParticleTracker` for more info.
 
         plot : bool, optional
            Whether to plot the requested quantity
