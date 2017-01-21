@@ -1,6 +1,8 @@
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+from Cython.Build import cythonize
+import numpy
 
 # Get the long description
 # If possible, use pypandoc to convert the README from Markdown
@@ -40,6 +42,10 @@ setup(name='openPMD-viewer',
       package_data={'opmd_viewer': ['notebook_starter/*.ipynb']},
       scripts=['opmd_viewer/notebook_starter/openPMD_notebook'],
       tests_require=['pytest', 'jupyter'],
+      setup_requires=['cython', 'numpy'],
+      ext_modules = cythonize(
+        "opmd_viewer/openpmd_timeseries/cython_function.pyx"),
+      include_dirs=[numpy.get_include()],
       install_requires=install_requires,
       cmdclass={'test': PyTest},
       platforms='any',

@@ -10,10 +10,10 @@ License: 3-Clause-BSD-LBNL
 import numpy as np
 from .data_reader.particle_reader import read_species_data
 try:
-    import numba
-    numba_available = True
+    from .cython_function import extract_indices_cython
+    cython_function_available = True
 except ImportError:
-    numba_available = False
+    cython_function_available = False
 
 
 class ParticleTracker( object ):
@@ -211,15 +211,16 @@ class ParticleTracker( object ):
         """
         # Sort the pid, and keep track of the original index
         # at which each pid was
-        original_indices = pid.argsort()
+        original_indices = pid.argsort().astype(np.int64)
         sorted_pid = pid[ original_indices ]
 
         # Extract only the indices for which sorted_pid is one of pid
         # in self.sselected_pid (i.e. which correpond to one
         # of the original particles)
         selected_indices = np.empty( self.N_selected, dtype=np.int64 )
-        N_extracted = extract_indices( original_indices, selected_indices,
-            sorted_pid, self.selected_pid, self.preserve_particle_index)
+        N_extracted = extract_indices(
+            original_indices, selected_indices, sorted_pid,
+            self.selected_pid, self.preserve_particle_index )
 
         # If there are less particles then self.N_selected
         # (i.e. not all the pid in self.selected_pid were in sorted_pid)
@@ -234,8 +235,15 @@ class ParticleTracker( object ):
 
         return( selected_indices )
 
+# The functions `extract_indices_python` and `extract_indices_cython`
+# perform the same operations, but the cython version is much faster
+# since it is compiled
+if cython_function_available:
+    extract_indices = extract_indices_cython
+else:
+    extract_indices = extract_indices_python
 
-def extract_indices( original_indices, selected_indices,
+def extract_indices_python( original_indices, selected_indices,
                         pid, selected_pid, preserve_particle_index ):
     """
     Go through the sorted arrays `pid` and `selected_pid`, and record
@@ -269,8 +277,3 @@ def extract_indices( original_indices, selected_indices,
                 i_fill += 1
 
     return( i_fill )
-
-if numba_available:
-    # Compile the Python function, to avoid bottleneck
-    # (all other operations are numpy operations)
-    extract_indices = numba.jit( extract_indices, nopython=True )
