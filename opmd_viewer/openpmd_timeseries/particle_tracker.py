@@ -235,13 +235,6 @@ class ParticleTracker( object ):
 
         return( selected_indices )
 
-# The functions `extract_indices_python` and `extract_indices_cython`
-# perform the same operations, but the cython version is much faster
-# since it is compiled
-if cython_function_available:
-    extract_indices = extract_indices_cython
-else:
-    extract_indices = extract_indices_python
 
 def extract_indices_python( original_indices, selected_indices,
                         pid, selected_pid, preserve_particle_index ):
@@ -277,3 +270,11 @@ def extract_indices_python( original_indices, selected_indices,
                 i_fill += 1
 
     return( i_fill )
+
+# The functions `extract_indices_python` and `extract_indices_cython`
+# perform the same operations, but the cython version is much faster
+# since it is compiled
+if cython_function_available:
+    extract_indices = extract_indices_cython
+else:
+    extract_indices = extract_indices_python

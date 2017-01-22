@@ -96,7 +96,7 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     if data.dtype != output_type:
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if output_type is np.float64:
+    if output_type in [ np.float64, np.float32, np.float16 ]:
         if dset.attrs['unitSI'] != 1.0:
             data *= dset.attrs['unitSI']
 
