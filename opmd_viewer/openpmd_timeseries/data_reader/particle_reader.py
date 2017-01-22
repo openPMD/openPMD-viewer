@@ -10,6 +10,7 @@ License: 3-Clause-BSD-LBNL
 """
 
 import os
+import numpy as np
 from scipy import constants
 from .utilities import get_data, get_bpath
 
@@ -55,7 +56,11 @@ def read_species_data(file_handle, species, record_comp, extensions):
     # Extract the right dataset
     species_grp = file_handle[
         os.path.join(base_path, particles_path, species) ]
-    data = get_data(species_grp[ opmd_record_comp ])
+    if opmd_record_comp == 'id':
+        output_type = np.uint64
+    else:
+        output_type = np.float64
+    data = get_data( species_grp[ opmd_record_comp ], output_type=output_type )
 
     # For ED-PIC: if the data is weighted for a full macroparticle,
     # divide by the weight with the proper power

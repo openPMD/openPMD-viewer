@@ -33,7 +33,8 @@ before_install:
 
 # Install packages
 install:
-  - conda install --yes --file requirements.txt
+  - conda install --yes cython numpy scipy h5py
+  - pip install matplotlib
   - python setup.py install
   - pip install wget
   - pip install pyflakes pep8 jupyter
@@ -45,5 +46,5 @@ before_script :
   #   pep8: style only, enforce PEP 8
   - python -m pep8 --ignore=E201,E202,E122,E127,E128,E131 opmd_viewer
 
-script: 
+script:
   - "python setup.py test"

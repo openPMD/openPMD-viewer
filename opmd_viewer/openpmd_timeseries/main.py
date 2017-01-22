@@ -13,6 +13,7 @@ import numpy as np
 import h5py as h5
 from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
 from .plotter import Plotter
+from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_1d, read_field_2d, \
@@ -156,12 +157,15 @@ class OpenPMDTimeSeries(parent_class):
         output : bool, optional
            Whether to return the requested quantity
 
-        select: dict, optional
-            Either None or a dictionary of rules
-            to select the particles, of the form
+        select: dict or ParticleTracker object, optional
+            - If `select` is a dictionary:
+            then it lists a set of rules to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
+            - If `select` is a ParticleTracker object:
+            then it returns particles that have been selected at another
+            iteration ; see the docstring of `ParticleTracker` for more info.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -225,16 +229,15 @@ class OpenPMDTimeSeries(parent_class):
                 "\n - %s\nPlease set the argument `var_list` "
                 "accordingly." % (species, quantity_list) )
 
-        # Check the selection quantities
-        if select is not None:
+        # Check the format of the particle selection
+        if select is None or isinstance(select, ParticleTracker):
+            pass
+        elif isinstance(select, dict):
+            # Dictionary: Check that all selection quantities are available
             valid_select_list = True
-            if not isinstance(select, dict):
-                valid_select_list = False
-            else:
-                for quantity in select.keys():
-                    if (quantity in self.avail_record_components[species]) \
-                            is False:
-                        valid_select_list = False
+            for quantity in select.keys():
+                if not (quantity in self.avail_record_components[species]):
+                    valid_select_list = False
             if not valid_select_list:
                 quantity_list = '\n - '.join(
                     self.avail_record_components[species])
@@ -244,6 +247,9 @@ class OpenPMDTimeSeries(parent_class):
                     "quantities.\n The available quantities are: "
                     "\n - %s\nPlease set the argument `select` "
                     "accordingly." % quantity_list)
+        else:
+            raise OpenPMDException("The argument `select` is erroneous.\n"
+            "It should be either a dictionary or a ParticleTracker object.")
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self.current_i and self.current_t)
@@ -258,9 +264,12 @@ class OpenPMDTimeSeries(parent_class):
             data_list.append(read_species_data(
                 file_handle, species, quantity, self.extensions))
         # Apply selection if needed
-        if select is not None:
+        if isinstance( select, dict ):
             data_list = apply_selection(
                 file_handle, data_list, select, species, self.extensions)
+        elif isinstance( select, ParticleTracker ):
+            data_list = select.extract_tracked_particles(
+                file_handle, data_list, species, self.extensions )
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
@@ -269,9 +278,12 @@ class OpenPMDTimeSeries(parent_class):
             if 'w' in self.avail_record_components[species]:
                 w = read_species_data(
                     file_handle, species, 'w', self.extensions)
-                if select is not None:
+                if isinstance( select, dict ):
                     w, = apply_selection(
                         file_handle, [w], select, species, self.extensions)
+                elif isinstance( select, ParticleTracker ):
+                    w, = select.extract_tracked_particles(
+                        file_handle, [w], species, self.extensions )
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])
