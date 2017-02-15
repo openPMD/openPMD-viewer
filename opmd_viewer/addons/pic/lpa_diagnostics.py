@@ -492,7 +492,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         fft_field_slice = np.fft.fft(field)
         fft_freqs = np.fft.fftfreq(N)
         # Find central frequency
-        central_freq_i = np.argmax(np.abs(fft_field_slice[:N / 2]))
+        central_freq_i = np.argmax(np.abs(fft_field_slice[:int(N / 2)]))
         central_freq = fft_freqs[central_freq_i]
         # Filter frequencies higher than central_freq * freq_filter/100
         filter_bound = central_freq * freq_filter / 100.
@@ -501,8 +501,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         filter_freq_range_i = central_freq_i - filter_i
         # Write filtered FFT array
         filtered_fft = np.zeros_like( field, dtype=np.complex )
-        filtered_fft[N / 2 - filter_freq_range_i:
-                     N / 2 + filter_freq_range_i] \
+        filtered_fft[int(N / 2) - filter_freq_range_i:
+                     int(N / 2) + filter_freq_range_i] \
         = fft_field_slice[central_freq_i - filter_freq_range_i:
                           central_freq_i + filter_freq_range_i]
         # Calculate inverse FFT of filtered FFT array
@@ -617,12 +617,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                 coord=pol, theta=theta, m=m,
                                 slicing_dir=slicing_dir )
         # Get central field lineout
-        field1d = field[field.shape[0] / 2, :]
+        field1d = field[ int( field.shape[0] / 2 ), :]
         # FFT of 1d data
         dt = (info.z[1] - info.z[0]) / const.c  # Integration step for the FFT
         fft_field = np.fft.fft(field1d) * dt
         # Take half of the data (positive frequencies only)
-        spectrum = abs( fft_field[ :len(fft_field) / 2 ] )
+        spectrum = abs( fft_field[ : int( len(fft_field) / 2 ) ] )
         # Create a FieldMetaInformation object
         T = (info.zmax - info.zmin) / const.c
         spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
@@ -858,7 +858,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                     coord=pol, theta=theta,
                                     slicing_dir=slicing_dir )
         # Get central slice
-        E = E[E.shape[0] / 2, :]
+        E = E[ int(E.shape[0] / 2), :]
         Nz = len(E)
         # Get time domain of the data
         tmin = info.zmin / const.c
@@ -884,7 +884,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             fft_EE = np.fft.fft(EE)
             spectrogram[i, :] = np.abs(fft_EE) ** 2
         # Rotate and flip array to have input form of imshow
-        spectrogram = np.flipud(np.rot90(spectrogram[:, Nz / 2:]))
+        spectrogram = np.flipud(np.rot90(spectrogram[:, int(Nz / 2):]))
         # Find the time at which the wigner transform is the highest
         maxi, maxj = np.unravel_index(spectrogram.argmax(), spectrogram.shape)
         tmin = -(T - T / spectrogram.shape[1] * maxj)
