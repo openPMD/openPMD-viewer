@@ -42,7 +42,7 @@ setup(name='openPMD-viewer',
       package_data={'opmd_viewer': ['notebook_starter/*.ipynb']},
       scripts=['opmd_viewer/notebook_starter/openPMD_notebook'],
       tests_require=['pytest', 'jupyter'],
-      setup_requires=['cython', 'numpy'],
+      setup_requires=['Cython', 'numpy'],
       ext_modules = cythonize(
         "opmd_viewer/openpmd_timeseries/cython_function.pyx"),
       include_dirs=[numpy.get_include()],
