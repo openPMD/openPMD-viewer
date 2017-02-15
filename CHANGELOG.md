@@ -1,5 +1,13 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.5.0
+
+This is version `0.5.0` of openPMD-viewer.
+
+This new version includes the `ParticleTracker` object, which allows user to track individual particles across different iterations, provided that their `id` is stored in the openPMD file. Also, starting with this version, openPMD-viewer now depends on `Cython`.
+
+For more information on how to use the `ParticleTracker`, see the tutorial notebook.
+
 ## 0.4.0
 
 This is version `0.4.0` of openPMD-viewer.
