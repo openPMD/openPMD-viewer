@@ -70,8 +70,10 @@ following commands
 ```
 conda build --python=2.7 .
 conda build --python=3.5 .
-conda convert $(conda build --python=2.7 . --output) -p all
-conda convert $(conda build --python=3.5 . --output) -p all
+conda convert $(conda build --python=2.7 . --output) -p osx-64
+conda convert $(conda build --python=2.7 . --output) -p linux-64
+conda convert $(conda build --python=3.5 . --output) -f -p osx-64
+conda convert $(conda build --python=3.5 . --output) -f -p linux-64
 ```
 
 - Upload the different versions to Anaconda.org
@@ -79,7 +81,6 @@ conda convert $(conda build --python=3.5 . --output) -p all
 anaconda login
 anaconda upload osx-64/*
 anaconda upload linux-64/*
-anaconda upload linux-32/*
 ```
 
 
