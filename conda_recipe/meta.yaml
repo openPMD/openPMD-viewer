@@ -15,12 +15,14 @@ requirements:
   build:
     - python
     - setuptools
+    - cython
     - numpy
     - scipy
     - matplotlib
     - h5py
   run:
     - python
+    - cython
     - numpy
     - scipy
     - matplotlib
