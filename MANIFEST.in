@@ -1,4 +1,5 @@
 include README.md
 include requirements.txt
+include opmd_viewer/openpmd_timeseries/cython_function.pyx
 include opmd_viewer/notebook_starter/openPMD_notebook
 include opmd_viewer/notebook_starter/Template_notebook.ipynb
