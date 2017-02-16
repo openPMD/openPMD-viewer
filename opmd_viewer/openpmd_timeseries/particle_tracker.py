@@ -7,6 +7,7 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
+import warnings
 import numpy as np
 from .data_reader.particle_reader import read_species_data
 try:
@@ -102,6 +103,15 @@ class ParticleTracker( object ):
         self.N_selected = len( self.selected_pid )
         self.species = species
         self.preserve_particle_index = preserve_particle_index
+
+        # Print a warning if the Cython function is unavailable
+        if not cython_function_available:
+            warnings.warn(
+            "\nUnable to compile particle tracking with Cython. \n"  + \
+            "The ParticleTracker will still work, but will be slow. \n" + \
+            "For faster particle tracking: \n" + \
+            " - make sure that Cython is installed \n" + \
+            " - then reinstall openPMD-viewer")
 
     def extract_tracked_particles( self, file_handle, data_list,
                                     species, extensions ):
