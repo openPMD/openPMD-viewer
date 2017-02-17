@@ -107,10 +107,10 @@ class ParticleTracker( object ):
         # Print a warning if the Cython function is unavailable
         if not cython_function_available:
             warnings.warn(
-            "\nUnable to compile particle tracking with Cython. \n"  + \
-            "The ParticleTracker will still work, but will be slow. \n" + \
-            "For faster particle tracking: \n" + \
-            " - make sure that Cython is installed \n" + \
+            "\nUnable to compile particle tracking with Cython. \n"
+            "The ParticleTracker will still work, but will be slow. \n"
+            "For faster particle tracking: \n"
+            " - make sure that Cython is installed \n"
             " - then reinstall openPMD-viewer")
 
     def extract_tracked_particles( self, file_handle, data_list,
