@@ -3,14 +3,14 @@ This file is part of the openPMD-viewer.
 
 It defines a number of helper functions that are used in main.py
 
-Copyright 2015-2016, openPMD-viewer contributors
-Authors: Remi Lehe
+Copyright 2015-2017, openPMD-viewer contributors
+Authors: Remi Lehe, Richard Pausch
 License: 3-Clause-BSD-LBNL
 """
 
 import os
-import re
 import numpy as np
+import h5py
 from .data_reader.particle_reader import read_species_data
 
 
@@ -38,17 +38,16 @@ def list_h5_files(path_to_dir):
     for filename in all_files:
         # Use only the name that end with .h5 or .hdf5
         if filename[-3:] == '.h5' or filename[-5:] == '.hdf5':
-            # Extract the iteration, using regular expressions (regex)
-            regex_match = re.search('(\d+).h[df]*5', filename)
-            if regex_match is None:
-                print('Ill-formated HDF5 file: %s\n File names should end with'
-                      ' the iteration number, followed by ".h5"' % filename)
-            else:
-                iteration = int(regex_match.groups()[-1])
-                full_name = os.path.join(
-                    os.path.abspath(path_to_dir), filename)
-                # Create list of tuples (which can be sorted together)
-                iters_and_names.append((iteration, full_name))
+            full_name = os.path.join(
+                os.path.abspath(path_to_dir), filename)
+            # extract all iterations from hdf5 file
+            f = h5py.File(full_name, 'r')
+            iterations = list(f['/data'].keys())
+            f.close()
+            # for each found iteration create list of tuples
+            # (which can be sorted together)
+            for key_iteration in iterations:
+                iters_and_names.append((int(key_iteration), full_name))
 
     # Sort the list of tuples according to the iteration
     iters_and_names.sort()
