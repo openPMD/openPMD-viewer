@@ -214,8 +214,9 @@ class Plotter(object):
                       fontsize=self.fontsize)
         # 3D Cartesian geometry
         elif geometry == "3dcartesian":
-            plt.title("%s sliced across %s at %.1f fs  (iteration %d)"
-                      % (field_label, slicing_dir, time_fs, iteration),
+            slice_plane = info.axes[0] + '-' + info.axes[1]
+            plt.title("%s sliced in %s at %.1f fs  (iteration %d)"
+                      % (field_label, slice_plane, time_fs, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes

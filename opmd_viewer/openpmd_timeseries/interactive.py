@@ -284,7 +284,7 @@ class InteractiveViewer(object):
             # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(
                 value=self.axis_labels[0], options=self.axis_labels,
-                description='Slicing direction:')
+                description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider(
                 description='Slicing:', min=-1., max=1., value=0.)
