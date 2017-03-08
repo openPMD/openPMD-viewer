@@ -278,17 +278,16 @@ class InteractiveViewer(object):
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
-                description=r'Theta:', min=-math.pi / 2, max=math.pi / 2)
-            set_widget_dimensions( theta_button, width=250 )
+                    min=-math.pi / 2, max=math.pi / 2)
+            set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(
                 value=self.axis_labels[0], options=self.axis_labels,
                 description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
-            slicing_button = widgets.FloatSlider(
-                description='Slicing:', min=-1., max=1., value=0.)
-            set_widget_dimensions( slicing_button, width=250 )
+            slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
+            set_widget_dimensions( slicing_button, width=180 )
             slicing_button.observe( refresh_field, 'value', 'change')
 
             # Plotting options
@@ -325,17 +324,17 @@ class InteractiveViewer(object):
             # ----------
             # Field type container
             if self.geometry == "thetaMode":
-                container_fields = widgets.VBox(
-                    children=[fieldtype_button, coord_button,
-                        mode_button, theta_button])
+                container_fields = widgets.VBox( children=[
+                    fieldtype_button, coord_button, mode_button,
+                    add_description('Theta:', theta_button) ])
             elif self.geometry in ["1dcartesian", "2dcartesian"]:
                 container_fields = widgets.VBox(
                     children=[fieldtype_button, coord_button])
             elif self.geometry == "3dcartesian":
-                container_fields = widgets.VBox(
-                    children=[fieldtype_button, coord_button,
-                        slicing_dir_button, slicing_button])
-            set_widget_dimensions( container_fields, width=260 )
+                container_fields = widgets.VBox( children=[
+                    fieldtype_button, coord_button, slicing_dir_button,
+                    add_description("Slicing:", slicing_button) ])
+            set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
             container_fld_magnitude = widgets.HBox( children=[
                 add_description("x 10^", fld_magnitude_button),
@@ -350,7 +349,7 @@ class InteractiveViewer(object):
                     add_description("Figure:", fld_figure_button),
                     fld_range_button, container_fld_magnitude,
                     fld_color_button])
-            set_widget_dimensions( container_fld_plots, width=260 )
+            set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
                 children=[container_fields, container_fld_plots])
