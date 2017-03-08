@@ -396,7 +396,7 @@ class InteractiveViewer(object):
             ptcl_figure_button = widgets.IntText( value=1 )
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
-            ptcl_bins_button = widgets.IntText(description='nbins:', value=100)
+            ptcl_bins_button = widgets.IntText( value=100 )
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
@@ -440,13 +440,14 @@ class InteractiveViewer(object):
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
             container_ptcl_bins = widgets.HBox( children=[
-                ptcl_bins_button, ptcl_use_field_button ] )
+                add_description( "nbins:", ptcl_bins_button ),
+                ptcl_use_field_button ] )
             container_ptcl_magnitude = widgets.HBox( children=[
                 add_description("x 10^", ptcl_magnitude_button),
                 ptcl_use_button ] )
             set_widget_dimensions( container_ptcl_magnitude, height=50 )
             container_ptcl_plots = widgets.VBox( children=[
-                add_description("Figure", ptcl_figure_button),
+                add_description("Figure:", ptcl_figure_button),
                 container_ptcl_bins, ptcl_range_button,
                 container_ptcl_magnitude, ptcl_color_button ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
@@ -516,10 +517,10 @@ class ParticleSelectWidget(object):
         self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
-        self.low_bound = [widgets.FloatText(value=-1.e-1,
-            description='from ') for i in range(n_rules)]
-        self.up_bound = [widgets.FloatText(value=1.e-1,
-            description='to ') for i in range(n_rules)]
+        self.low_bound = [widgets.FloatText( value=-1.e-1 )
+            for i in range(n_rules)]
+        self.up_bound = [widgets.FloatText( value=1.e-1 )
+            for i in range(n_rules)]
 
         # Add the callback function refresh_ptcl to each widget
         for i in range(n_rules):
@@ -537,11 +538,12 @@ class ParticleSelectWidget(object):
         for i in range(self.n_rules):
             set_widget_dimensions( self.active[i], width=20 )
             set_widget_dimensions( self.low_bound[i], width=90 )
-            set_widget_dimensions( self.up_bound[i], width=90, left_margin=40 )
+            set_widget_dimensions( self.up_bound[i], width=90 )
             containers.append(widgets.HBox(
                 children=[self.active[i], self.quantity[i]]))
-            containers.append(widgets.HBox(
-                children=[self.low_bound[i], self.up_bound[i]]))
+            containers.append( widgets.HBox( children=[
+                add_description("from", self.low_bound[i]),
+                add_description("to", self.up_bound[i])] ) )
 
         final_container = widgets.VBox(children=containers)
         set_widget_dimensions( final_container, width=310 )
@@ -597,6 +599,7 @@ def set_widget_dimensions( widget, height=None, width=None, left_margin=None ):
         if width is not None:
             widget.width = width
 
+
 def add_description( text, annotated_widget ):
     """
     Add a description (as an HTML widget) to the left of `annotated_widget`
@@ -609,5 +612,5 @@ def add_description( text, annotated_widget ):
         The widget to which the description will be added
     """
     html_widget = widgets.HTML(text)
-    set_widget_dimensions( html_widget, width=60 )
+    set_widget_dimensions( html_widget, width=50 )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
