@@ -358,7 +358,7 @@ class InteractiveViewer(object):
             # Complete field container
             container_fld = widgets.VBox( children=[accord1, widgets.HBox(
                 children=[fld_refresh_toggle, fld_refresh_button])])
-            set_widget_dimensions( container_fld, width=300 )
+            set_widget_dimensions( container_fld, width=370 )
 
         # Particle widgets
         # ----------------
