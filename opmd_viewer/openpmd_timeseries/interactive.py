@@ -278,31 +278,29 @@ class InteractiveViewer(object):
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
-                description=r'Theta:', min=-math.pi / 2, max=math.pi / 2)
-            set_widget_dimensions( theta_button, width=250 )
+                    min=-math.pi / 2, max=math.pi / 2)
+            set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
             slicing_dir_button = widgets.ToggleButtons(
                 value=self.axis_labels[0], options=self.axis_labels,
                 description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
-            slicing_button = widgets.FloatSlider(
-                description='Slicing:', min=-1., max=1., value=0.)
-            set_widget_dimensions( slicing_button, width=250 )
+            slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
+            set_widget_dimensions( slicing_button, width=180 )
             slicing_button.observe( refresh_field, 'value', 'change')
 
             # Plotting options
             # ----------------
             # Figure number
-            fld_figure_button = widgets.IntText(description='Figure ', value=0)
+            fld_figure_button = widgets.IntText( value=0 )
             set_widget_dimensions( fld_figure_button, width=50 )
             # Range of values
             fld_range_button = widgets.IntRangeSlider( min=-10, max=10 )
             set_widget_dimensions( fld_range_button, width=220 )
             fld_range_button.observe( refresh_field, 'value', 'change')
             # Order of magnitude
-            fld_magnitude_button = widgets.IntText(
-                description='x 10^', value=9 )
+            fld_magnitude_button = widgets.IntText( value=9 )
             set_widget_dimensions( fld_magnitude_button, width=50 )
             fld_magnitude_button.observe( refresh_field, 'value', 'change')
             # Use button
@@ -326,30 +324,32 @@ class InteractiveViewer(object):
             # ----------
             # Field type container
             if self.geometry == "thetaMode":
-                container_fields = widgets.VBox(
-                    children=[fieldtype_button, coord_button,
-                        mode_button, theta_button])
+                container_fields = widgets.VBox( children=[
+                    fieldtype_button, coord_button, mode_button,
+                    add_description('Theta:', theta_button) ])
             elif self.geometry in ["1dcartesian", "2dcartesian"]:
                 container_fields = widgets.VBox(
                     children=[fieldtype_button, coord_button])
             elif self.geometry == "3dcartesian":
-                container_fields = widgets.VBox(
-                    children=[fieldtype_button, coord_button,
-                        slicing_dir_button, slicing_button])
-            set_widget_dimensions( container_fields, width=260 )
+                container_fields = widgets.VBox( children=[
+                    fieldtype_button, coord_button, slicing_dir_button,
+                    add_description("Slicing:", slicing_button) ])
+            set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
-            container_fld_magnitude = widgets.HBox(
-                children=[ fld_magnitude_button, fld_use_button])
+            container_fld_magnitude = widgets.HBox( children=[
+                add_description("x 10^", fld_magnitude_button),
+                fld_use_button])
             set_widget_dimensions( container_fld_magnitude, height=50 )
             if self.geometry == "1dcartesian":
-                container_fld_plots = widgets.VBox(
-                    children=[ fld_figure_button, fld_range_button,
-                    container_fld_magnitude])
+                container_fld_plots = widgets.VBox( children=[
+                    add_description("Figure:", fld_figure_button),
+                    fld_range_button, container_fld_magnitude])
             else:
-                container_fld_plots = widgets.VBox(
-                    children=[ fld_figure_button, fld_range_button,
-                    container_fld_magnitude, fld_color_button])
-            set_widget_dimensions( container_fld_plots, width=260 )
+                container_fld_plots = widgets.VBox( children=[
+                    add_description("Figure:", fld_figure_button),
+                    fld_range_button, container_fld_magnitude,
+                    fld_color_button])
+            set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
                 children=[container_fields, container_fld_plots])
@@ -358,7 +358,7 @@ class InteractiveViewer(object):
             # Complete field container
             container_fld = widgets.VBox( children=[accord1, widgets.HBox(
                 children=[fld_refresh_toggle, fld_refresh_button])])
-            set_widget_dimensions( container_fld, width=300 )
+            set_widget_dimensions( container_fld, width=370 )
 
         # Particle widgets
         # ----------------
@@ -392,11 +392,10 @@ class InteractiveViewer(object):
             # Plotting options
             # ----------------
             # Figure number
-            ptcl_figure_button = widgets.IntText(
-                description='Figure ', value=1 )
+            ptcl_figure_button = widgets.IntText( value=1 )
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
-            ptcl_bins_button = widgets.IntText(description='nbins:', value=100)
+            ptcl_bins_button = widgets.IntText( value=100 )
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
@@ -410,8 +409,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_range_button, width=220 )
             ptcl_range_button.observe( refresh_ptcl, 'value', 'change')
             # Order of magnitude
-            ptcl_magnitude_button = widgets.IntText(
-                description='x 10^', value=9 )
+            ptcl_magnitude_button = widgets.IntText( value=9 )
             set_widget_dimensions( ptcl_magnitude_button, width=50 )
             ptcl_magnitude_button.observe( refresh_ptcl, 'value', 'change')
             # Use button
@@ -441,12 +439,15 @@ class InteractiveViewer(object):
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
             container_ptcl_bins = widgets.HBox( children=[
-                ptcl_bins_button, ptcl_use_field_button ] )
+                add_description( "nbins:", ptcl_bins_button ),
+                ptcl_use_field_button ] )
             container_ptcl_magnitude = widgets.HBox( children=[
-                ptcl_magnitude_button, ptcl_use_button ] )
+                add_description("x 10^", ptcl_magnitude_button),
+                ptcl_use_button ] )
             set_widget_dimensions( container_ptcl_magnitude, height=50 )
             container_ptcl_plots = widgets.VBox( children=[
-                ptcl_figure_button, container_ptcl_bins, ptcl_range_button,
+                add_description("Figure:", ptcl_figure_button),
+                container_ptcl_bins, ptcl_range_button,
                 container_ptcl_magnitude, ptcl_color_button ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
@@ -515,10 +516,10 @@ class ParticleSelectWidget(object):
         self.quantity = [widgets.Dropdown(options=avail_records,
             description='Select ') for i in range(n_rules)]
         # Create widgets that determines the lower bound and upper bound
-        self.low_bound = [widgets.FloatText(value=-1.e-1,
-            description='from ') for i in range(n_rules)]
-        self.up_bound = [widgets.FloatText(value=1.e-1,
-            description='to ') for i in range(n_rules)]
+        self.low_bound = [widgets.FloatText( value=-1.e-1 )
+            for i in range(n_rules)]
+        self.up_bound = [widgets.FloatText( value=1.e-1 )
+            for i in range(n_rules)]
 
         # Add the callback function refresh_ptcl to each widget
         for i in range(n_rules):
@@ -536,11 +537,12 @@ class ParticleSelectWidget(object):
         for i in range(self.n_rules):
             set_widget_dimensions( self.active[i], width=20 )
             set_widget_dimensions( self.low_bound[i], width=90 )
-            set_widget_dimensions( self.up_bound[i], width=90, left_margin=40 )
+            set_widget_dimensions( self.up_bound[i], width=90 )
             containers.append(widgets.HBox(
                 children=[self.active[i], self.quantity[i]]))
-            containers.append(widgets.HBox(
-                children=[self.low_bound[i], self.up_bound[i]]))
+            containers.append( widgets.HBox( children=[
+                add_description("from", self.low_bound[i]),
+                add_description("to", self.up_bound[i])] ) )
 
         final_container = widgets.VBox(children=containers)
         set_widget_dimensions( final_container, width=310 )
@@ -595,3 +597,19 @@ def set_widget_dimensions( widget, height=None, width=None, left_margin=None ):
             widget.height = height
         if width is not None:
             widget.width = width
+
+
+def add_description( text, annotated_widget ):
+    """
+    Add a description (as an HTML widget) to the left of `annotated_widget`
+
+    Parameters
+    ----------
+    text: string
+        The text to be added
+    annotated_widget: an ipywidgets widget
+        The widget to which the description will be added
+    """
+    html_widget = widgets.HTML(text)
+    set_widget_dimensions( html_widget, width=50 )
+    return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
