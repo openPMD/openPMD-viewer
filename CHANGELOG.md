@@ -1,5 +1,25 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.5.3
+
+This is version `0.5.3` of openPMD-viewer.
+
+It corrects some of the issues with the size of boxes and widgets in the
+interactive slider. In addition, the iteration number is now read from
+the hdf5 metadata, and not the name of the file.
+
+## 0.5.2
+
+This is version `0.5.2` of openPMD-viewer.
+
+It fixes some of the installation issues associated with Cython.
+
+## 0.5.1
+
+This is version `0.5.1` of openPMD-viewer.
+
+It corrects a minor bug in the dependencies of the package.
+
 ## 0.5.0
 
 This is version `0.5.0` of openPMD-viewer.
