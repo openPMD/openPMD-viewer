@@ -1,4 +1,4 @@
-{% set version = "0.5.3" %}
+{% set version = "0.5.4" %}
 
 package:
   name: openpmd_viewer

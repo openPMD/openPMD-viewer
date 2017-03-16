@@ -1,5 +1,11 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.5.4
+
+This is version `0.5.4` of openPMD-viewer.
+
+It adds support for Python 3.4 (which erroneously dropped in the past).
+
 ## 0.5.3
 
 This is version `0.5.3` of openPMD-viewer.
