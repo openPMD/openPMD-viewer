@@ -11,9 +11,7 @@ PyPI and conda. In particular:
 
 - you should install the packages
 [`pypandoc`](https://pypi.python.org/pypi/pypandoc/),
-[`twine`](https://pypi.python.org/pypi/twine),
-[`conda-build`](http://conda.pydata.org/docs/commands/build/conda-build.html)
-and [`anaconda-client`](https://anaconda.org/anaconda/anaconda-client)
+[`twine`](https://pypi.python.org/pypi/twine) and [`anaconda-client`](https://anaconda.org/anaconda/anaconda-client)
 - you should have a registered account on [PyPI](https://pypi.python.org/pypi) and [test PyPI](https://testpypi.python.org/pypi), and your `$HOME` should contain a file `.pypirc` which contains the following text:
 
  ```
@@ -66,12 +64,13 @@ replace `pypi` by `pypitest` in the above set of commands)
 - `cd` into the folder `conda_recipe` and make sure that the version
   number in `meta.yaml` matches the current version.
 
-- Still in the folder `conda_recipe`, build the package for python 2.7,
-python 3.5 and python 3.6, and convert them for all available OS, by using the
-provided build script (this takes some time):
+- Still in the folder `conda_recipe`, run
 ```
-bash build.sh
+docker build -t openpmd_build .
+docker run -it -v $PWD:/home/ openpmd_build
 ```
+This builds the conda packages for Python 2.7, 3.4, 3.5 and 3.6, using a
+reproduceable environment.
 
 - Upload the different versions to Anaconda.org
 ```
