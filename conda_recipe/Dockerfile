@@ -1,6 +1,11 @@
 FROM continuumio/miniconda
+MAINTAINER Remi Lehe <rlehe@lbl.gov>
 
-RUN apt-get update && apt-get install -y gcc libgl1-mesa-glx
+RUN apt-get update \
+    && apt-get install -y \
+        gcc \
+        libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN conda install --yes conda conda-build
 
