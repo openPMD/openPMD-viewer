@@ -77,8 +77,8 @@ class InteractiveViewer(object):
 
                 if fld_use_button.value:
                     i_power = fld_magnitude_button.value
-                    vmin = fld_range_button.value[0] * 10 ** i_power
-                    vmax = fld_range_button.value[1] * 10 ** i_power
+                    vmin = fld_range_button.value[0] * 10. ** i_power
+                    vmax = fld_range_button.value[1] * 10. ** i_power
                 else:
                     vmin = None
                     vmax = None
@@ -123,8 +123,8 @@ class InteractiveViewer(object):
 
                 if ptcl_use_button.value:
                     i_power = ptcl_magnitude_button.value
-                    vmin = ptcl_range_button.value[0] * 10 ** i_power
-                    vmax = ptcl_range_button.value[1] * 10 ** i_power
+                    vmin = ptcl_range_button.value[0] * 10. ** i_power
+                    vmax = ptcl_range_button.value[1] * 10. ** i_power
                 else:
                     vmin = None
                     vmax = None
