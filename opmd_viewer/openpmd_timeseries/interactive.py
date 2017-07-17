@@ -83,7 +83,8 @@ class InteractiveViewer(object):
                     vmin = None
                     vmax = None
 
-                self.get_field(t=self.current_t, output=False, plot=True,
+                self.get_field( iteration=self.current_iteration,
+                    output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
@@ -131,8 +132,8 @@ class InteractiveViewer(object):
 
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
-                    self.get_particle(t=self.current_t, output=False,
-                        var_list=[ptcl_xaxis_button.value],
+                    self.get_particle( iteration=self.current_iteration,
+                        output=False, var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
@@ -140,9 +141,9 @@ class InteractiveViewer(object):
                         use_field_mesh=ptcl_use_field_button.value )
                 else:
                     # 2D histogram
-                    self.get_particle(t=self.current_t, output=False,
-                        var_list=[ptcl_xaxis_button.value,
-                                  ptcl_yaxis_button.value],
+                    self.get_particle( iteration=self.current_iteration,
+                        output=False, var_list=[ptcl_xaxis_button.value,
+                                                ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
@@ -203,39 +204,41 @@ class InteractiveViewer(object):
             # Put back the previous value of the refreshing button
             ptcl_refresh_toggle.value = saved_refresh_value
 
-        def change_t(change):
-            "Plot the result at the required time"
-            self.current_t = 1.e-15 * change['new']
+        def change_iteration(change):
+            "Plot the result at the required iteration"
+            # Find the closest iteration
+            self._current_i = abs(self.iterations - change['new']).argmin()
+            self.current_iteration = self.iterations[ self._current_i ]
             refresh_field()
             refresh_ptcl()
 
         def step_fw(b):
             "Plot the result one iteration further"
-            if self.current_i < len(self.t) - 1:
-                self.current_t = self.t[self.current_i + 1]
+            if self._current_i < len(self.t) - 1:
+                self.current_iteration = self.iterations[self._current_i + 1]
             else:
-                self.current_t = self.t[self.current_i]
-            slider.value = self.current_t * 1.e15
+                self.current_iteration = self.iterations[self._current_i]
+            slider.value = self.current_iteration
 
         def step_bw(b):
             "Plot the result one iteration before"
-            if self.current_t > 0:
-                self.current_t = self.t[self.current_i - 1]
+            if self._current_i > 0:
+                self.current_iteration = self.iterations[self._current_i - 1]
             else:
-                self.current_t = self.t[self.current_i]
-            slider.value = self.current_t * 1.e15
+                self.current_iteration = self.iterations[self._current_i]
+            slider.value = self.current_iteration
 
         # ---------------
         # Define widgets
         # ---------------
 
         # Slider
-        slider = widgets.FloatSlider(
-            min=math.ceil(1.e15 * self.tmin),
-            max=math.ceil(1.e15 * self.tmax),
-            step=math.ceil(1.e15 * (self.tmax - self.tmin)) / 20.,
-            description="t (fs)")
-        slider.observe( change_t, names='value', type='change')
+        iteration_min = self.iterations.min()
+        iteration_max = self.iterations.max()
+        step = max( int( (iteration_max - iteration_min) / 20. ), 1 )
+        slider = widgets.IntSlider( description="iteration",
+            min=iteration_min, max=iteration_max + step, step=step )
+        slider.observe( change_iteration, names='value', type='change' )
         set_widget_dimensions( slider, width=500 )
 
         # Forward button

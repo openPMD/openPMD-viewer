@@ -28,7 +28,7 @@ def list_h5_files(path_to_dir):
     -------
     A tuple with:
     - a list of strings which correspond to the absolute path of each file
-    - a list of integers which correspond to the iteration of each file
+    - an array of integers which correspond to the iteration of each file
     """
     # Find all the files in the provided directory
     all_files = os.listdir(path_to_dir)
@@ -53,7 +53,7 @@ def list_h5_files(path_to_dir):
     iters_and_names.sort()
     # Extract the list of filenames and iterations
     filenames = [name for (it, name) in iters_and_names]
-    iterations = [it for (it, name) in iters_and_names]
+    iterations = np.array([it for (it, name) in iters_and_names])
 
     return(filenames, iterations)
 
