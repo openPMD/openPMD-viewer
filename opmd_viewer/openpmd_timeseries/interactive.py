@@ -123,7 +123,7 @@ class InteractiveViewer(object):
                     clear_output()
 
                 # Colorscale range
-                vmin, vmax = fld_color_button.get_range()
+                vmin, vmax = ptcl_color_button.get_range()
 
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
