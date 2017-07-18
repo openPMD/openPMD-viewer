@@ -32,7 +32,7 @@ class Plotter(object):
            Iteration number for each available iteration of the timeseries
         """
         # Default fontsize
-        self.fontsize = 18
+        self.fontsize = 12
 
         # Register the time array and iterations array
         # (Useful when labeling the figures)

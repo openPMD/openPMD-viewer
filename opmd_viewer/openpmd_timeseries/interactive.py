@@ -23,7 +23,7 @@ class InteractiveViewer(object):
     def __init__(self):
         pass
 
-    def slider(self, figsize=(8, 8),
+    def slider(self, figsize=(6, 5),
                exclude_particle_records=['charge', 'mass'], **kw):
         """
         Navigate the simulation using a slider
