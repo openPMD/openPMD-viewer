@@ -298,7 +298,7 @@ class OpenPMDTimeSeries(parent_class):
             # Determine the size of the histogram bins
             # - First pick default values
             hist_range = []
-            for i_data in len(data_list):
+            for i_data in range(len(data_list)):
                 data = data_list[i_data]
                 # Check if the user specified a value
                 if (plot_range[i_data][0] is not None) and \
@@ -323,8 +323,8 @@ class OpenPMDTimeSeries(parent_class):
                     if var in grid_size_dict.keys():
                         # Check that the user indeed allowed this dimension
                         # to be determined automatically
-                        if (plot_range[i_data][0] is None) or \
-                            (plot_range[i_data][1] is None):
+                        if (plot_range[i_var][0] is None) or \
+                            (plot_range[i_var][1] is None):
                             hist_bins[i_var], hist_range[i_var] = \
                                 fit_bins_to_grid(hist_bins[i_var],
                                 grid_size_dict[var], grid_range_dict[var] )

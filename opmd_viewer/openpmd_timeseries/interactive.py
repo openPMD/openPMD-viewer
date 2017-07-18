@@ -137,7 +137,7 @@ class InteractiveViewer(object):
                         vmin=vmin, vmax=vmax,
                         cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
-                        plot_range=plot_range
+                        plot_range=plot_range,
                         use_field_mesh=ptcl_use_field_button.value )
                 else:
                     # 2D histogram
@@ -149,6 +149,7 @@ class InteractiveViewer(object):
                         vmin=vmin, vmax=vmax,
                         cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
+                        plot_range=plot_range,
                         use_field_mesh=ptcl_use_field_button.value )
 
         def refresh_field_type(change):
@@ -331,16 +332,17 @@ class InteractiveViewer(object):
             set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
             container_fld_cbar = fld_color_button.to_container()
-            container_hrange = fld_hrange_button.to_container()
-            container_vrange = fld_vrange_button.to_container()
+            container_fld_hrange = fld_hrange_button.to_container()
+            container_fld_vrange = fld_vrange_button.to_container()
             if self.geometry == "1dcartesian":
                 container_fld_plots = widgets.VBox( children=[
-                    add_description("Figure:", fld_figure_button),
-                    container_vrange, container_hrange ])
+                    add_description("<b>Figure:</b>", fld_figure_button),
+                    container_fld_vrange, container_fld_hrange ])
             else:
                 container_fld_plots = widgets.VBox( children=[
-                    add_description("Figure:", fld_figure_button),
-                    container_fld_cbar, container_vrange, container_hrange ])
+                    add_description("<b>Figure:</b>", fld_figure_button),
+                    container_fld_cbar, container_fld_vrange,
+                    container_fld_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
@@ -418,13 +420,15 @@ class InteractiveViewer(object):
             # Particle selection container
             container_ptcl_select = ptcl_select_widget.to_container()
             # Plotting options container
-            container_ptcl_bins = widgets.HBox( children=[
-                add_description( "nbins:", ptcl_bins_button ),
-                ptcl_use_field_button ] )
+            container_ptcl_fig = widgets.HBox( children=[
+                add_description("<b>Figure:</b>", ptcl_figure_button),
+                add_description( "Bins:", ptcl_bins_button ) ] )
             container_ptcl_cbar = ptcl_color_button.to_container()
-            container_ptcl_plots = widgets.VBox( children=[
-                add_description("Figure:", ptcl_figure_button),
-                container_ptcl_bins, container_ptcl_cbar ])
+            container_ptcl_hrange = ptcl_hrange_button.to_container()
+            container_ptcl_vrange = ptcl_vrange_button.to_container()
+            container_ptcl_plots = widgets.VBox( children=[ container_ptcl_fig,
+                container_ptcl_cbar, container_ptcl_hrange,
+                container_ptcl_vrange, ptcl_use_field_button ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
