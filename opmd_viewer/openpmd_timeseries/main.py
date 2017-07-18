@@ -310,7 +310,7 @@ class OpenPMDTimeSeries(parent_class):
                     hist_range.append( [ data.min(), data.max() ] )
                 else:
                     hist_range.append( [ -1., 1. ] )
-            hist_bins = [ nbins for data in data_list ]
+            hist_bins = [ nbins for i_data in range(len(data_list)) ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
             if use_field_mesh and self.avail_fields is not None:
