@@ -427,8 +427,8 @@ class InteractiveViewer(object):
             container_ptcl_hrange = ptcl_hrange_button.to_container()
             container_ptcl_vrange = ptcl_vrange_button.to_container()
             container_ptcl_plots = widgets.VBox( children=[ container_ptcl_fig,
-                container_ptcl_cbar, container_ptcl_hrange,
-                container_ptcl_vrange, ptcl_use_field_button ])
+                container_ptcl_cbar, container_ptcl_vrange,
+                container_ptcl_hrange, ptcl_use_field_button ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
