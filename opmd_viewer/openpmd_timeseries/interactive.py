@@ -76,13 +76,7 @@ class InteractiveViewer(object):
                     clear_output()
 
                 # Colorscale range
-                if fld_use_button.value:
-                    i_power = fld_magnitude_button.value
-                    vmin = fld_range_button.value[0] * 10. ** i_power
-                    vmax = fld_range_button.value[1] * 10. ** i_power
-                else:
-                    vmin = None
-                    vmax = None
+                vmin, vmax = fld_color_button.get_range()
                 # Determine range of the plot from widgets
                 plot_range = [ fld_hrange_button.get_range(),
                                 fld_vrange_button.get_range() ]
@@ -95,7 +89,7 @@ class InteractiveViewer(object):
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
                     plot_range=plot_range, vmin=vmin, vmax=vmax,
-                    cmap=fld_color_button.value)
+                    cmap=fld_color_button.cmap.value)
 
         def refresh_ptcl(change=None, force=False):
             """
@@ -128,13 +122,8 @@ class InteractiveViewer(object):
                 if 'inline' in matplotlib.get_backend():
                     clear_output()
 
-                if ptcl_use_button.value:
-                    i_power = ptcl_magnitude_button.value
-                    vmin = ptcl_range_button.value[0] * 10. ** i_power
-                    vmax = ptcl_range_button.value[1] * 10. ** i_power
-                else:
-                    vmin = None
-                    vmax = None
+                # Colorscale range
+                vmin, vmax = fld_color_button.get_range()
 
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
@@ -142,7 +131,8 @@ class InteractiveViewer(object):
                         output=False, var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
+                        vmin=vmin, vmax=vmax,
+                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         use_field_mesh=ptcl_use_field_button.value )
                 else:
@@ -152,7 +142,8 @@ class InteractiveViewer(object):
                                                 ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax, cmap=ptcl_color_button.value,
+                        vmin=vmin, vmax=vmax,
+                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         use_field_mesh=ptcl_use_field_button.value )
 
@@ -304,24 +295,9 @@ class InteractiveViewer(object):
             # Figure number
             fld_figure_button = widgets.IntText( value=0 )
             set_widget_dimensions( fld_figure_button, width=50 )
-            # Range of values
-            fld_range_button = widgets.IntRangeSlider( min=-10, max=10 )
-            set_widget_dimensions( fld_range_button, width=220 )
-            fld_range_button.observe( refresh_field, 'value', 'change')
-            # Order of magnitude
-            fld_magnitude_button = widgets.IntText( value=9 )
-            set_widget_dimensions( fld_magnitude_button, width=50 )
-            fld_magnitude_button.observe( refresh_field, 'value', 'change')
-            # Use button
-            fld_use_button = widgets.Checkbox(
-                description=' Use this range', value=False)
-            set_widget_dimensions( fld_use_button, left_margin=100 )
-            fld_use_button.observe( refresh_field, 'value', 'change')
             # Colormap button
-            fld_color_button = widgets.Select(
-                options=sorted(plt.cm.datad.keys()), value='jet')
-            set_widget_dimensions( fld_color_button, height=50, width=200 )
-            fld_color_button.observe( refresh_field, 'value', 'change' )
+            fld_color_button = ColorBarSelector(
+                refresh_field, default_cmap='viridis' )
             # Range buttons
             fld_hrange_button = RangeSelector( refresh_field,
                 default_value=10., title='Horizontal axis:')
@@ -350,10 +326,7 @@ class InteractiveViewer(object):
                     add_description("Slicing:", slicing_button) ])
             set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
-            container_fld_magnitude = widgets.HBox( children=[
-                add_description("x 10^", fld_magnitude_button),
-                fld_use_button])
-            set_widget_dimensions( container_fld_magnitude, height=50 )
+            container_fld_cbar = fld_color_button.to_container()
             container_hrange = fld_hrange_button.to_container()
             container_vrange = fld_vrange_button.to_container()
             if self.geometry == "1dcartesian":
@@ -363,8 +336,7 @@ class InteractiveViewer(object):
             else:
                 container_fld_plots = widgets.VBox( children=[
                     add_description("Figure:", fld_figure_button),
-                    fld_range_button, container_fld_magnitude,
-                    fld_color_button, container_vrange, container_hrange ])
+                    container_fld_cbar, container_vrange, container_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
@@ -415,24 +387,8 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
-            ptcl_color_button = widgets.Select(
-                options=sorted(plt.cm.datad.keys()), value='Blues')
-            set_widget_dimensions( ptcl_color_button, height=50, width=200 )
-            ptcl_color_button.observe( refresh_ptcl, 'value', 'change')
-            # Range of values
-            ptcl_range_button = widgets.IntRangeSlider(
-                min=0, max=10, value=(0, 5))
-            set_widget_dimensions( ptcl_range_button, width=220 )
-            ptcl_range_button.observe( refresh_ptcl, 'value', 'change')
-            # Order of magnitude
-            ptcl_magnitude_button = widgets.IntText( value=9 )
-            set_widget_dimensions( ptcl_magnitude_button, width=50 )
-            ptcl_magnitude_button.observe( refresh_ptcl, 'value', 'change')
-            # Use button
-            ptcl_use_button = widgets.Checkbox(
-                description=' Use this range', value=False)
-            set_widget_dimensions( ptcl_use_button, left_margin=100 )
-            ptcl_use_button.observe( refresh_ptcl, 'value', 'change')
+            ptcl_color_button = ColorBarSelector(
+                refresh_ptcl, default_cmap='Blues' )
             # Use field mesh buttons
             ptcl_use_field_button = widgets.Checkbox(
                 description=' Use field mesh', value=True)
@@ -457,14 +413,10 @@ class InteractiveViewer(object):
             container_ptcl_bins = widgets.HBox( children=[
                 add_description( "nbins:", ptcl_bins_button ),
                 ptcl_use_field_button ] )
-            container_ptcl_magnitude = widgets.HBox( children=[
-                add_description("x 10^", ptcl_magnitude_button),
-                ptcl_use_button ] )
-            set_widget_dimensions( container_ptcl_magnitude, height=50 )
+            container_ptcl_cbar = ptcl_color_button.to_container()
             container_ptcl_plots = widgets.VBox( children=[
                 add_description("Figure:", ptcl_figure_button),
-                container_ptcl_bins, ptcl_range_button,
-                container_ptcl_magnitude, ptcl_color_button ])
+                container_ptcl_bins, container_ptcl_cbar ])
             set_widget_dimensions( container_ptcl_plots, width=310 )
             # Accordion for the field widgets
             accord2 = widgets.Accordion(
@@ -498,6 +450,82 @@ def convert_to_int(m):
         return(m)
     else:
         return(int(m))
+
+
+class ColorBarSelector(object):
+    """
+    Class that allows to select a colorbar and the corresponding range.
+    It features a widget for the exponent, in order to rapidly change
+    the order of magnitude of the colorbar.
+    """
+
+    def __init__( self, callback_function, default_cmap ):
+        """
+        Initialize a set of widgets that select a colorbar.
+
+        # TODO
+
+        Parameters:
+        -----------
+        callback_function: callable
+            The function to call when activating/deactivating the range
+        default_value:
+            The default value of the upper bound of the range at initialization
+            (The default lower bound is the opposite of this value.)
+        title:
+            The title that is displayed on top of the widgets
+        """
+        # Create the colormap widget
+        available_cmaps = sorted( plt.colormaps() )
+        if default_cmap not in available_cmaps:
+            default_cmap = 'jet'
+        self.cmap = widgets.Select(options=available_cmaps, value=default_cmap)
+
+        # Create the widgets for the range
+        self.active = widgets.Checkbox(
+            description=' Use this range', value=False)
+        self.low_bound = widgets.FloatText( value=-5. )
+        self.up_bound = widgets.FloatText( value=5. )
+        self.exponent = widgets.FloatText( value=9. )
+
+        # Add the callback function
+        self.active.observe( callback_function, 'value', 'change' )
+        self.exponent.observe( callback_function, 'value', 'change' )
+        self.cmap.observe( callback_function, 'value', 'change' )
+
+    def to_container( self ):
+        """
+        Return a widget container, where all the widgets
+        are placed properly, with respect to each other.
+        """
+        # Set the widget dimensions
+        set_widget_dimensions( self.active, width=20 )
+        set_widget_dimensions( self.low_bound, width=30 )
+        set_widget_dimensions( self.up_bound, width=30 )
+        set_widget_dimensions( self.exponent, width=45 )
+        # Gather the different widgets on two lines
+        cmap_container = widgets.VBox( children=[
+            widgets.HTML( "<b>Colorbar:</b>"), self.cmap ] )
+        range_container = widgets.HBox( children=[
+            add_description("from", self.low_bound, width=30 ),
+            add_description("to", self.up_bound, width=20 ),
+            add_description("x 10^", self.exponent, width=45), self.active ] )
+        # Stack the two types of widgets
+        final_container = widgets.VBox(
+            children=[ cmap_container, range_container ] )
+        set_widget_dimensions( final_container, width=310 )
+        return( final_container )
+
+    def get_range( self ):
+        """
+        Return a list of 2 elements: the current lower bound and upper bound.
+        When the widget is not active, None is returned instead of the bounds.
+        """
+        if self.active.value is True:
+            return( [ self.low_bound.value * 10.**self.exponent.value,
+                      self.up_bound.value * 10.**self.exponent.value ] )
+        else:
+            return( [ None, None ] )
 
 
 class RangeSelector(object):
