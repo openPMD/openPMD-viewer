@@ -113,7 +113,8 @@ class OpenPMDTimeSeries(parent_class):
                         break
 
         # - Set the current iteration and time
-        self.current_i = 0
+        self._current_i = 0
+        self.current_iteration = self.iterations[0]
         self.current_t = self.t[0]
         # - Find the min and the max of the time
         self.tmin = self.t.min()
@@ -252,10 +253,10 @@ class OpenPMDTimeSeries(parent_class):
             "It should be either a dictionary or a ParticleTracker object.")
 
         # Find the output that corresponds to the requested time/iteration
-        # (Modifies self.current_i and self.current_t)
+        # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
         # Get the corresponding file name & open the file
-        file_name = self.h5_files[self.current_i]
+        file_name = self.h5_files[self._current_i]
         file_handle = h5.File(file_name, 'r')
 
         # Extract the list of particle quantities
@@ -316,13 +317,13 @@ class OpenPMDTimeSeries(parent_class):
             if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                        self.current_i, hist_bins[0], hist_range[0], **kw)
+                        self._current_i, hist_bins[0], hist_range[0], **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d(data_list[0], data_list[1], w,
                     var_list[0], var_list[1], species,
-                    self.current_i, hist_bins, hist_range, **kw)
+                    self._current_i, hist_bins, hist_range, **kw)
         # Close the file
         file_handle.close()
 
@@ -426,10 +427,10 @@ class OpenPMDTimeSeries(parent_class):
                     "The available modes are: \n - %s" % (m, mode_list))
 
         # Find the output that corresponds to the requested time/iteration
-        # (Modifies self.current_i and self.current_t)
+        # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
         # Get the corresponding filename
-        filename = self.h5_files[self.current_i]
+        filename = self.h5_files[self._current_i]
 
         # Find the proper path for vector or scalar fields
         if self.avail_fields[field] == 'scalar':
@@ -474,11 +475,11 @@ class OpenPMDTimeSeries(parent_class):
         if plot:
             if self.geometry == "1dcartesian":
                 self.plotter.show_field_1d(F, info, field_label,
-                                    self.current_i, **kw)
+                                    self._current_i, **kw)
             else:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
                                     field_label, self.geometry,
-                                    self.current_i, **kw)
+                                    self._current_i, **kw)
 
         # Return the result
         return(F, info)
@@ -486,7 +487,7 @@ class OpenPMDTimeSeries(parent_class):
     def _find_output(self, t, iteration):
         """
         Find the output that correspond to the requested `t` or `iteration`
-        Modify self.current_i accordingly.
+        Modify self._current_i accordingly.
 
         Parameter
         ---------
@@ -505,24 +506,26 @@ class OpenPMDTimeSeries(parent_class):
         elif (t is not None):
             # Make sur the time requested does not exceed the allowed bounds
             if t < self.tmin:
-                self.current_i = 0
+                self._current_i = 0
             elif t > self.tmax:
-                self.current_i = len(self.t) - 1
+                self._current_i = len(self.t) - 1
             # Find the last existing output
             else:
-                self.current_i = self.t[self.t <= t].argmax()
+                self._current_i = self.t[self.t <= t].argmax()
         # If an iteration is requested
         elif (iteration is not None):
             if (iteration in self.iterations):
-                self.current_i = self.iterations.index(iteration)
+                # Get the index that corresponds to this iteration
+                self._current_i = abs(iteration - self.iterations).argmin()
             else:
                 iter_list = '\n - '.join([str(it) for it in self.iterations])
                 print("The requested iteration '%s' is not available.\nThe "
                       "available iterations are: \n - %s\nThe first iteration "
                       "is used instead." % (iteration, iter_list))
-                self.current_i = 0
+                self._current_i = 0
         else:
-            pass  # self.current_i retains its previous value
+            pass  # self._current_i retains its previous value
 
         # Register the value in the object
-        self.current_t = self.t[self.current_i]
+        self.current_t = self.t[self._current_i]
+        self.current_iteration = self.iterations[self._current_i]

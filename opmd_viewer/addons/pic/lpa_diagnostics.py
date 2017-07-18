@@ -153,8 +153,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             i += 1
         # Plot the result if needed
         if plot:
-            iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15 * self.t[ self.current_i ]
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( z_pos, spreads, **kw)
             plt.title("Slice energy spread at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
@@ -354,8 +354,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
-            iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15 * self.t[ self.current_i ]
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
             plt.title("Current at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
@@ -449,8 +449,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15 * self.t[ self.current_i ]
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
                 plt.plot( 1.e6 * info.z, envelope, **kw)
                 plt.ylabel('$E_%s \;(V/m)$' % pol,
@@ -631,8 +631,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
-            iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15 * self.t[ self.current_i ]
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
@@ -894,8 +894,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            iteration = self.iterations[ self.current_i ]
-            time_fs = 1.e15 * self.t[ self.current_i ]
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
             plt.title("Spectrogram at %.1f fs   (iteration %d)"
