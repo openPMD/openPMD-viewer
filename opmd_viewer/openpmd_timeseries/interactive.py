@@ -124,6 +124,9 @@ class InteractiveViewer(object):
 
                 # Colorscale range
                 vmin, vmax = ptcl_color_button.get_range()
+                # Determine range of the plot from widgets
+                plot_range = [ ptcl_hrange_button.get_range(),
+                                ptcl_vrange_button.get_range() ]
 
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
@@ -134,6 +137,7 @@ class InteractiveViewer(object):
                         vmin=vmin, vmax=vmax,
                         cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
+                        plot_range=plot_range
                         use_field_mesh=ptcl_use_field_button.value )
                 else:
                     # 2D histogram
@@ -389,10 +393,14 @@ class InteractiveViewer(object):
             # Colormap button
             ptcl_color_button = ColorBarSelector(
                 refresh_ptcl, default_cmap='Blues' )
+            # Range buttons
+            ptcl_hrange_button = RangeSelector( refresh_ptcl,
+                default_value=10., title='Horizontal axis:')
+            ptcl_vrange_button = RangeSelector( refresh_ptcl,
+                default_value=10., title='Vertical axis:')
             # Use field mesh buttons
-            ptcl_use_field_button = widgets.Checkbox(
-                description=' Use field mesh', value=True)
-            set_widget_dimensions( ptcl_use_field_button, left_margin=100 )
+            ptcl_use_field_button = widgets.ToggleButton(
+                description=' Use field mesh', value=True )
             ptcl_use_field_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
