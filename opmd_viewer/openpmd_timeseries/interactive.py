@@ -507,7 +507,17 @@ class RangeSelector(object):
 
     def __init__( self, callback_function, default_value, title ):
         """
-        # TODO
+        Initialize a set of widgets that select a range of (float) values
+
+        Parameters:
+        -----------
+        callback_function: callable
+            The function to call when activating/deactivating the range
+        default_value:
+            The default value of the upper bound of the range at initialization
+            (The default lower bound is the opposite of this value.)
+        title:
+            The title that is displayed on top of the widgets
         """
         # Register title
         self.title = title
@@ -523,7 +533,8 @@ class RangeSelector(object):
 
     def to_container( self ):
         """
-        # TODO
+        Return a widget container, where all the range widgets
+        are placed properly, with respect to each other.
         """
         # Set the widget dimensions
         set_widget_dimensions( self.active, width=20 )
@@ -541,7 +552,8 @@ class RangeSelector(object):
 
     def get_range( self ):
         """
-        # TODO
+        Return a list of 2 elements: the current lower bound and upper bound.
+        When the widget is not active, None is returned instead of the bounds.
         """
         if self.active.value is True:
             return( [ self.low_bound.value, self.up_bound.value ] )
