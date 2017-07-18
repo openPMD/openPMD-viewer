@@ -123,9 +123,10 @@ class OpenPMDTimeSeries(parent_class):
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter(self.t, self.iterations)
 
-    def get_particle(self, var_list=None, species=None, t=None,
-        iteration=None, select=None, output=True, plot=False, nbins=150,
-        plot_range=[[None, None], [None, None]], use_field_mesh=True, **kw):
+    def get_particle(self, var_list=None, species=None, t=None, iteration=None,
+            select=None, output=True, plot=False, nbins=150,
+            plot_range=[[None, None], [None, None]],
+            use_field_mesh=True, **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -324,7 +325,7 @@ class OpenPMDTimeSeries(parent_class):
                         # Check that the user indeed allowed this dimension
                         # to be determined automatically
                         if (plot_range[i_var][0] is None) or \
-                            (plot_range[i_var][1] is None):
+                                (plot_range[i_var][1] is None):
                             hist_bins[i_var], hist_range[i_var] = \
                                 fit_bins_to_grid(hist_bins[i_var],
                                 grid_size_dict[var], grid_range_dict[var] )
