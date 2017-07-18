@@ -75,6 +75,7 @@ class InteractiveViewer(object):
                 if 'inline' in matplotlib.get_backend():
                     clear_output()
 
+                # Colorscale range
                 if fld_use_button.value:
                     i_power = fld_magnitude_button.value
                     vmin = fld_range_button.value[0] * 10. ** i_power
@@ -82,14 +83,19 @@ class InteractiveViewer(object):
                 else:
                     vmin = None
                     vmax = None
+                # Determine range of the plot from widgets
+                plot_range = [ fld_hrange_button.get_range(),
+                                fld_vrange_button.get_range() ]
 
+                # Call the method get_field
                 self.get_field( iteration=self.current_iteration,
                     output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
-                    vmin=vmin, vmax=vmax, cmap=fld_color_button.value)
+                    plot_range=plot_range, vmin=vmin, vmax=vmax,
+                    cmap=fld_color_button.value)
 
         def refresh_ptcl(change=None, force=False):
             """
@@ -316,7 +322,12 @@ class InteractiveViewer(object):
                 options=sorted(plt.cm.datad.keys()), value='jet')
             set_widget_dimensions( fld_color_button, height=50, width=200 )
             fld_color_button.observe( refresh_field, 'value', 'change' )
-            # Resfresh buttons
+            # Range buttons
+            fld_hrange_button = RangeSelector( refresh_field,
+                default_value=10., title='Horizontal axis:')
+            fld_vrange_button = RangeSelector( refresh_field,
+                default_value=10., title='Vertical axis:')
+            # Refresh buttons
             fld_refresh_toggle = widgets.ToggleButton(
                 description='Always refresh', value=True)
             fld_refresh_button = widgets.Button(
@@ -343,15 +354,17 @@ class InteractiveViewer(object):
                 add_description("x 10^", fld_magnitude_button),
                 fld_use_button])
             set_widget_dimensions( container_fld_magnitude, height=50 )
+            container_hrange = fld_hrange_button.to_container()
+            container_vrange = fld_vrange_button.to_container()
             if self.geometry == "1dcartesian":
                 container_fld_plots = widgets.VBox( children=[
                     add_description("Figure:", fld_figure_button),
-                    fld_range_button, container_fld_magnitude])
+                    container_vrange, container_hrange ])
             else:
                 container_fld_plots = widgets.VBox( children=[
                     add_description("Figure:", fld_figure_button),
                     fld_range_button, container_fld_magnitude,
-                    fld_color_button])
+                    fld_color_button, container_vrange, container_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(
@@ -487,6 +500,55 @@ def convert_to_int(m):
         return(int(m))
 
 
+class RangeSelector(object):
+    """
+    Class that allows to select a range of (float) values.
+    """
+
+    def __init__( self, callback_function, default_value, title ):
+        """
+        # TODO
+        """
+        # Register title
+        self.title = title
+
+        # Create the widgets
+        self.active = widgets.Checkbox(
+            description=' Use this range', value=False)
+        self.low_bound = widgets.FloatText( value=-default_value )
+        self.up_bound = widgets.FloatText( value=default_value )
+
+        # Add the callback function
+        self.active.observe( callback_function, 'value', 'change' )
+
+    def to_container( self ):
+        """
+        # TODO
+        """
+        # Set the widget dimensions
+        set_widget_dimensions( self.active, width=20 )
+        set_widget_dimensions( self.low_bound, width=60 )
+        set_widget_dimensions( self.up_bound, width=60 )
+        # Gather the different widgets on one line
+        container = widgets.HBox( children=[
+            add_description("from", self.low_bound, width=30 ),
+            add_description("to", self.up_bound, width=20 ), self.active ] )
+        set_widget_dimensions( container, width=310 )
+        # Add the title
+        final_container = widgets.VBox( children=[
+            widgets.HTML( "<b>%s</b>" % self.title ), container ] )
+        return( final_container )
+
+    def get_range( self ):
+        """
+        # TODO
+        """
+        if self.active.value is True:
+            return( [ self.low_bound.value, self.up_bound.value ] )
+        else:
+            return( [ None, None ] )
+
+
 class ParticleSelectWidget(object):
 
     """
@@ -544,8 +606,8 @@ class ParticleSelectWidget(object):
             containers.append(widgets.HBox(
                 children=[self.active[i], self.quantity[i]]))
             containers.append( widgets.HBox( children=[
-                add_description("from", self.low_bound[i]),
-                add_description("to", self.up_bound[i])] ) )
+                add_description("from", self.low_bound[i], width=30 ),
+                add_description("to", self.up_bound[i], width=20 )] ) )
 
         final_container = widgets.VBox(children=containers)
         set_widget_dimensions( final_container, width=310 )
@@ -602,7 +664,7 @@ def set_widget_dimensions( widget, height=None, width=None, left_margin=None ):
             widget.width = width
 
 
-def add_description( text, annotated_widget ):
+def add_description( text, annotated_widget, width=50 ):
     """
     Add a description (as an HTML widget) to the left of `annotated_widget`
 
@@ -612,7 +674,9 @@ def add_description( text, annotated_widget ):
         The text to be added
     annotated_widget: an ipywidgets widget
         The widget to which the description will be added
+    width: int
+        The width of the description
     """
     html_widget = widgets.HTML(text)
-    set_widget_dimensions( html_widget, width=50 )
+    set_widget_dimensions( html_widget, width=width )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
