@@ -131,7 +131,7 @@ class Plotter(object):
         plt.title("%s:   t =  %.1f fs   (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
-    def show_field_1d( self, F, info, field_label, current_i,
+    def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
         """
         Plot the given field in 1D
@@ -149,6 +149,10 @@ class Plotter(object):
 
         vmin, vmax: floats or None
            The amplitude of the field
+
+        plot_range : list of lists
+           Indicates the values between which to clip the plot,
+           along the 1st axis (first list) and 2nd axis (second list)
         """
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -165,12 +169,17 @@ class Plotter(object):
         # Plot the data
         plt.plot( xaxis, F )
         # Get the limits of the plot
-        plt.xlim( xaxis.min(), xaxis.max() )
-        if (vmin is not None) and (vmax is not None):
-            plt.ylim( vmin, vmax )
+        # - Along the first dimension
+        if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
+            plt.xlim( plot_range[0][0], plot_range[0][1] )
+        else:
+            plt.xlim( xaxis.min(), xaxis.max() )  # Full extent of the box
+        # - Along the second dimension
+        if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
+            plt.ylim( plot_range[1][0], plot_range[1][1] )
 
-    def show_field_2d(self, F, info, slicing_dir, m,
-                   field_label, geometry, current_i, **kw):
+    def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
+                        current_i, plot_range, **kw):
         """
         Plot the given field in 2D
 
@@ -195,6 +204,10 @@ class Plotter(object):
 
         geometry: string
            Either "2dcartesian", "3dcartesian" or "thetaMode"
+
+        plot_range : list of lists
+           Indicates the values between which to clip the plot,
+           along the 1st axis (first list) and 2nd axis (second list)
         """
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -227,3 +240,11 @@ class Plotter(object):
         plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
                    interpolation='nearest', aspect='auto', **kw)
         plt.colorbar()
+
+        # Get the limits of the plot
+        # - Along the first dimension
+        if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
+            plt.xlim( plot_range[0][0], plot_range[0][1] )
+        # - Along the second dimension
+        if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
+            plt.ylim( plot_range[1][0], plot_range[1][1] )

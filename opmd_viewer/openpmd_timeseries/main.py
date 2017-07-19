@@ -333,7 +333,8 @@ class OpenPMDTimeSeries(parent_class):
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slicing=0., slicing_dir='y',
-                  output=True, plot=False, **kw):
+                  output=True, plot=False,
+                  plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
 
@@ -385,6 +386,12 @@ class OpenPMDTimeSeries(parent_class):
 
         plot : bool, optional
            Whether to plot the requested quantity
+
+        plot_range : list of lists
+           A list containing 2 lists of 2 elements each
+           Indicates the values between which to clip the plot,
+           along the 1st axis (first list) and 2nd axis (second list)
+           Default: plots the full extent of the simulation box
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's imshow.
@@ -475,11 +482,11 @@ class OpenPMDTimeSeries(parent_class):
         if plot:
             if self.geometry == "1dcartesian":
                 self.plotter.show_field_1d(F, info, field_label,
-                                    self._current_i, **kw)
+                self._current_i, plot_range=plot_range, **kw)
             else:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
-                                    field_label, self.geometry,
-                                    self._current_i, **kw)
+                        field_label, self.geometry, self._current_i,
+                        plot_range=plot_range, **kw)
 
         # Return the result
         return(F, info)
