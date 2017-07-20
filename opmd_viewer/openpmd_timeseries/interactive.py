@@ -463,17 +463,14 @@ class ColorBarSelector(object):
         """
         Initialize a set of widgets that select a colorbar.
 
-        # TODO
-
         Parameters:
         -----------
         callback_function: callable
-            The function to call when activating/deactivating the range
-        default_value:
-            The default value of the upper bound of the range at initialization
-            (The default lower bound is the opposite of this value.)
-        title:
-            The title that is displayed on top of the widgets
+            The function to call when activating/deactivating the range,
+            or when changing the colormap
+        default_cmap: string
+            The name of the colormap that will be used when the widget is
+            initialized
         """
         # Create the colormap widget
         available_cmaps = sorted( plt.colormaps() )
