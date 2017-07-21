@@ -123,9 +123,10 @@ class OpenPMDTimeSeries(parent_class):
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter(self.t, self.iterations)
 
-    def get_particle(self, var_list=None, species=None, t=None,
-                     iteration=None, select=None, output=True,
-                     plot=False, nbins=150, use_field_mesh=True, **kw):
+    def get_particle(self, var_list=None, species=None, t=None, iteration=None,
+            select=None, output=True, plot=False, nbins=150,
+            plot_range=[[None, None], [None, None]],
+            use_field_mesh=True, **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -176,6 +177,12 @@ class OpenPMDTimeSeries(parent_class):
         nbins : int, optional
            (Only used when `plot` is True)
            Number of bins for the histograms
+
+        plot_range : list of lists
+           A list containing 2 lists of 2 elements each
+           Indicates the values between which to perform the histogram,
+           along the 1st axis (first list) and 2nd axis (second list)
+           Default: the range is automatically determined
 
         use_field_mesh: bool, optional
            (Only used when `plot` is True)
@@ -292,12 +299,18 @@ class OpenPMDTimeSeries(parent_class):
             # Determine the size of the histogram bins
             # - First pick default values
             hist_range = []
-            for data in data_list:
-                if len(data) != 0:
+            for i_data in range(len(data_list)):
+                data = data_list[i_data]
+                # Check if the user specified a value
+                if (plot_range[i_data][0] is not None) and \
+                        (plot_range[i_data][1] is not None):
+                    hist_range.append( plot_range[i_data] )
+                # Else use min and max of data
+                elif len(data) != 0:
                     hist_range.append( [ data.min(), data.max() ] )
                 else:
                     hist_range.append( [ -1., 1. ] )
-            hist_bins = [ nbins for data in data_list ]
+            hist_bins = [ nbins for i_data in range(len(data_list)) ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
             if use_field_mesh and self.avail_fields is not None:
@@ -309,9 +322,13 @@ class OpenPMDTimeSeries(parent_class):
                 for i_var in range(len(var_list)):
                     var = var_list[i_var]
                     if var in grid_size_dict.keys():
-                        hist_bins[i_var], hist_range[i_var] = \
-                            fit_bins_to_grid(hist_bins[i_var],
-                            grid_size_dict[var], grid_range_dict[var] )
+                        # Check that the user indeed allowed this dimension
+                        # to be determined automatically
+                        if (plot_range[i_var][0] is None) or \
+                                (plot_range[i_var][1] is None):
+                            hist_bins[i_var], hist_range[i_var] = \
+                                fit_bins_to_grid(hist_bins[i_var],
+                                grid_size_dict[var], grid_range_dict[var] )
 
             # - In the case of only one quantity
             if len(data_list) == 1:
