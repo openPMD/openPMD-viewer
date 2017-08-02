@@ -81,8 +81,11 @@ def read_species_data(file_handle, species, record_comp, extensions):
         data *= 1.e6
     # - Return momentum in normalized units
     elif record_comp in ['ux', 'uy', 'uz' ]:
-        norm_factor = 1. / (get_data(species_grp['mass']) * constants.c)
-        data *= norm_factor
+        m = get_data(species_grp['mass'])
+        # Normalize only if the particle mass is non-zero
+        if np.all( m != 0 ):
+            norm_factor = 1. / (m * constants.c)
+            data *= norm_factor
 
     # Return the data
     return(data)

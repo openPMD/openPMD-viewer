@@ -131,11 +131,14 @@ class OpenPMDTimeSeries(parent_class):
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
 
-        In the case of positions, the result is returned in microns
-
         Plot the histogram of the returned quantity.
         If two quantities are requested by the user, this plots
         a 2d histogram of these quantities.
+
+        In the case of positions, the result is returned in microns
+        In the case of momenta, the result is returned as:
+        - unitless momentum (i.e. gamma*beta) for particles with non-zero mass
+        - in kg.m.s^-1 for particles with zero mass
 
         Parameters
         ----------
