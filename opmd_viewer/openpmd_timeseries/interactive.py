@@ -509,33 +509,21 @@ class ColorBarSelector(object):
         """
         # Set the widget dimensions
         set_widget_dimensions( self.active, width=20 )
-        if ipywidgets_version >= 5:
-            text_width=30
-        else:
-            text_width=60
-        set_widget_dimensions( self.low_bound, width=text_width )
-        set_widget_dimensions( self.up_bound, width=text_width )
+        set_widget_dimensions( self.low_bound, width=60 )
+        set_widget_dimensions( self.up_bound, width=60 )
         set_widget_dimensions( self.exponent, width=45 )
+        set_widget_dimensions( self.cmap, width=200 )
         # Gather the different widgets on two lines
         cmap_container = widgets.VBox( children=[
             widgets.HTML( "<b>Colorbar:</b>"), self.cmap ] )
-        if ipywidgets_version >= 5:
-            range_container = widgets.HBox( children=[
-                add_description("from", self.low_bound, width=30 ),
-                add_description("to", self.up_bound, width=20 ),
-                add_description("x 10^", self.exponent, width=45),
-                self.active ] )
-            final_container = widgets.VBox(
-                children=[ cmap_container, range_container ] )
-        else:
-            range_container1 = widgets.HBox( children=[
-                add_description("from", self.low_bound, width=30 ),
-                add_description("to", self.up_bound, width=20 ) ] )
-            range_container2 = widgets.HBox( children=[
-                add_description("x 10^", self.exponent, width=45),
-                self.active ] )
-            final_container = widgets.VBox(
-                children=[cmap_container, range_container1, range_container2])
+        range_container1 = widgets.HBox( children=[
+            add_description("from", self.low_bound, width=30 ),
+            add_description("to", self.up_bound, width=20 ) ] )
+        range_container2 = widgets.HBox( children=[
+            add_description("x 10^", self.exponent, width=45),
+            self.active ] )
+        final_container = widgets.VBox(
+            children=[cmap_container, range_container1, range_container2])
         set_widget_dimensions( final_container, width=310 )
         return( final_container )
 
