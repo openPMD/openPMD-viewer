@@ -509,8 +509,8 @@ class ColorBarSelector(object):
         """
         # Set the widget dimensions
         set_widget_dimensions( self.active, width=20 )
-        set_widget_dimensions( self.low_bound, width=30 )
-        set_widget_dimensions( self.up_bound, width=30 )
+        set_widget_dimensions( self.low_bound, width=60 )
+        set_widget_dimensions( self.up_bound, width=60 )
         set_widget_dimensions( self.exponent, width=45 )
         # Gather the different widgets on two lines
         cmap_container = widgets.VBox( children=[
@@ -518,10 +518,10 @@ class ColorBarSelector(object):
         range_container = widgets.HBox( children=[
             add_description("from", self.low_bound, width=30 ),
             add_description("to", self.up_bound, width=20 ),
-            add_description("x 10^", self.exponent, width=45), self.active ] )
+            add_description("x 10^", self.exponent, width=45) ] )
         # Stack the two types of widgets
         final_container = widgets.VBox(
-            children=[ cmap_container, range_container ] )
+            children=[ cmap_container, range_container, self.active ] )
         set_widget_dimensions( final_container, width=310 )
         return( final_container )
 
