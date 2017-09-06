@@ -513,13 +513,24 @@ class ColorBarSelector(object):
         set_widget_dimensions( self.exponent, width=45 )
         set_widget_dimensions( self.cmap, width=200 )
         # Gather the different widgets on two lines
-        range_container = widgets.HBox( children=[ self.active,
-            add_description(" from: ", self.low_bound, width=30 ),
-            add_description(" to: ", self.up_bound, width=20 ),
-            add_description("x 10^", self.exponent, width=45 ) ] )
-        final_container = widgets.VBox(
-            children=[ widgets.HTML( "<b>Colorbar:</b>"),
-                        self.cmap, range_container ])
+        cmap_container = widgets.HBox( children=[
+            widgets.HTML( "<b>Colorbar:</b>"), self.cmap ])
+        if ipywidgets_version > 4:
+            # For newer version of ipywidgets: add the "x10^" on same line
+            range_container = widgets.HBox( children=[ self.active,
+                add_description("from", self.low_bound, width=30 ),
+                add_description("to", self.up_bound, width=20 ),
+                add_description("x 10^", self.exponent, width=45 ) ] )
+            final_container = widgets.VBox(
+                children=[ cmap_container, range_container ])
+        else:
+            # For older version of ipywidgets: add the "x10^" on new line
+            range_container = widgets.HBox( children=[ self.active,
+                add_description("from", self.low_bound, width=30 ),
+                add_description("to", self.up_bound, width=20 ) ] )
+            final_container = widgets.VBox(
+                children=[ cmap_container, range_container,
+                add_description("x 10^", self.exponent, width=45 ) ])
         set_widget_dimensions( final_container, width=310 )
         return( final_container )
 
