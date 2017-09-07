@@ -1,5 +1,14 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.6.0
+
+This version improves the layout of the Jupyter GUI and allows the user to
+select a particular region of the plots through this GUI.
+
+In addition, support for massless particle (e.g. photons) was added. In this
+case, the momenta are returned in kg.m.s^-1, instead of using the
+dimensionless momenta.
+
 ## 0.5.4
 
 This is version `0.5.4` of openPMD-viewer.
