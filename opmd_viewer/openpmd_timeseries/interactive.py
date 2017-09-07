@@ -491,8 +491,7 @@ class ColorBarSelector(object):
         self.cmap = widgets.Select(options=available_cmaps, value=default_cmap)
 
         # Create the widgets for the range
-        self.active = widgets.Checkbox(
-            description=' Use this range', value=False)
+        self.active = widgets.Checkbox( value=False )
         self.low_bound = widgets.FloatText( value=-5. )
         self.up_bound = widgets.FloatText( value=5. )
         self.exponent = widgets.FloatText( value=9. )
@@ -512,16 +511,26 @@ class ColorBarSelector(object):
         set_widget_dimensions( self.low_bound, width=60 )
         set_widget_dimensions( self.up_bound, width=60 )
         set_widget_dimensions( self.exponent, width=45 )
+        set_widget_dimensions( self.cmap, width=200 )
         # Gather the different widgets on two lines
-        cmap_container = widgets.VBox( children=[
-            widgets.HTML( "<b>Colorbar:</b>"), self.cmap ] )
-        range_container = widgets.HBox( children=[
-            add_description("from", self.low_bound, width=30 ),
-            add_description("to", self.up_bound, width=20 ),
-            add_description("x 10^", self.exponent, width=45) ] )
-        # Stack the two types of widgets
-        final_container = widgets.VBox(
-            children=[ cmap_container, range_container, self.active ] )
+        cmap_container = widgets.HBox( children=[
+            widgets.HTML( "<b>Colorbar:</b>"), self.cmap ])
+        if ipywidgets_version > 4:
+            # For newer version of ipywidgets: add the "x10^" on same line
+            range_container = widgets.HBox( children=[ self.active,
+                add_description("from", self.low_bound, width=30 ),
+                add_description("to", self.up_bound, width=20 ),
+                add_description("x 10^", self.exponent, width=45 ) ] )
+            final_container = widgets.VBox(
+                children=[ cmap_container, range_container ])
+        else:
+            # For older version of ipywidgets: add the "x10^" on new line
+            range_container = widgets.HBox( children=[ self.active,
+                add_description("from", self.low_bound, width=30 ),
+                add_description("to", self.up_bound, width=20 ) ] )
+            final_container = widgets.VBox(
+                children=[ cmap_container, range_container,
+                add_description("x 10^", self.exponent, width=45 ) ])
         set_widget_dimensions( final_container, width=310 )
         return( final_container )
 
@@ -560,8 +569,7 @@ class RangeSelector(object):
         self.title = title
 
         # Create the widgets
-        self.active = widgets.Checkbox(
-            description=' Use this range', value=False)
+        self.active = widgets.Checkbox( value=False )
         self.low_bound = widgets.FloatText( value=-default_value )
         self.up_bound = widgets.FloatText( value=default_value )
 
@@ -578,9 +586,9 @@ class RangeSelector(object):
         set_widget_dimensions( self.low_bound, width=60 )
         set_widget_dimensions( self.up_bound, width=60 )
         # Gather the different widgets on one line
-        container = widgets.HBox( children=[
+        container = widgets.HBox( children=[ self.active,
             add_description("from", self.low_bound, width=30 ),
-            add_description("to", self.up_bound, width=20 ), self.active ] )
+            add_description("to", self.up_bound, width=20 ) ] )
         set_widget_dimensions( container, width=310 )
         # Add the title
         final_container = widgets.VBox( children=[
