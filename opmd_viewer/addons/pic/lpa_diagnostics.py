@@ -87,7 +87,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             # If selection is empty or all particles have weight zero,
             # return NaN
             mean_gamma = np.nan
-        std_gamma = wstd(gamma, w)
+        std_gamma = w_std(gamma, w)
         # Return the result
         return( mean_gamma, std_gamma )
 
@@ -148,7 +148,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Iterate over slices and calculate sigma gamma
         while zi < zend:
             z_filter = (z > zi - dz / 2.) & (z < zi + dz / 2.)
-            spreads[i] = wstd(gamma[z_filter], w[z_filter])
+            spreads[i] = w_std(gamma[z_filter], w[z_filter])
             zi += dz
             i += 1
         # Plot the result if needed
@@ -236,8 +236,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                            t=t, iteration=iteration,
                                            species=species, select=select )
         # Calculate diveregence
-        div_x = wstd( np.arctan2(ux, uz), w )
-        div_y = wstd( np.arctan2(uy, uz), w )
+        div_x = w_std( np.arctan2(ux, uz), w )
+        div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
@@ -281,12 +281,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Calculate the necessary RMS values
         x *= 1.e-6
         y *= 1.e-6
-        xsq = np.average( x ** 2, weights=w )
-        ysq = np.average( y ** 2, weights=w )
-        uxsq = np.average( ux ** 2, weights=w )
-        uysq = np.average( uy ** 2, weights=w )
-        xux = np.average( x * ux, weights=w )
-        yuy = np.average( y * uy, weights=w )
+        xsq = w_ave( x ** 2, weights=w )
+        ysq = w_ave( y ** 2, weights=w )
+        uxsq = w_ave( ux ** 2, weights=w )
+        uysq = w_ave( uy ** 2, weights=w )
+        xux = w_ave( x * ux, weights=w )
+        yuy = w_ave( y * uy, weights=w )
         # Calculate the beam emittances
         emit_x = np.sqrt( xsq * uxsq - xux ** 2 )
         emit_y = np.sqrt( ysq * uysq - yuy ** 2 )
@@ -724,7 +724,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
         # Calculate ctau with RMS value
-        ctau = np.sqrt(2) * wstd(info.z, E)
+        ctau = np.sqrt(2) * w_std(info.z, E)
         if method == 'rms':
             return( ctau )
 
@@ -794,7 +794,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
-        w0 = np.sqrt(2) * wstd(trans_pos, trans_slice)
+        w0 = np.sqrt(2) * w_std(trans_pos, trans_slice)
         if method == 'rms':
             return( w0 )
 
@@ -907,9 +907,36 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( spectrogram, info )
 
 
-def wstd( a, weights ):
+def w_ave( a, weights ):
     """
-    Calcualte the weighted standard deviation.
+    Calculate the weighted average of array `a`
+
+    Parameters
+    ----------
+    a : 1d array
+        Calculate the weighted average for these a.
+
+    weights : 1d array
+        An array of weights for the values in a.
+
+    Returns
+    -------
+    Float with the weighted average
+    Returns nan if input array is empty
+    """
+    # Check if input contains data
+    if not np.any(weights) and not np.any(a):
+        # If input is empty return NaN
+        return np.nan
+    else:
+        # Calculate the weighted average
+        average = np.average(a, weights=weights)
+        return( average )
+
+
+def w_std( a, weights ):
+    """
+    Calculate the weighted standard deviation.
 
     Parameters
     ----------
