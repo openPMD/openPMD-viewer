@@ -68,13 +68,11 @@ def clean_ipython_features(script_name):
 
         # Replace the lines that activate matplotlib in a notebook
         # by a line that selects the PS backend
-        if re.match("[ ]*get_ipython\(\)\.magic\((.*)'matplotlib",
-                    lines[i]) is not None:
+        if re.search("get_ipython.*matplotlib", lines[i]) is not None:
             lines[i] = "import matplotlib; matplotlib.use('ps')\n"
 
         # Discard the lines that use in-notebook documentation
-        if re.match("[ ]*get_ipython\(\)\.magic\((.*)'pinfo",
-                    lines[i]) is not None:
+        if re.search("get_ipython.*pinfo", lines[i]) is not None:
             lines[i] = ''
 
         # Discard the lines that use the GUI
