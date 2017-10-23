@@ -38,7 +38,10 @@ class InteractiveViewer(object):
             in the slider (typically because they are less interesting)
 
         kw: dict
-            Extra arguments to pass to matplotlib's imshow
+            Extra arguments to pass to matplotlib's imshow (e.g. cmap, etc.).
+            This will be applied both to the particle plots and field plots.
+            Note that `kw` sets the initial plotting options, but the user
+            can then still modify these options through the slider interface.
         """
         # -----------------------
         # Define useful functions
@@ -75,8 +78,12 @@ class InteractiveViewer(object):
                 if 'inline' in matplotlib.get_backend():
                     clear_output()
 
-                # Colorscale range
+                # Handle plotting options
+                kw_fld = kw.copy()
                 vmin, vmax = fld_color_button.get_range()
+                kw_fld['vmin'] = vmin
+                kw_fld['vmax'] = vmax
+                kw_fld['cmap'] = fld_color_button.cmap.value
                 # Determine range of the plot from widgets
                 plot_range = [ fld_hrange_button.get_range(),
                                 fld_vrange_button.get_range() ]
@@ -88,8 +95,7 @@ class InteractiveViewer(object):
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
-                    plot_range=plot_range, vmin=vmin, vmax=vmax,
-                    cmap=fld_color_button.cmap.value)
+                    plot_range=plot_range, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
             """
@@ -122,8 +128,12 @@ class InteractiveViewer(object):
                 if 'inline' in matplotlib.get_backend():
                     clear_output()
 
-                # Colorscale range
+                # Handle plotting options
+                kw_ptcl = kw.copy()
                 vmin, vmax = ptcl_color_button.get_range()
+                kw_ptcl['vmin'] = vmin
+                kw_ptcl['vmax'] = vmax
+                kw_ptcl['cmap'] = ptcl_color_button.cmap.value
                 # Determine range of the plot from widgets
                 plot_range = [ ptcl_hrange_button.get_range(),
                                 ptcl_vrange_button.get_range() ]
@@ -134,11 +144,9 @@ class InteractiveViewer(object):
                         output=False, var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax,
-                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value )
+                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
                 else:
                     # 2D histogram
                     self.get_particle( iteration=self.current_iteration,
@@ -146,11 +154,9 @@ class InteractiveViewer(object):
                                                 ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax,
-                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value )
+                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
 
         def refresh_field_type(change):
             """
@@ -301,8 +307,10 @@ class InteractiveViewer(object):
             fld_figure_button = widgets.IntText( value=0 )
             set_widget_dimensions( fld_figure_button, width=50 )
             # Colormap button
-            fld_color_button = ColorBarSelector(
-                refresh_field, default_cmap='viridis' )
+            fld_color_button = ColorBarSelector( refresh_field,
+                default_cmap=kw.get('cmap', 'viridis'),
+                default_vmin=kw.get('vmin', -5.e9),
+                default_vmax=kw.get('vmax', 5.e9) )
             # Range buttons
             fld_hrange_button = RangeSelector( refresh_field,
                 default_value=10., title='Horizontal axis:')
@@ -393,8 +401,10 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
-            ptcl_color_button = ColorBarSelector(
-                refresh_ptcl, default_cmap='Blues' )
+            ptcl_color_button = ColorBarSelector( refresh_ptcl,
+                default_cmap=kw.get('cmap', 'Blues'),
+                default_vmin=kw.get('vmin', -5.e9),
+                default_vmax=kw.get('vmax', 5.e9) )
             # Range buttons
             ptcl_hrange_button = RangeSelector( refresh_ptcl,
                 default_value=10., title='Horizontal axis:')
@@ -471,7 +481,8 @@ class ColorBarSelector(object):
     the order of magnitude of the colorbar.
     """
 
-    def __init__( self, callback_function, default_cmap ):
+    def __init__( self, callback_function, default_cmap,
+                        default_vmin, default_vmax ):
         """
         Initialize a set of widgets that select a colorbar.
 
@@ -483,6 +494,8 @@ class ColorBarSelector(object):
         default_cmap: string
             The name of the colormap that will be used when the widget is
             initialized
+        default_vmin, default_vmax: float
+            The default value for the initial value of vmin and vmax
         """
         # Create the colormap widget
         available_cmaps = sorted( plt.colormaps() )
@@ -490,11 +503,17 @@ class ColorBarSelector(object):
             default_cmap = 'jet'
         self.cmap = widgets.Select(options=available_cmaps, value=default_cmap)
 
+        # Convert default_vmin, default vmax to scientific format
+        max_abs = max( abs(default_vmin), abs(default_vmax) )
+        default_exponent = math.floor( math.log10( max_abs ) )
+        default_upbound = default_vmax * 10.**(-default_exponent)
+        default_lowbound = default_vmin * 10.**(-default_exponent)
+
         # Create the widgets for the range
         self.active = widgets.Checkbox( value=False )
-        self.low_bound = widgets.FloatText( value=-5. )
-        self.up_bound = widgets.FloatText( value=5. )
-        self.exponent = widgets.FloatText( value=9. )
+        self.low_bound = widgets.FloatText( value=default_lowbound )
+        self.up_bound = widgets.FloatText( value=default_upbound )
+        self.exponent = widgets.FloatText( value=default_exponent )
 
         # Add the callback function
         self.active.observe( callback_function, 'value', 'change' )
