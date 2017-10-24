@@ -79,7 +79,6 @@ class Plotter(object):
         # Check if matplotlib is available
         if not matplotlib_installed:
             raise_matplotlib_error()
-            return
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -129,7 +128,6 @@ class Plotter(object):
         # Check if matplotlib is available
         if not matplotlib_installed:
             raise_matplotlib_error()
-            return
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -170,7 +168,6 @@ class Plotter(object):
         # Check if matplotlib is available
         if not matplotlib_installed:
             raise_matplotlib_error()
-            return
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -230,7 +227,6 @@ class Plotter(object):
         # Check if matplotlib is available
         if not matplotlib_installed:
             raise_matplotlib_error()
-            return
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
