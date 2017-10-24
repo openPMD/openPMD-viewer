@@ -278,22 +278,22 @@ class InteractiveViewer(object):
             # Field type
             # ----------
             # Field button
-            fieldtype_button = widgets.ToggleButtons(
+            fieldtype_button = create_toggle_buttons(
                 description='Field:',
                 options=sorted(self.avail_fields.keys()))
             fieldtype_button.observe( refresh_field_type, 'value', 'change' )
 
             # Coord button
             if self.geometry == "thetaMode":
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z', 'r', 't'])
             elif self.geometry in \
                     ["1dcartesian", "2dcartesian", "3dcartesian"]:
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z'])
             coord_button.observe( refresh_field, 'value', 'change')
             # Mode and theta button (for thetaMode)
-            mode_button = widgets.ToggleButtons(description='Mode:',
+            mode_button = create_toggle_buttons(description='Mode:',
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
@@ -301,7 +301,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
-            slicing_dir_button = widgets.ToggleButtons(
+            slicing_dir_button = create_toggle_buttons(
                 value=self.axis_labels[0], options=self.axis_labels,
                 description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
@@ -386,10 +386,10 @@ class InteractiveViewer(object):
                                  ptcl_species_button.value]
                              if q not in exclude_particle_records]
             # Particle quantity on the x axis
-            ptcl_xaxis_button = widgets.ToggleButtons(options=avail_records)
+            ptcl_xaxis_button = create_toggle_buttons(options=avail_records)
             ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
             # Particle quantity on the y axis
-            ptcl_yaxis_button = widgets.ToggleButtons(
+            ptcl_yaxis_button = create_toggle_buttons(
                 options=avail_records + ['None'], value='None')
             ptcl_yaxis_button.observe( refresh_ptcl, 'value', 'change')
 
@@ -764,3 +764,14 @@ def add_description( text, annotated_widget, width=50 ):
     html_widget = widgets.HTML(text)
     set_widget_dimensions( html_widget, width=width )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
+
+def create_toggle_buttons( **kwargs ):
+    """
+    TODO
+    """
+    t = widgets.ToggleButtons( **kwargs )
+    # Set the style attribute of the widgets, so that buttons
+    # automatically adapt to the size of their content
+    if ipywidgets_version >= 7:
+        t.style.button_width = 'initial'
+    return(t)
