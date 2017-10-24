@@ -765,9 +765,16 @@ def add_description( text, annotated_widget, width=50 ):
     set_widget_dimensions( html_widget, width=width )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
 
+
 def create_toggle_buttons( **kwargs ):
     """
-    TODO
+    Initialize a ToggleButtons widget, in such a way that
+    its buttons are sized proportionally to the text content, when possible.
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
     """
     t = widgets.ToggleButtons( **kwargs )
     # Set the style attribute of the widgets, so that buttons
