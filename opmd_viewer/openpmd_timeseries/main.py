@@ -18,19 +18,7 @@ from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_1d, read_field_2d, \
     read_field_circ, read_field_3d, get_grid_parameters
-
-
-# Check wether the interactive interface can be loaded
-try:
-    # If yes, use the InteractiveViewer as a parent class
-    from .interactive import InteractiveViewer
-    parent_class = InteractiveViewer
-except ImportError:
-    # Otherwise, use the default parent class
-    print('[opmd_viewer] Failed to import the interactive interface.\n'
-          '(Make sure that ipywidgets is installed.)\n'
-          'The opmd_viewer API is nonetheless working.')
-    parent_class = object
+from .interactive import InteractiveViewer
 
 
 # Define a custom Exception
@@ -39,9 +27,7 @@ class OpenPMDException(Exception):
     pass
 
 
-# Define the OpenPMDTimeSeries class and have it inherit
-# from the parent class defined above
-class OpenPMDTimeSeries(parent_class):
+class OpenPMDTimeSeries(InteractiveViewer):
     """
     Main class for the exploration of an openPMD timeseries
 

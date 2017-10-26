@@ -8,14 +8,17 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
-
-from ipywidgets import widgets, __version__
-from IPython.core.display import display, clear_output
 import math
-import matplotlib
-import matplotlib.pyplot as plt
 from functools import partial
-ipywidgets_version = int(__version__[0])
+try:
+    from ipywidgets import widgets, __version__
+    ipywidgets_version = int(__version__[0])
+    from IPython.core.display import display, clear_output
+    import matplotlib
+    import matplotlib.pyplot as plt
+    dependencies_installed = True
+except ImportError:
+    dependencies_installed = False
 
 
 class InteractiveViewer(object):
@@ -43,6 +46,11 @@ class InteractiveViewer(object):
             Note that `kw` sets the initial plotting options, but the user
             can then still modify these options through the slider interface.
         """
+        # Check that the dependencies have been installed
+        if not dependencies_installed:
+            raise RuntimeError("Failed to load the openPMD-viewer slider.\n"
+                "(Make sure that ipywidgets and matplotlib are installed.)")
+
         # -----------------------
         # Define useful functions
         # -----------------------
