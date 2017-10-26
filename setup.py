@@ -55,6 +55,10 @@ setup(name='openPMD-viewer',
       ext_modules=ext_modules,
       include_dirs=include_dirs,
       install_requires=install_requires,
+      extras_require = {
+        'GUI':  ["ipywidgets", "matplotlib"],
+        'plot': ["matplotlib"],
+        },
       cmdclass={'test': PyTest},
       platforms='any',
       classifiers=[

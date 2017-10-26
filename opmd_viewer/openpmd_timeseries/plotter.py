@@ -8,8 +8,11 @@ Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
-
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    matplotlib_installed = True
+except ImportError:
+    matplotlib_installed = False
 
 
 class Plotter(object):
@@ -73,6 +76,10 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's hist
         """
+        # Check if matplotlib is available
+        if not matplotlib_installed:
+            raise_matplotlib_error()
+
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
@@ -118,6 +125,10 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's hist
         """
+        # Check if matplotlib is available
+        if not matplotlib_installed:
+            raise_matplotlib_error()
+
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
@@ -154,6 +165,10 @@ class Plotter(object):
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
         """
+        # Check if matplotlib is available
+        if not matplotlib_installed:
+            raise_matplotlib_error()
+
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
@@ -209,6 +224,10 @@ class Plotter(object):
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
         """
+        # Check if matplotlib is available
+        if not matplotlib_installed:
+            raise_matplotlib_error()
+
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
@@ -248,3 +267,9 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+
+
+def raise_matplotlib_error():
+    """Raise an error telling the user to install matplotlib."""
+    raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
+        "(Make sure that matplotlib is installed.)")
