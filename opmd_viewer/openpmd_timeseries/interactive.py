@@ -518,7 +518,7 @@ class ColorBarSelector(object):
         default_lowbound = default_vmin * 10.**(-default_exponent)
 
         # Create the widgets for the range
-        self.active = widgets.Checkbox( value=False )
+        self.active = create_checkbox( value=False )
         self.low_bound = widgets.FloatText( value=default_lowbound )
         self.up_bound = widgets.FloatText( value=default_upbound )
         self.exponent = widgets.FloatText( value=default_exponent )
@@ -596,7 +596,7 @@ class RangeSelector(object):
         self.title = title
 
         # Create the widgets
-        self.active = widgets.Checkbox( value=False )
+        self.active = create_checkbox( value=False )
         self.low_bound = widgets.FloatText( value=-default_value )
         self.up_bound = widgets.FloatText( value=default_value )
 
@@ -782,3 +782,20 @@ def create_toggle_buttons( **kwargs ):
     if ipywidgets_version >= 7:
         t.style.button_width = 'initial'
     return(t)
+
+
+def create_checkbox( **kwargs ):
+    """
+    Create a Checkbox widget, in such a way that it displays correctly
+    with all versions of ipywidgets
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
+    """
+    if ipywidgets_version >= 7:
+        c = widgets.Checkbox( **kwargs, indent=False )
+    else:
+        c = widgets.Checkbox( **kwargs )
+    return(c)
