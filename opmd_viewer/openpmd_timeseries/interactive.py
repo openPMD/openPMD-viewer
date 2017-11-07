@@ -805,7 +805,7 @@ def create_checkbox( **kwargs ):
         Arguments to be passed to the ToggleButtons constructor
     """
     if ipywidgets_version >= 7:
-        c = widgets.Checkbox( **kwargs, indent=False )
+        c = widgets.Checkbox( indent=False, **kwargs )
     else:
         c = widgets.Checkbox( **kwargs )
     return(c)
