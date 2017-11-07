@@ -667,7 +667,7 @@ class ParticleSelectWidget(object):
         self.n_rules = n_rules
 
         # Create widgets that determines whether the rule is used
-        self.active = [widgets.Checkbox(value=False)
+        self.active = [ create_checkbox(value=False)
                        for i in range(n_rules)]
         # Create widgets that determines the quantity on which to select
         # (The Dropdown menu is empty, but is later populated by the
