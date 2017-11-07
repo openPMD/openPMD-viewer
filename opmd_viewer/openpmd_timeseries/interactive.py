@@ -84,7 +84,17 @@ class InteractiveViewer(object):
                 # clear the output (prevents the images from stacking
                 # in the notebook)
                 if 'inline' in matplotlib.get_backend():
-                    clear_output()
+                    if ipywidgets_version < 7:
+                        clear_output()
+                    else:
+                        import warnings
+                        warnings.warn(
+                        "\n\nIt seems that you are using ipywidgets 7 and "
+                        "`%matplotlib inline`. \nThis can cause issues when "
+                        "using `slider`.\nIn order to avoid this, you "
+                        "can either:\n- use `%matplotlib notebook`\n- or "
+                        "downgrade to ipywidgets 6 (with `pip` or `conda`).",
+                        UserWarning)
 
                 # Handle plotting options
                 kw_fld = kw.copy()
