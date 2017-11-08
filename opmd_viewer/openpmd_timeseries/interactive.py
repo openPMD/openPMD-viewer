@@ -84,7 +84,17 @@ class InteractiveViewer(object):
                 # clear the output (prevents the images from stacking
                 # in the notebook)
                 if 'inline' in matplotlib.get_backend():
-                    clear_output()
+                    if ipywidgets_version < 7:
+                        clear_output()
+                    else:
+                        import warnings
+                        warnings.warn(
+                        "\n\nIt seems that you are using ipywidgets 7 and "
+                        "`%matplotlib inline`. \nThis can cause issues when "
+                        "using `slider`.\nIn order to avoid this, you "
+                        "can either:\n- use `%matplotlib notebook`\n- or "
+                        "downgrade to ipywidgets 6 (with `pip` or `conda`).",
+                        UserWarning)
 
                 # Handle plotting options
                 kw_fld = kw.copy()
@@ -278,22 +288,22 @@ class InteractiveViewer(object):
             # Field type
             # ----------
             # Field button
-            fieldtype_button = widgets.ToggleButtons(
+            fieldtype_button = create_toggle_buttons(
                 description='Field:',
                 options=sorted(self.avail_fields.keys()))
             fieldtype_button.observe( refresh_field_type, 'value', 'change' )
 
             # Coord button
             if self.geometry == "thetaMode":
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z', 'r', 't'])
             elif self.geometry in \
                     ["1dcartesian", "2dcartesian", "3dcartesian"]:
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z'])
             coord_button.observe( refresh_field, 'value', 'change')
             # Mode and theta button (for thetaMode)
-            mode_button = widgets.ToggleButtons(description='Mode:',
+            mode_button = create_toggle_buttons(description='Mode:',
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
@@ -301,7 +311,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
-            slicing_dir_button = widgets.ToggleButtons(
+            slicing_dir_button = create_toggle_buttons(
                 value=self.axis_labels[0], options=self.axis_labels,
                 description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
@@ -386,10 +396,10 @@ class InteractiveViewer(object):
                                  ptcl_species_button.value]
                              if q not in exclude_particle_records]
             # Particle quantity on the x axis
-            ptcl_xaxis_button = widgets.ToggleButtons(options=avail_records)
+            ptcl_xaxis_button = create_toggle_buttons(options=avail_records)
             ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
             # Particle quantity on the y axis
-            ptcl_yaxis_button = widgets.ToggleButtons(
+            ptcl_yaxis_button = create_toggle_buttons(
                 options=avail_records + ['None'], value='None')
             ptcl_yaxis_button.observe( refresh_ptcl, 'value', 'change')
 
@@ -518,7 +528,7 @@ class ColorBarSelector(object):
         default_lowbound = default_vmin * 10.**(-default_exponent)
 
         # Create the widgets for the range
-        self.active = widgets.Checkbox( value=False )
+        self.active = create_checkbox( value=False )
         self.low_bound = widgets.FloatText( value=default_lowbound )
         self.up_bound = widgets.FloatText( value=default_upbound )
         self.exponent = widgets.FloatText( value=default_exponent )
@@ -596,7 +606,7 @@ class RangeSelector(object):
         self.title = title
 
         # Create the widgets
-        self.active = widgets.Checkbox( value=False )
+        self.active = create_checkbox( value=False )
         self.low_bound = widgets.FloatText( value=-default_value )
         self.up_bound = widgets.FloatText( value=default_value )
 
@@ -657,7 +667,7 @@ class ParticleSelectWidget(object):
         self.n_rules = n_rules
 
         # Create widgets that determines whether the rule is used
-        self.active = [widgets.Checkbox(value=False)
+        self.active = [ create_checkbox(value=False)
                        for i in range(n_rules)]
         # Create widgets that determines the quantity on which to select
         # (The Dropdown menu is empty, but is later populated by the
@@ -764,3 +774,38 @@ def add_description( text, annotated_widget, width=50 ):
     html_widget = widgets.HTML(text)
     set_widget_dimensions( html_widget, width=width )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
+
+
+def create_toggle_buttons( **kwargs ):
+    """
+    Initialize a ToggleButtons widget, in such a way that
+    its buttons are sized proportionally to the text content, when possible.
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
+    """
+    t = widgets.ToggleButtons( **kwargs )
+    # Set the style attribute of the widgets, so that buttons
+    # automatically adapt to the size of their content
+    if ipywidgets_version >= 7:
+        t.style.button_width = 'initial'
+    return(t)
+
+
+def create_checkbox( **kwargs ):
+    """
+    Create a Checkbox widget, in such a way that it displays correctly
+    with all versions of ipywidgets
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
+    """
+    if ipywidgets_version >= 7:
+        c = widgets.Checkbox( indent=False, **kwargs )
+    else:
+        c = widgets.Checkbox( **kwargs )
+    return(c)
