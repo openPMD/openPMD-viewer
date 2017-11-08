@@ -8,14 +8,17 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
-
-from ipywidgets import widgets, __version__
-from IPython.core.display import display, clear_output
 import math
-import matplotlib
-import matplotlib.pyplot as plt
 from functools import partial
-ipywidgets_version = int(__version__[0])
+try:
+    from ipywidgets import widgets, __version__
+    ipywidgets_version = int(__version__[0])
+    from IPython.core.display import display, clear_output
+    import matplotlib
+    import matplotlib.pyplot as plt
+    dependencies_installed = True
+except ImportError:
+    dependencies_installed = False
 
 
 class InteractiveViewer(object):
@@ -38,8 +41,16 @@ class InteractiveViewer(object):
             in the slider (typically because they are less interesting)
 
         kw: dict
-            Extra arguments to pass to matplotlib's imshow
+            Extra arguments to pass to matplotlib's imshow (e.g. cmap, etc.).
+            This will be applied both to the particle plots and field plots.
+            Note that `kw` sets the initial plotting options, but the user
+            can then still modify these options through the slider interface.
         """
+        # Check that the dependencies have been installed
+        if not dependencies_installed:
+            raise RuntimeError("Failed to load the openPMD-viewer slider.\n"
+                "(Make sure that ipywidgets and matplotlib are installed.)")
+
         # -----------------------
         # Define useful functions
         # -----------------------
@@ -73,10 +84,24 @@ class InteractiveViewer(object):
                 # clear the output (prevents the images from stacking
                 # in the notebook)
                 if 'inline' in matplotlib.get_backend():
-                    clear_output()
+                    if ipywidgets_version < 7:
+                        clear_output()
+                    else:
+                        import warnings
+                        warnings.warn(
+                        "\n\nIt seems that you are using ipywidgets 7 and "
+                        "`%matplotlib inline`. \nThis can cause issues when "
+                        "using `slider`.\nIn order to avoid this, you "
+                        "can either:\n- use `%matplotlib notebook`\n- or "
+                        "downgrade to ipywidgets 6 (with `pip` or `conda`).",
+                        UserWarning)
 
-                # Colorscale range
+                # Handle plotting options
+                kw_fld = kw.copy()
                 vmin, vmax = fld_color_button.get_range()
+                kw_fld['vmin'] = vmin
+                kw_fld['vmax'] = vmax
+                kw_fld['cmap'] = fld_color_button.cmap.value
                 # Determine range of the plot from widgets
                 plot_range = [ fld_hrange_button.get_range(),
                                 fld_vrange_button.get_range() ]
@@ -88,8 +113,7 @@ class InteractiveViewer(object):
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
-                    plot_range=plot_range, vmin=vmin, vmax=vmax,
-                    cmap=fld_color_button.cmap.value)
+                    plot_range=plot_range, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
             """
@@ -122,8 +146,12 @@ class InteractiveViewer(object):
                 if 'inline' in matplotlib.get_backend():
                     clear_output()
 
-                # Colorscale range
+                # Handle plotting options
+                kw_ptcl = kw.copy()
                 vmin, vmax = ptcl_color_button.get_range()
+                kw_ptcl['vmin'] = vmin
+                kw_ptcl['vmax'] = vmax
+                kw_ptcl['cmap'] = ptcl_color_button.cmap.value
                 # Determine range of the plot from widgets
                 plot_range = [ ptcl_hrange_button.get_range(),
                                 ptcl_vrange_button.get_range() ]
@@ -134,11 +162,9 @@ class InteractiveViewer(object):
                         output=False, var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax,
-                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value )
+                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
                 else:
                     # 2D histogram
                     self.get_particle( iteration=self.current_iteration,
@@ -146,11 +172,9 @@ class InteractiveViewer(object):
                                                 ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
-                        vmin=vmin, vmax=vmax,
-                        cmap=ptcl_color_button.cmap.value,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value )
+                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
 
         def refresh_field_type(change):
             """
@@ -264,22 +288,22 @@ class InteractiveViewer(object):
             # Field type
             # ----------
             # Field button
-            fieldtype_button = widgets.ToggleButtons(
+            fieldtype_button = create_toggle_buttons(
                 description='Field:',
                 options=sorted(self.avail_fields.keys()))
             fieldtype_button.observe( refresh_field_type, 'value', 'change' )
 
             # Coord button
             if self.geometry == "thetaMode":
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z', 'r', 't'])
             elif self.geometry in \
                     ["1dcartesian", "2dcartesian", "3dcartesian"]:
-                coord_button = widgets.ToggleButtons(
+                coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z'])
             coord_button.observe( refresh_field, 'value', 'change')
             # Mode and theta button (for thetaMode)
-            mode_button = widgets.ToggleButtons(description='Mode:',
+            mode_button = create_toggle_buttons(description='Mode:',
                                                 options=self.avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
@@ -287,7 +311,7 @@ class InteractiveViewer(object):
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
-            slicing_dir_button = widgets.ToggleButtons(
+            slicing_dir_button = create_toggle_buttons(
                 value=self.axis_labels[0], options=self.axis_labels,
                 description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
@@ -301,8 +325,10 @@ class InteractiveViewer(object):
             fld_figure_button = widgets.IntText( value=0 )
             set_widget_dimensions( fld_figure_button, width=50 )
             # Colormap button
-            fld_color_button = ColorBarSelector(
-                refresh_field, default_cmap='viridis' )
+            fld_color_button = ColorBarSelector( refresh_field,
+                default_cmap=kw.get('cmap', 'viridis'),
+                default_vmin=kw.get('vmin', -5.e9),
+                default_vmax=kw.get('vmax', 5.e9) )
             # Range buttons
             fld_hrange_button = RangeSelector( refresh_field,
                 default_value=10., title='Horizontal axis:')
@@ -370,10 +396,10 @@ class InteractiveViewer(object):
                                  ptcl_species_button.value]
                              if q not in exclude_particle_records]
             # Particle quantity on the x axis
-            ptcl_xaxis_button = widgets.ToggleButtons(options=avail_records)
+            ptcl_xaxis_button = create_toggle_buttons(options=avail_records)
             ptcl_xaxis_button.observe( refresh_ptcl, 'value', 'change')
             # Particle quantity on the y axis
-            ptcl_yaxis_button = widgets.ToggleButtons(
+            ptcl_yaxis_button = create_toggle_buttons(
                 options=avail_records + ['None'], value='None')
             ptcl_yaxis_button.observe( refresh_ptcl, 'value', 'change')
 
@@ -393,8 +419,10 @@ class InteractiveViewer(object):
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
-            ptcl_color_button = ColorBarSelector(
-                refresh_ptcl, default_cmap='Blues' )
+            ptcl_color_button = ColorBarSelector( refresh_ptcl,
+                default_cmap=kw.get('cmap', 'Blues'),
+                default_vmin=kw.get('vmin', -5.e9),
+                default_vmax=kw.get('vmax', 5.e9) )
             # Range buttons
             ptcl_hrange_button = RangeSelector( refresh_ptcl,
                 default_value=10., title='Horizontal axis:')
@@ -471,7 +499,8 @@ class ColorBarSelector(object):
     the order of magnitude of the colorbar.
     """
 
-    def __init__( self, callback_function, default_cmap ):
+    def __init__( self, callback_function, default_cmap,
+                        default_vmin, default_vmax ):
         """
         Initialize a set of widgets that select a colorbar.
 
@@ -483,6 +512,8 @@ class ColorBarSelector(object):
         default_cmap: string
             The name of the colormap that will be used when the widget is
             initialized
+        default_vmin, default_vmax: float
+            The default value for the initial value of vmin and vmax
         """
         # Create the colormap widget
         available_cmaps = sorted( plt.colormaps() )
@@ -490,11 +521,17 @@ class ColorBarSelector(object):
             default_cmap = 'jet'
         self.cmap = widgets.Select(options=available_cmaps, value=default_cmap)
 
+        # Convert default_vmin, default vmax to scientific format
+        max_abs = max( abs(default_vmin), abs(default_vmax) )
+        default_exponent = math.floor( math.log10( max_abs ) )
+        default_upbound = default_vmax * 10.**(-default_exponent)
+        default_lowbound = default_vmin * 10.**(-default_exponent)
+
         # Create the widgets for the range
-        self.active = widgets.Checkbox( value=False )
-        self.low_bound = widgets.FloatText( value=-5. )
-        self.up_bound = widgets.FloatText( value=5. )
-        self.exponent = widgets.FloatText( value=9. )
+        self.active = create_checkbox( value=False )
+        self.low_bound = widgets.FloatText( value=default_lowbound )
+        self.up_bound = widgets.FloatText( value=default_upbound )
+        self.exponent = widgets.FloatText( value=default_exponent )
 
         # Add the callback function
         self.active.observe( callback_function, 'value', 'change' )
@@ -569,7 +606,7 @@ class RangeSelector(object):
         self.title = title
 
         # Create the widgets
-        self.active = widgets.Checkbox( value=False )
+        self.active = create_checkbox( value=False )
         self.low_bound = widgets.FloatText( value=-default_value )
         self.up_bound = widgets.FloatText( value=default_value )
 
@@ -630,7 +667,7 @@ class ParticleSelectWidget(object):
         self.n_rules = n_rules
 
         # Create widgets that determines whether the rule is used
-        self.active = [widgets.Checkbox(value=False)
+        self.active = [ create_checkbox(value=False)
                        for i in range(n_rules)]
         # Create widgets that determines the quantity on which to select
         # (The Dropdown menu is empty, but is later populated by the
@@ -737,3 +774,38 @@ def add_description( text, annotated_widget, width=50 ):
     html_widget = widgets.HTML(text)
     set_widget_dimensions( html_widget, width=width )
     return( widgets.HBox( children=[ html_widget, annotated_widget] ) )
+
+
+def create_toggle_buttons( **kwargs ):
+    """
+    Initialize a ToggleButtons widget, in such a way that
+    its buttons are sized proportionally to the text content, when possible.
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
+    """
+    t = widgets.ToggleButtons( **kwargs )
+    # Set the style attribute of the widgets, so that buttons
+    # automatically adapt to the size of their content
+    if ipywidgets_version >= 7:
+        t.style.button_width = 'initial'
+    return(t)
+
+
+def create_checkbox( **kwargs ):
+    """
+    Create a Checkbox widget, in such a way that it displays correctly
+    with all versions of ipywidgets
+
+    Parameters:
+    -----------
+    **kwargs: keyword arguments
+        Arguments to be passed to the ToggleButtons constructor
+    """
+    if ipywidgets_version >= 7:
+        c = widgets.Checkbox( indent=False, **kwargs )
+    else:
+        c = widgets.Checkbox( **kwargs )
+    return(c)
