@@ -1,5 +1,19 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.7.0
+
+This version improves support for `ipywidgets` version 7, especially in
+the layout of the slider.
+
+In addition, with this version of `openPMD-viewer`, `matplotlib` is  not a
+strict requirement anymore. This allows lighter installation for users that
+need `openPMD-viewer` only as a data reader.
+
+Finally, the calculation of the laser envelope in 2D has been improved
+(see [PR 170](https://github.com/openPMD/openPMD-viewer/pull/170)). Note
+that the function `wstd` (which is not documented in the tutorial, but
+which some users might still use) has been renamed to `w_std`.
+
 ## 0.6.0
 
 This version improves the layout of the Jupyter GUI and allows the user to

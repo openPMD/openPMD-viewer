@@ -33,9 +33,9 @@ username = <yourPypiUsername>
 
 ## Creating a release on Github
 
-- Make sure that the version number in `opmd_viewer/__version__.py`
-  correspond to the new release, and that the corresponding changes have been
-  documented in `CHANGELOG.md`.
+- Make sure that the version number in `opmd_viewer/__version__.py` **and**
+  in `conda_recipe/meta.yaml` correspond to the new release, and that
+  the corresponding changes have been documented in `CHANGELOG.md`.
 
 - If everything works fine, then merge the `dev` version into `master`
 and upload it to Github:
@@ -61,8 +61,7 @@ replace `pypi` by `pypitest` in the above set of commands)
 
 ## Uploading the package to Anaconda.org
 
-- `cd` into the folder `conda_recipe` and make sure that the version
-  number in `meta.yaml` matches the current version.
+- `cd` into the folder `conda_recipe`.
 
 - Still in the folder `conda_recipe`, run
 ```
