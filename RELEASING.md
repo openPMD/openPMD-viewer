@@ -11,7 +11,7 @@ PyPI and conda. In particular:
 
 - you should install the packages
 [`pypandoc`](https://pypi.python.org/pypi/pypandoc/),
-[`twine`](https://pypi.python.org/pypi/twine) and [`anaconda-client`](https://anaconda.org/anaconda/anaconda-client)
+[`twine`](https://pypi.python.org/pypi/twine).
 - you should have a registered account on [PyPI](https://pypi.python.org/pypi) and [test PyPI](https://testpypi.python.org/pypi), and your `$HOME` should contain a file `.pypirc` which contains the following text:
 
  ```
@@ -71,9 +71,9 @@ docker run -it -v $PWD:/home/ openpmd_build
 This builds the conda packages for Python 2.7, 3.4, 3.5 and 3.6, using a
 reproduceable environment.
 
-- Upload the different versions to Anaconda.org
+- After the build, the Docker container will **not** exit. From the container, type the following commands:
 ```
 anaconda login
 anaconda upload osx-64/*
-anaconda upload linux-64/*
+anaconda upload /opt/conda/conda-bld/linux-64/openpmd_viewer*
 ```
