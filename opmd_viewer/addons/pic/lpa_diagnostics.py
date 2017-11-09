@@ -11,10 +11,15 @@ License: 3-Clause-BSD-LBNL
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
 from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
+
+try:
+    import matplotlib.pyplot as plt
+    matplotlib_installed = True
+except ImportError:
+    matplotlib_installed = False
 
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
@@ -87,7 +92,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             # If selection is empty or all particles have weight zero,
             # return NaN
             mean_gamma = np.nan
-        std_gamma = wstd(gamma, w)
+        std_gamma = w_std(gamma, w)
         # Return the result
         return( mean_gamma, std_gamma )
 
@@ -148,20 +153,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Iterate over slices and calculate sigma gamma
         while zi < zend:
             z_filter = (z > zi - dz / 2.) & (z < zi + dz / 2.)
-            spreads[i] = wstd(gamma[z_filter], w[z_filter])
+            spreads[i] = w_std(gamma[z_filter], w[z_filter])
             zi += dz
             i += 1
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.plot( z_pos, spreads, **kw)
+            plt.plot(z_pos, spreads, **kw)
             plt.title("Slice energy spread at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+                % (time_fs, iteration), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
-                        fontsize=self.plotter.fontsize)
-
+                       fontsize=self.plotter.fontsize)
         return(spreads, z_pos)
 
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
@@ -236,8 +242,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                            t=t, iteration=iteration,
                                            species=species, select=select )
         # Calculate diveregence
-        div_x = wstd( np.arctan2(ux, uz), w )
-        div_y = wstd( np.arctan2(uy, uz), w )
+        div_x = w_std( np.arctan2(ux, uz), w )
+        div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
@@ -281,12 +287,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Calculate the necessary RMS values
         x *= 1.e-6
         y *= 1.e-6
-        xsq = np.average( x ** 2, weights=w )
-        ysq = np.average( y ** 2, weights=w )
-        uxsq = np.average( ux ** 2, weights=w )
-        uysq = np.average( uy ** 2, weights=w )
-        xux = np.average( x * ux, weights=w )
-        yuy = np.average( y * uy, weights=w )
+        xsq = w_ave( x ** 2, weights=w )
+        ysq = w_ave( y ** 2, weights=w )
+        uxsq = w_ave( ux ** 2, weights=w )
+        uysq = w_ave( uy ** 2, weights=w )
+        xux = w_ave( x * ux, weights=w )
+        yuy = w_ave( y * uy, weights=w )
         # Calculate the beam emittances
         emit_x = np.sqrt( xsq * uxsq - xux ** 2 )
         emit_y = np.sqrt( ysq * uysq - yuy ** 2 )
@@ -354,6 +360,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
@@ -448,6 +456,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
@@ -463,7 +473,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.title("Laser envelope at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
-
         # Return the result
         return( envelope, info )
 
@@ -648,6 +657,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
@@ -741,7 +752,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                             pol=pol, theta=theta,
                                             slicing_dir=slicing_dir)
         # Calculate ctau with RMS value
-        ctau = np.sqrt(2) * wstd(info.z, E)
+        ctau = np.sqrt(2) * w_std(info.z, E)
         if method == 'rms':
             return( ctau )
 
@@ -811,7 +822,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
-        w0 = np.sqrt(2) * wstd(trans_pos, trans_slice)
+        w0 = np.sqrt(2) * w_std(trans_pos, trans_slice)
         if method == 'rms':
             return( w0 )
 
@@ -911,6 +922,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
@@ -920,13 +933,39 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
-
         return( spectrogram, info )
 
 
-def wstd( a, weights ):
+def w_ave( a, weights ):
     """
-    Calcualte the weighted standard deviation.
+    Calculate the weighted average of array `a`
+
+    Parameters
+    ----------
+    a : 1d array
+        Calculate the weighted average for these a.
+
+    weights : 1d array
+        An array of weights for the values in a.
+
+    Returns
+    -------
+    Float with the weighted average
+    Returns nan if input array is empty
+    """
+    # Check if input contains data
+    if not np.any(weights) and not np.any(a):
+        # If input is empty return NaN
+        return np.nan
+    else:
+        # Calculate the weighted average
+        average = np.average(a, weights=weights)
+        return( average )
+
+
+def w_std( a, weights ):
+    """
+    Calculate the weighted standard deviation.
 
     Parameters
     ----------
@@ -976,3 +1015,9 @@ def gaussian_profile( x, x0, E0, w0 ):
     A 1darray of floats, of the same length as x
     """
     return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
+
+
+def raise_matplotlib_error():
+    """Raise an error telling the user to install matplotlib."""
+    raise RuntimeError("Failed to plot result.\n"
+                       "(Make sure that matplotlib is installed.)")
