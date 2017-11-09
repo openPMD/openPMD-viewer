@@ -11,10 +11,15 @@ License: 3-Clause-BSD-LBNL
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
 from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
+
+try:
+    import matplotlib.pyplot as plt
+    matplotlib_installed = True
+except ImportError:
+    matplotlib_installed = False
 
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
@@ -153,15 +158,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             i += 1
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.plot( z_pos, spreads, **kw)
+            plt.plot(z_pos, spreads, **kw)
             plt.title("Slice energy spread at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+                % (time_fs, iteration), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
-                        fontsize=self.plotter.fontsize)
-
+                       fontsize=self.plotter.fontsize)
         return(spreads, z_pos)
 
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
@@ -354,6 +360,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
@@ -448,6 +456,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
@@ -463,7 +473,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.title("Laser envelope at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
-
         # Return the result
         return( envelope, info )
 
@@ -648,6 +657,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
@@ -911,6 +922,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
+            if not matplotlib_installed:
+                raise_matplotlib_error()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
@@ -920,7 +933,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
-
         return( spectrogram, info )
 
 
@@ -1003,3 +1015,9 @@ def gaussian_profile( x, x0, E0, w0 ):
     A 1darray of floats, of the same length as x
     """
     return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
+
+
+def raise_matplotlib_error():
+    """Raise an error telling the user to install matplotlib."""
+    raise RuntimeError("Failed to plot result.\n"
+                       "(Make sure that matplotlib is installed.)")
