@@ -9,6 +9,8 @@ Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 try:
+    import warnings
+    import matplotlib
     import matplotlib.pyplot as plt
     matplotlib_installed = True
 except ImportError:
@@ -77,8 +79,7 @@ class Plotter(object):
            Additional options to be passed to matplotlib's hist
         """
         # Check if matplotlib is available
-        if not matplotlib_installed:
-            raise_matplotlib_error()
+        check_matplotlib()
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -126,8 +127,7 @@ class Plotter(object):
            Additional options to be passed to matplotlib's hist
         """
         # Check if matplotlib is available
-        if not matplotlib_installed:
-            raise_matplotlib_error()
+        check_matplotlib()
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -166,8 +166,7 @@ class Plotter(object):
            along the 1st axis (first list) and 2nd axis (second list)
         """
         # Check if matplotlib is available
-        if not matplotlib_installed:
-            raise_matplotlib_error()
+        check_matplotlib()
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -225,8 +224,7 @@ class Plotter(object):
            along the 1st axis (first list) and 2nd axis (second list)
         """
         # Check if matplotlib is available
-        if not matplotlib_installed:
-            raise_matplotlib_error()
+        check_matplotlib()
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -269,7 +267,16 @@ class Plotter(object):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
 
 
-def raise_matplotlib_error():
-    """Raise an error telling the user to install matplotlib."""
-    raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
-        "(Make sure that matplotlib is installed.)")
+def check_matplotlib():
+    """Raise error messages or warnings when potential issues when
+    potenial issues with matplotlib are detected."""
+
+    if not matplotlib_installed:
+        raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
+            "(Make sure that matplotlib is installed.)")
+
+    elif ('MacOSX' in matplotlib.get_backend()):
+        warnings.warn("\n\nIt seems that you are using the matplotlib MacOSX "
+        "backend. \n(This typically obtained when typing `%matplotlib`.)\n"
+        "With recent version of Jupyter, the plots might not appear.\nIn this "
+        "case, switch to `%matplotlib notebook` and restart the notebook.")
