@@ -14,12 +14,12 @@ from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
-
+from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib
 try:
     import matplotlib.pyplot as plt
-    matplotlib_installed = True
 except ImportError:
-    matplotlib_installed = False
+    # Any error will be caught later by `check_matplotlib`
+    pass
 
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
@@ -158,8 +158,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             i += 1
         # Plot the result if needed
         if plot:
-            if not matplotlib_installed:
-                raise_matplotlib_error()
+            check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot(z_pos, spreads, **kw)
@@ -360,8 +359,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
-            if not matplotlib_installed:
-                raise_matplotlib_error()
+            check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
@@ -456,8 +454,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            if not matplotlib_installed:
-                raise_matplotlib_error()
+            check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
@@ -657,8 +654,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
-            if not matplotlib_installed:
-                raise_matplotlib_error()
+            check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
@@ -922,8 +918,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            if not matplotlib_installed:
-                raise_matplotlib_error()
+            check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
@@ -1015,9 +1010,3 @@ def gaussian_profile( x, x0, E0, w0 ):
     A 1darray of floats, of the same length as x
     """
     return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
-
-
-def raise_matplotlib_error():
-    """Raise an error telling the user to install matplotlib."""
-    raise RuntimeError("Failed to plot result.\n"
-                       "(Make sure that matplotlib is installed.)")
