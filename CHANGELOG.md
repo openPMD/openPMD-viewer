@@ -1,5 +1,14 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.7.1
+
+This version adds better support, when the local installation of matplotlib
+has issues:
+
+- The `LpaDiagnostics` can now work without matplotlib if needed.
+- The `MacOSX` matplotlib backend is now avoided, since there can be issues
+when using it in the latest version of Jupyter.
+
 ## 0.7.0
 
 This version improves support for `ipywidgets` version 7, especially in
