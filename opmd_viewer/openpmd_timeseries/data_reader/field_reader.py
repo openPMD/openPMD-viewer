@@ -329,9 +329,9 @@ def get_grid_parameters( dfile, avail_fields, metadata ):
     # (This function is for the purpose of histogramming the particles;
     # in this case, the highest dimensionality ensures that more particle
     # quantities can be properly histogrammed.)
-    geometry_ranking = {'1dcartesian':0, '2dcartesian':1,
-                        'thetaMode':2, '3dcartesian':3}
-    fields_ranking = [ geometry_ranking[ metadata[field]['geometry'] ] \
+    geometry_ranking = {'1dcartesian': 0, '2dcartesian': 1,
+                        'thetaMode': 2, '3dcartesian': 3}
+    fields_ranking = [ geometry_ranking[ metadata[field]['geometry'] ]
                         for field in avail_fields ]
     index_best_field = fields_ranking.index( max(fields_ranking) )
     field_name = avail_fields[ index_best_field ]

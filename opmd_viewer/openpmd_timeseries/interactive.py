@@ -323,7 +323,7 @@ class InteractiveViewer(object):
             avail_circ_modes = []
             for field in self.avail_fields:
                 for m in self.fields_metadata[field]['avail_circ_modes']:
-                    if not m in avail_circ_modes:
+                    if m not in avail_circ_modes:
                         avail_circ_modes.append(m)
             mode_button = create_toggle_buttons(description='Mode:',
                                                 options=avail_circ_modes)
