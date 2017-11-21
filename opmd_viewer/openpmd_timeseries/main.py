@@ -78,9 +78,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.avail_fields = params0['avail_fields']
         self.extensions = params0['extensions']
         if self.avail_fields is not None:
-            self.geometry = params0['geometry']
-            self.axis_labels = params0['axis_labels']
-            self.avail_circ_modes = params0['avail_circ_modes']
+            self.fields_metadata = params0['fields_metadata']
         self.avail_species = params0['avail_species']
         self.avail_record_components = \
             params0['avail_record_components']
@@ -420,9 +418,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
         # Check the coordinate (for vector fields)
-        if self.avail_fields[field] == 'vector':
+        if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
-            if self.geometry == 'thetaMode':
+            if self.fields_metadata[field]['geometry'] == 'thetaMode':
                 available_coord += ['r', 't']
             if coord not in available_coord:
                 coord_list = '\n - '.join(available_coord)
@@ -432,9 +430,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     "coordinates are: \n - %s\nPlease set the `coord` "
                     "argument accordingly." % (field, coord_list))
         # Check the mode (for thetaMode)
-        if self.geometry == "thetaMode":
-            if str(m) not in self.avail_circ_modes:
-                mode_list = '\n - '.join(self.avail_circ_modes)
+        if self.fields_metadata[field]['geometry'] == "thetaMode":
+            avail_circ_modes = self.fields_metadata['avail_circ_modes']
+            if str(m) not in avail_circ_modes:
+                mode_list = '\n - '.join(avail_circ_modes)
                 raise OpenPMDException(
                     "The requested mode '%s' is not available.\n"
                     "The available modes are: \n - %s" % (m, mode_list))
@@ -446,28 +445,30 @@ class OpenPMDTimeSeries(InteractiveViewer):
         filename = self.h5_files[self._current_i]
 
         # Find the proper path for vector or scalar fields
-        if self.avail_fields[field] == 'scalar':
+        if self.fields_metadata[field]['type'] == 'scalar':
             field_path = field
             field_label = field
-        elif self.avail_fields[field] == 'vector':
+        elif self.fields_metadata[field]['type'] == 'vector':
             field_path = os.path.join(field, coord)
             field_label = field + coord
 
         # Get the field data
+        geometry = self.fields_metadata[field]['geometry']
+        axis_labels = self.fields_metadata[field]['axis_labels']
         # - For 1D
-        if self.geometry == "1dcartesian":
-            F, info = read_field_1d(filename, field_path, self.axis_labels)
+        if geometry == "1dcartesian":
+            F, info = read_field_1d(filename, field_path, axis_labels)
         # - For 2D
-        if self.geometry == "2dcartesian":
-            F, info = read_field_2d(filename, field_path, self.axis_labels)
+        elif geometry == "2dcartesian":
+            F, info = read_field_2d(filename, field_path, axis_labels)
         # - For 3D
-        elif self.geometry == "3dcartesian":
+        elif geometry == "3dcartesian":
             F, info = read_field_3d(
-                filename, field_path, self.axis_labels, slicing, slicing_dir)
+                filename, field_path, axis_labels, slicing, slicing_dir)
         # - For thetaMode
-        elif self.geometry == "thetaMode":
+        elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
-                    (self.avail_fields[field] == 'vector'):
+                    (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
                 Fr, info = read_field_circ(filename, field + '/r', m, theta)
                 Ft, info = read_field_circ(filename, field + '/t', m, theta)
@@ -483,15 +484,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
-        if (self.geometry == "3dcartesian") and (slicing is None):
+        if (geometry == "3dcartesian") and (slicing is None):
             plot = False
         if plot:
-            if self.geometry == "1dcartesian":
+            if geometry == "1dcartesian":
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
             else:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
-                        field_label, self.geometry, self._current_i,
+                        field_label, geometry, self._current_i,
                         plot_range=plot_range, **kw)
 
         # Return the result
