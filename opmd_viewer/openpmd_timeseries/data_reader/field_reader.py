@@ -298,7 +298,7 @@ def find_dataset( dfile, field_path ):
     return( group, dset )
 
 
-def get_grid_parameters( dfile, avail_fields, geometry ):
+def get_grid_parameters( dfile, avail_fields, metadata ):
     """
     Return the parameters of the spatial grid (grid size and grid range)
     in two dictionaries
@@ -308,13 +308,13 @@ def get_grid_parameters( dfile, avail_fields, geometry ):
     dfile: an h5Py.File object
        The file from which to extract the information
 
-    avail_fields: dictionary
-       A dictionary listing the available fields and whether they are
-       vectors or scalars
-       (e.g. {'B':'vector', 'E':'vector', 'rho':'scalar'})
+    avail_fields: list
+       A list of the available fields
+       e.g. ['B', 'E', 'rho']
 
-    geometry: string
-      Either '2dcartesian', '3dcartesian' or 'thetaMode'
+    metadata: dictionary
+      A dictionary whose keys are the fields of `avail_fields` and
+      whose values are dictionaries that contain metadata (e.g. geometry)
 
     Returns:
     --------
@@ -325,10 +325,20 @@ def get_grid_parameters( dfile, avail_fields, geometry ):
     The values of `grid_range_dict` are lists of two floats, which correspond
     to the min and max of the grid, along each axis.
     """
-    # Pick the first field, extract the group and dataset
-    first_field = list(avail_fields.keys())[0]
-    group, dset = find_dataset( dfile, first_field )
-    if avail_fields[first_field] == 'vector':
+    # Pick field with the highest dimensionality ('3d'>'thetaMode'>'2d')
+    # (This function is for the purpose of histogramming the particles;
+    # in this case, the highest dimensionality ensures that more particle
+    # quantities can be properly histogrammed.)
+    geometry_ranking = {'1dcartesian':0, '2dcartesian':1,
+                        'thetaMode':2, '3dcartesian':3}
+    fields_ranking = [ geometry_ranking[ metadata[field]['geometry'] ] \
+                        for field in avail_fields ]
+    index_best_field = fields_ranking.index( max(fields_ranking) )
+    field_name = avail_fields[ index_best_field ]
+
+    # Get the corresponding field data
+    group, dset = find_dataset( dfile, field_name )
+    if metadata[field_name]['type'] == 'vector':
         # For field vector, extract the first coordinate, to get the dataset
         first_coord = next(iter(group.keys()))
         dset = group[first_coord]
@@ -338,7 +348,7 @@ def get_grid_parameters( dfile, avail_fields, geometry ):
     grid_spacing = group.attrs['gridSpacing'] * group.attrs['gridUnitSI']
     grid_offset = group.attrs['gridGlobalOffset'] * group.attrs['gridUnitSI']
     grid_size = dset.shape
-    if geometry == 'thetaMode':
+    if metadata[field_name]['geometry'] == 'thetaMode':
         # In thetaMode: skip the first number of dset.shape, as this
         # corresponds to the number of modes
         grid_size = dset.shape[1:]

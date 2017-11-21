@@ -75,10 +75,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # - Extract parameters from the first file
         t, params0 = read_openPMD_params(self.h5_files[0])
         self.t[0] = t
-        self.avail_fields = params0['avail_fields']
         self.extensions = params0['extensions']
-        if self.avail_fields is not None:
-            self.fields_metadata = params0['fields_metadata']
+        self.avail_fields = params0['avail_fields']
+        self.fields_metadata = params0['fields_metadata']
         self.avail_species = params0['avail_species']
         self.avail_record_components = \
             params0['avail_record_components']
@@ -303,7 +302,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if use_field_mesh and self.avail_fields is not None:
                 # Extract the grid resolution
                 grid_size_dict, grid_range_dict = get_grid_parameters(
-                    file_handle, self.avail_fields, self.geometry )
+                    file_handle, self.avail_fields, self.fields_metadata )
                 # For each direction, modify the number of bins, so that
                 # the resolution is a multiple of the grid resolution
                 for i_var in range(len(var_list)):
@@ -431,7 +430,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     "argument accordingly." % (field, coord_list))
         # Check the mode (for thetaMode)
         if self.fields_metadata[field]['geometry'] == "thetaMode":
-            avail_circ_modes = self.fields_metadata['avail_circ_modes']
+            avail_circ_modes = self.fields_metadata[field]['avail_circ_modes']
             if str(m) not in avail_circ_modes:
                 mode_list = '\n - '.join(avail_circ_modes)
                 raise OpenPMDException(
