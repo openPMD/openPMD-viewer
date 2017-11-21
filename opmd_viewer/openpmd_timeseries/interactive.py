@@ -188,10 +188,27 @@ class InteractiveViewer(object):
                 whenever a change of a widget happens
                 (see docstring of ipywidgets.Widget.observe)
             """
-            if self.fields_metadata[change['new']]['type'] == 'scalar':
-                coord_button.disabled = True
-            elif self.fields_metadata[change['new']]['type'] == 'vector':
+            new_field = change['new']
+            # Activate/deactivate vector fields
+            if self.fields_metadata[new_field]['type'] == 'vector':
                 coord_button.disabled = False
+            else:
+                coord_button.disabled = True
+            # Activate/deactivate cylindrical-specific widgets
+            if self.fields_metadata[new_field]['geometry'] == 'thetaMode':
+                mode_button.disabled = False
+                theta_button.disabled = False
+            else:
+                mode_button.disabled = True
+                theta_button.disabled = True
+            # Activate/deactivate 3d-specific widgets
+            if self.fields_metadata[new_field]['geometry'] == '3dcartesian':
+                slicing_dir_button.disabled = False
+                slicing_button.disabled = False
+            else:
+                slicing_dir_button.disabled = True
+                slicing_button.disabled = True
+            # Show the fields
             refresh_field()
 
         def refresh_species(change=None):
