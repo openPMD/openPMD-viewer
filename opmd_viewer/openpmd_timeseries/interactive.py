@@ -188,10 +188,27 @@ class InteractiveViewer(object):
                 whenever a change of a widget happens
                 (see docstring of ipywidgets.Widget.observe)
             """
-            if self.avail_fields[change['new']] == 'scalar':
-                coord_button.disabled = True
-            elif self.avail_fields[change['new']] == 'vector':
+            new_field = change['new']
+            # Activate/deactivate vector fields
+            if self.fields_metadata[new_field]['type'] == 'vector':
                 coord_button.disabled = False
+            else:
+                coord_button.disabled = True
+            # Activate/deactivate cylindrical-specific widgets
+            if self.fields_metadata[new_field]['geometry'] == 'thetaMode':
+                mode_button.disabled = False
+                theta_button.disabled = False
+            else:
+                mode_button.disabled = True
+                theta_button.disabled = True
+            # Activate/deactivate 3d-specific widgets
+            if self.fields_metadata[new_field]['geometry'] == '3dcartesian':
+                slicing_dir_button.disabled = False
+                slicing_button.disabled = False
+            else:
+                slicing_dir_button.disabled = True
+                slicing_button.disabled = True
+            # Show the fields
             refresh_field()
 
         def refresh_species(change=None):
@@ -290,30 +307,34 @@ class InteractiveViewer(object):
             # Field button
             fieldtype_button = create_toggle_buttons(
                 description='Field:',
-                options=sorted(self.avail_fields.keys()))
+                options=sorted(self.avail_fields))
             fieldtype_button.observe( refresh_field_type, 'value', 'change' )
 
             # Coord button
-            if self.geometry == "thetaMode":
+            if "thetaMode" in self.avail_geom:
                 coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z', 'r', 't'])
-            elif self.geometry in \
-                    ["1dcartesian", "2dcartesian", "3dcartesian"]:
+            else:
                 coord_button = create_toggle_buttons(
                     description='Coord:', options=['x', 'y', 'z'])
             coord_button.observe( refresh_field, 'value', 'change')
             # Mode and theta button (for thetaMode)
+            # (First find all available cylindrical modes, across all fields)
+            avail_circ_modes = []
+            for field in self.avail_fields:
+                for m in self.fields_metadata[field]['avail_circ_modes']:
+                    if m not in avail_circ_modes:
+                        avail_circ_modes.append(m)
             mode_button = create_toggle_buttons(description='Mode:',
-                                                options=self.avail_circ_modes)
+                                                options=avail_circ_modes)
             mode_button.observe( refresh_field, 'value', 'change')
             theta_button = widgets.FloatSlider( value=0.,
                     min=-math.pi / 2, max=math.pi / 2)
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons (for 3D)
-            slicing_dir_button = create_toggle_buttons(
-                value=self.axis_labels[0], options=self.axis_labels,
-                description='Slice normal:')
+            slicing_dir_button = create_toggle_buttons( value='y',
+                options=['x', 'y', 'z'], description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
             set_widget_dimensions( slicing_button, width=180 )
@@ -344,31 +365,25 @@ class InteractiveViewer(object):
             # Containers
             # ----------
             # Field type container
-            if self.geometry == "thetaMode":
-                container_fields = widgets.VBox( children=[
-                    fieldtype_button, coord_button, mode_button,
-                    add_description('Theta:', theta_button) ])
-            elif self.geometry in ["1dcartesian", "2dcartesian"]:
-                container_fields = widgets.VBox(
-                    children=[fieldtype_button, coord_button])
-            elif self.geometry == "3dcartesian":
-                container_fields = widgets.VBox( children=[
-                    fieldtype_button, coord_button, slicing_dir_button,
-                    add_description("Slicing:", slicing_button) ])
+            field_widget_list = [fieldtype_button, coord_button]
+            if "thetaMode" in self.avail_geom:
+                # Add widgets specific to azimuthal modes
+                field_widget_list += [ mode_button,
+                                add_description('Theta:', theta_button)]
+            elif "3dcartesian" in self.avail_geom:
+                # Add widgets specific to cartesian 3d
+                field_widget_list += [ slicing_dir_button,
+                    add_description("Slicing:", slicing_button) ]
+            container_fields = widgets.VBox( children=field_widget_list )
             set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
             container_fld_cbar = fld_color_button.to_container()
             container_fld_hrange = fld_hrange_button.to_container()
             container_fld_vrange = fld_vrange_button.to_container()
-            if self.geometry == "1dcartesian":
-                container_fld_plots = widgets.VBox( children=[
-                    add_description("<b>Figure:</b>", fld_figure_button),
-                    container_fld_vrange, container_fld_hrange ])
-            else:
-                container_fld_plots = widgets.VBox( children=[
-                    add_description("<b>Figure:</b>", fld_figure_button),
-                    container_fld_cbar, container_fld_vrange,
-                    container_fld_hrange ])
+            container_fld_plots = widgets.VBox( children=[
+                add_description("<b>Figure:</b>", fld_figure_button),
+                container_fld_cbar, container_fld_vrange,
+                container_fld_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
             accord1 = widgets.Accordion(

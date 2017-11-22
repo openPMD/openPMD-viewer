@@ -66,49 +66,51 @@ def read_openPMD_params(filename, extract_parameters=True):
         if bitmask_all_extensions & bitmask == bitmask:
             params['extensions'].append(extension)
 
-    # Find out whether fields are present and extract their geometry
+    # Find out whether fields are present and extract their metadata
     meshes_path = f.attrs['meshesPath'].decode().strip('/')
     if meshes_path in bpath.keys():
-        avail_fields = bpath[meshes_path].keys()
-        # Pick the first field and inspect its geometry
-        first_field_path = next(iter(avail_fields))
-        first_field = bpath[os.path.join(meshes_path, first_field_path)]
-        params['geometry'] = first_field.attrs['geometry'].decode()
-        params['axis_labels'] = [ coord.decode() for coord in
-                                  first_field.attrs['axisLabels'] ]
-        # Swap the order of the labels if the code that wrote the HDF5 file
-        # was Fortran order (i.e. reverse order with respect to Python)
-        if first_field.attrs['dataOrder'].decode() == 'F':
-            params['axis_labels'] = params['axis_labels'][::-1]
-        if params['geometry'] == "thetaMode":
-            # Check the available modes
-            if is_scalar_record(first_field):
-                Nm, _, _ = get_shape(first_field)
-            else:
-                coord = list(first_field.keys())[0]
-                Nm, _, _ = get_shape(first_field[coord])
-            params['avail_circ_modes'] = ['all'] + \
-                [str(m) for m in range(int(Nm / 2) + 1)]
-        elif params['geometry'] == "cartesian":
-            # Check if this a 1d, 2d or 3d Cartesian timeseries
-            dim = len(first_field.attrs['axisLabels'])
-            if dim == 1:
-                params['geometry'] = "1dcartesian"
-            elif dim == 2:
-                params['geometry'] = "2dcartesian"
-            elif dim == 3:
-                params['geometry'] = "3dcartesian"
-            params['avail_circ_modes'] = []
-        # For each field, check whether it is vector or scalar
-        # Store the information in a dictionary
-        params['avail_fields'] = {}
-        for field_name in avail_fields:
+        params['avail_fields'] = []
+        params['fields_metadata'] = {}
+
+        # Loop through the available fields
+        for field_name in bpath[meshes_path].keys():
             field = bpath[os.path.join(meshes_path, field_name)]
+            metadata = {}
+            metadata['geometry'] = field.attrs['geometry'].decode()
+            metadata['axis_labels'] = [ coord.decode() for coord in
+                                        field.attrs['axisLabels'] ]
+            # Swap the order of the labels if the code that wrote the HDF5 file
+            # was Fortran order (i.e. reverse order with respect to Python)
+            if field.attrs['dataOrder'].decode() == 'F':
+                metadata['axis_labels'] = metadata['axis_labels'][::-1]
+            # Check whether the field is a vector or a scalar
             if is_scalar_record(field):
-                field_type = 'scalar'
+                metadata['type'] = 'scalar'
             else:
-                field_type = 'vector'
-            params['avail_fields'][field_name] = field_type
+                metadata['type'] = 'vector'
+            # Check the number of modes
+            if metadata['geometry'] == "thetaMode":
+                if is_scalar_record(field):
+                    Nm, _, _ = get_shape(field)
+                else:
+                    coord = list(field.keys())[0]
+                    Nm, _, _ = get_shape(field[coord])
+                metadata['avail_circ_modes'] = ['all'] + \
+                    [str(m) for m in range(int(Nm / 2) + 1)]
+            # Check if this a 1d, 2d or 3d Cartesian
+            elif metadata['geometry'] == "cartesian":
+                dim = len(metadata['axis_labels'])
+                if dim == 1:
+                    metadata['geometry'] = "1dcartesian"
+                elif dim == 2:
+                    metadata['geometry'] = "2dcartesian"
+                elif dim == 3:
+                    metadata['geometry'] = "3dcartesian"
+                metadata['avail_circ_modes'] = []
+
+            params['avail_fields'].append( field_name )
+            params['fields_metadata'][field_name] = metadata
+
     else:
         params['avail_fields'] = None
 
