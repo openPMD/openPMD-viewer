@@ -3,6 +3,7 @@
 [![Build Status master](https://img.shields.io/travis/openPMD/openPMD-viewer/master.svg?label=master)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
 [![Build Status dev](https://img.shields.io/travis/openPMD/openPMD-viewer/dev.svg?label=dev)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
 [![pypi version](https://img.shields.io/pypi/v/openPMD-viewer.svg)](https://pypi.python.org/pypi/openPMD-viewer)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/master?filepath=tutorials%2F)
 [![License](https://img.shields.io/pypi/l/openPMD-viewer.svg)](LICENSE.txt)
 
 ## Overview
@@ -26,6 +27,9 @@ visualize the data.
 The notebooks in the folder `tutorials/` demonstrate how to use both
 the API and the interactive GUI. You can view these notebooks online
 [here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
+
+Alternatively, you can even
+[*run* our tutorials online](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/master?filepath=tutorials%2F)!
 
 You can also download and run these notebooks on your local computer
 (when viewing the notebooks with the above link, click on `Raw` to be able to
