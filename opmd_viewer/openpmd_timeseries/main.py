@@ -77,8 +77,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.t[0] = t
         self.extensions = params0['extensions']
         self.avail_fields = params0['avail_fields']
-        self.fields_metadata = params0['fields_metadata']
-        self.avail_geom = set( self.fields_metadata[field]['geometry']
+        if self.avail_fields is not None:
+            self.fields_metadata = params0['fields_metadata']
+            self.avail_geom = set( self.fields_metadata[field]['geometry']
                                 for field in self.avail_fields )
         # Extract information of the particles
         self.avail_species = params0['avail_species']
