@@ -26,7 +26,7 @@ class InteractiveViewer(object):
     def __init__(self):
         pass
 
-    def slider(self, figsize=(6, 5),
+    def slider(self, figsize=(6, 5), fields_figure=0, particles_figure=1,
                exclude_particle_records=['charge', 'mass'], **kw):
         """
         Navigate the simulation using a slider
@@ -35,6 +35,11 @@ class InteractiveViewer(object):
         -----------
         figsize: tuple
             Size of the figures
+
+        fields_figure, particle_figure: ints
+            The number of the matplotlib figure on which the fields
+            and the particles will be plotted respectively.
+            (This is similar to calling `plt.figure(fields_figure)`)
 
         exclude_particle_records: list of strings
             List of particle quantities that should not be displayed
@@ -343,7 +348,7 @@ class InteractiveViewer(object):
             # Plotting options
             # ----------------
             # Figure number
-            fld_figure_button = widgets.IntText( value=0 )
+            fld_figure_button = widgets.IntText( value=fields_figure )
             set_widget_dimensions( fld_figure_button, width=50 )
             # Colormap button
             fld_color_button = ColorBarSelector( refresh_field,
@@ -427,7 +432,7 @@ class InteractiveViewer(object):
             # Plotting options
             # ----------------
             # Figure number
-            ptcl_figure_button = widgets.IntText( value=1 )
+            ptcl_figure_button = widgets.IntText( value=particles_figure )
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
             ptcl_bins_button = widgets.IntText( value=100 )
