@@ -8,6 +8,7 @@ Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
+import numpy as np
 try:
     import warnings
     import matplotlib
@@ -76,7 +77,7 @@ class Plotter(object):
            Extent of the histogram
 
         **kw : dict, otional
-           Additional options to be passed to matplotlib's hist
+           Additional options to be passed to matplotlib's bar function
         """
         # Check if matplotlib is available
         check_matplotlib()
@@ -86,8 +87,10 @@ class Plotter(object):
         time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
-        plt.hist(q1, bins=nbins, range=hist_range, weights=w, **kw)
-        plt.xlim(hist_range)
+        binned_data, bin_edges = np.histogram(q1, nbins, hist_range, weights=w)
+        bin_coords = 0.5 * ( bin_edges[1:] + bin_edges[:-1] )
+        plt.bar( bin_coords, binned_data, **kw )
+        plt.xlim( hist_range )
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f fs    (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
@@ -124,7 +127,7 @@ class Plotter(object):
            Extent of the histogram along each direction
 
         **kw : dict, otional
-           Additional options to be passed to matplotlib's hist
+           Additional options to be passed to matplotlib's imshow function
         """
         # Check if matplotlib is available
         check_matplotlib()
@@ -134,8 +137,11 @@ class Plotter(object):
         time_fs = 1.e15 * self.t[current_i]
 
         # Do the plot
-        plt.hist2d(q1, q2, bins=nbins, cmap=cmap, range=hist_range,
-                   vmin=vmin, vmax=vmax, weights=w, **kw)
+        binned_data, _, _ = np.histogram2d(
+            q1, q2, nbins, hist_range, weights=w)
+        plt.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
+             origin='lower', interpolation='nearest', aspect='auto',
+             cmap=cmap, vmin=vmin, vmax=vmax, **kw )
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
