@@ -17,7 +17,7 @@ try:
 except ImportError:
     matplotlib_installed = False
 try:
-    from .cython_function import histogram_cic_1d
+    from .cython_function import histogram_cic_1d, histogram_cic_2d
     cython_function_available = True
 except ImportError:
     cython_function_available = False
@@ -122,7 +122,8 @@ class Plotter(object):
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
-                nbins, hist_range, cmap='Blues', vmin=None, vmax=None, **kw):
+                nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
+                deposition='cic', **kw):
         """
         Plot a 2D histogram of the particle quantity q1
         Sets the proper labels
@@ -152,6 +153,12 @@ class Plotter(object):
         hist_range : list contains 2 lists of 2 floats
            Extent of the histogram along each direction
 
+        deposition : string
+            Either `ngp` (Nearest Grid Point) or `cic` (Cloud-In-Cell)
+            When plotting the particle histogram, this determines how
+            particles affects neighboring bins.
+            `cic` (which is the default) leads to smoother results than `ngp`.
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's imshow function
         """
@@ -162,9 +169,24 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
 
+        # Check deposition method
+        if deposition == 'cic' and not cython_function_available:
+            print_cic_unavailable()
+            deposition = 'ngp'
+
+        # Bin the particle data
+        q1 = q1.astype( np.float64 )
+        q2 = q2.astype( np.float64 )
+        if deposition == 'ngp':
+            binned_data, _, _ = np.histogram2d(
+                q1, q2, nbins, hist_range, weights=w)
+        elif deposition == 'cic':
+            binned_data = histogram_cic_2d( q1, q2, w, nbins, hist_range[0][0],
+                hist_range[0][1], hist_range[1][0], hist_range[1][1] )
+        else:
+            raise ValueError('Unknown deposition method: %s' % deposition)
+
         # Do the plot
-        binned_data, _, _ = np.histogram2d(
-            q1, q2, nbins, hist_range, weights=w)
         plt.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
              origin='lower', interpolation='nearest', aspect='auto',
              cmap=cmap, vmin=vmin, vmax=vmax, **kw )
