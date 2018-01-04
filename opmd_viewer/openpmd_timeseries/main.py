@@ -113,7 +113,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
             select=None, output=True, plot=False, nbins=150,
             plot_range=[[None, None], [None, None]],
-            use_field_mesh=True, **kw):
+            use_field_mesh=True, histogram_deposition='cic', **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -186,6 +186,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
              the spacing of the histogram is an integer multiple of the grid
              spacing. This avoids artifacts in the plot, whenever particles
              are regularly spaced in each cell of the spatial mesh.
+
+            # TODO: histogram deposition
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's
@@ -324,13 +326,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                        self._current_i, hist_bins[0], hist_range[0], **kw)
+                        self._current_i, hist_bins[0], hist_range[0],
+                        deposition=histogram_deposition, **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d(data_list[0], data_list[1], w,
                     var_list[0], var_list[1], species,
-                    self._current_i, hist_bins, hist_range, **kw)
+                    self._current_i, hist_bins, hist_range,
+                    deposition=histogram_deposition, **kw)
         # Close the file
         file_handle.close()
 

@@ -16,6 +16,11 @@ try:
     matplotlib_installed = True
 except ImportError:
     matplotlib_installed = False
+try:
+    from .cython_function import histogram_cic_1d
+    cython_function_available = True
+except ImportError:
+    cython_function_available = False
 
 
 class Plotter(object):
@@ -46,7 +51,7 @@ class Plotter(object):
         self.iterations = iterations
 
     def hist1d(self, q1, w, quantity1, species, current_i, nbins, hist_range,
-               cmap='Blues', vmin=None, vmax=None, **kw):
+               cmap='Blues', vmin=None, vmax=None, deposition='cic', **kw):
         """
         Plot a 1D histogram of the particle quantity q1
         Sets the proper labels
@@ -76,6 +81,9 @@ class Plotter(object):
         hist_range : list of 2 floats
            Extent of the histogram
 
+        deposition : string
+            # TODO
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's bar function
         """
@@ -86,10 +94,25 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
 
+        # Check deposition method
+        if deposition == 'cic' and not cython_function_available:
+            print_cic_unavailable()
+            deposition = 'ngp'
+            # TODO: only call cic for float data
+
+        # Bin the particle data
+        if deposition == 'ngp':
+            binned_data, _ = np.histogram(q1, nbins, hist_range, weights=w)
+        elif deposition == 'cic':
+            binned_data = histogram_cic_1d(
+                q1, w, nbins, hist_range[0], hist_range[1])
+        else:
+            raise ValueError('Unknown deposition method: %s' %deposition)
+
         # Do the plot
-        binned_data, bin_edges = np.histogram(q1, nbins, hist_range, weights=w)
-        bin_coords = 0.5 * ( bin_edges[1:] + bin_edges[:-1] )
-        plt.bar( bin_coords, binned_data, **kw )
+        bin_size = (hist_range[1] - hist_range[0]) / nbins
+        bin_coords = hist_range[0] + bin_size * ( 0.5 + np.arange(nbins) )
+        plt.bar( bin_coords, binned_data, width=bin_size, **kw )
         plt.xlim( hist_range )
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f fs    (iteration %d)"
@@ -271,6 +294,15 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+
+
+def print_cic_unavailable():
+    warnings.warn(
+        "\nCIC particle histogramming is unavailable because \n"
+        "Cython is not installed. NGP histogramming is used instead.\n"
+        "For CIC histogramming: \n"
+        " - make sure that Cython is installed \n"
+        " - then reinstall openPMD-viewer")
 
 
 def check_matplotlib():
