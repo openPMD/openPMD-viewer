@@ -94,9 +94,9 @@ def histogram_cic_2d(
     """
     # Define various scalars
     cdef double bin_spacing_1 = (bins_end_1-bins_start_1)/nbins
-    cdef double bin_spacing_2 = (bins_end_1-bins_start_2)/nbins
     cdef double inv_spacing_1 = 1./bin_spacing_1
-    cdef double inv_spacing_1 = 1./bin_spacing_2
+    cdef double bin_spacing_2 = (bins_end_1-bins_start_2)/nbins
+    cdef double inv_spacing_2 = 1./bin_spacing_2
     cdef int n_ptcl = len(w)
     cdef int i1_low_bin, i2_low_bin
     cdef double q1_cell, q2_cell
@@ -107,11 +107,13 @@ def histogram_cic_2d(
 
     # Go through particle array and bin the data
     for i in xrange(n_ptcl):
+
         # Calculate the index of lower bin to which this particle contributes
         q1_cell = (q1[i] - bins_start_1) * inv_spacing_1
         q2_cell = (q2[i] - bins_start_2) * inv_spacing_2
         i1_low_bin = <int> floor( q1_cell )
-        i2_low_bin = <int> floor( q1_cell )
+        i2_low_bin = <int> floor( q2_cell )
+
         # Calculate corresponding CIC shape and deposit the weight
         S1_low = 1. - (q1_cell - i1_low_bin)
         S2_low = 1. - (q2_cell - i2_low_bin)
@@ -120,7 +122,7 @@ def histogram_cic_2d(
                 hist_data[ i1_low_bin, i2_low_bin ] += w[i]*S1_low*S2_low
             if (i2_low_bin+1 >= 0) and (i2_low_bin+1 < nbins):
                 hist_data[ i1_low_bin, i2_low_bin+1 ] += w[i]*S1_low*(1.-S2_low)
-        if (i_low_bin+1 >= 0) and (i_low_bin+1 < nbins):
+        if (i1_low_bin+1 >= 0) and (i1_low_bin+1 < nbins):
             if (i2_low_bin >= 0) and (i2_low_bin < nbins):
                 hist_data[ i1_low_bin+1, i2_low_bin ] += w[i]*(1.-S1_low)*S2_low
             if (i2_low_bin+1 >= 0) and (i2_low_bin+1 < nbins):
