@@ -181,8 +181,9 @@ class Plotter(object):
             binned_data, _, _ = np.histogram2d(
                 q1, q2, nbins, hist_range, weights=w)
         elif deposition == 'cic':
-            binned_data = histogram_cic_2d( q1, q2, w, nbins, hist_range[0][0],
-                hist_range[0][1], hist_range[1][0], hist_range[1][1] )
+            binned_data = histogram_cic_2d( q1, q2, w,
+                nbins[0], hist_range[0][0], hist_range[0][1],
+                nbins[1], hist_range[1][0], hist_range[1][1] )
         else:
             raise ValueError('Unknown deposition method: %s' % deposition)
 
