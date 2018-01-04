@@ -187,7 +187,11 @@ class OpenPMDTimeSeries(InteractiveViewer):
              spacing. This avoids artifacts in the plot, whenever particles
              are regularly spaced in each cell of the spatial mesh.
 
-            # TODO: histogram deposition
+        histogram_deposition : string
+            Either `ngp` (Nearest Grid Point) or `cic` (Cloud-In-Cell)
+            When plotting the particle histogram, this determines how
+            particles affects neighboring bins.
+            `cic` (which is the default) leads to smoother results than `ngp`.
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's

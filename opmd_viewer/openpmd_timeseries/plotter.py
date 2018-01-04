@@ -82,7 +82,10 @@ class Plotter(object):
            Extent of the histogram
 
         deposition : string
-            # TODO
+            Either `ngp` (Nearest Grid Point) or `cic` (Cloud-In-Cell)
+            When plotting the particle histogram, this determines how
+            particles affects neighboring bins.
+            `cic` (which is the default) leads to smoother results than `ngp`.
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's bar function
@@ -98,16 +101,16 @@ class Plotter(object):
         if deposition == 'cic' and not cython_function_available:
             print_cic_unavailable()
             deposition = 'ngp'
-            # TODO: only call cic for float data
 
         # Bin the particle data
+        q1 = q1.astype( np.float64 )
         if deposition == 'ngp':
             binned_data, _ = np.histogram(q1, nbins, hist_range, weights=w)
         elif deposition == 'cic':
             binned_data = histogram_cic_1d(
                 q1, w, nbins, hist_range[0], hist_range[1])
         else:
-            raise ValueError('Unknown deposition method: %s' %deposition)
+            raise ValueError('Unknown deposition method: %s' % deposition)
 
         # Do the plot
         bin_size = (hist_range[1] - hist_range[0]) / nbins
