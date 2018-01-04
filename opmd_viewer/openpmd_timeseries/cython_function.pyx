@@ -15,7 +15,7 @@ def extract_indices_cython(
     """
     Go through the sorted arrays `pid` and `selected_pid`, and record
     the indices (of the array `pid`) where they match, by storing them
-place)
+    in the array `selected_indices` (this array is thus modified in-place)
 
     Return the number of elements that were filled in `selected_indices`
     """
@@ -53,7 +53,10 @@ def histogram_cic_1d(
     np.ndarray[np.float64_t, ndim=1] w,
     int nbins, double bins_start, double bins_end ):
     """
-    # TODO
+    Return an 1D histogram of the values in `q1` weighted by `w`,
+    consisting of `nbins` evenly-spaced bins between `bins_start`
+    and `bins_end`. Contribution to each bins is determined by the
+    CIC weighting scheme (i.e. linear weights).
     """
     # Define various scalars
     cdef double bin_spacing = (bins_end-bins_start)/nbins
@@ -90,7 +93,11 @@ def histogram_cic_2d(
     int nbins_1, double bins_start_1, double bins_end_1,
     int nbins_2, double bins_start_2, double bins_end_2 ):
     """
-    # TODO
+    Return an 2D histogram of the values in `q1` and `q2` weighted by `w`,
+    consisting of `nbins_1` bins in the first dimension and `nbins_2` bins
+    in the second dimension.
+    Contribution to each bins is determined by the
+    CIC weighting scheme (i.e. linear weights).
     """
     # Define various scalars
     cdef double bin_spacing_1 = (bins_end_1-bins_start_1)/nbins_1
