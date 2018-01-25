@@ -56,9 +56,9 @@ setup(name='openPMD-viewer',
       include_dirs=include_dirs,
       install_requires=install_requires,
       extras_require = {
-        'GUI':  ["ipywidgets", "matplotlib"],
-        'plot': ["matplotlib"],
-        'tutorials': ["ipywidgets", "matplotlib", "wget"]
+        'GUI':  ["ipywidgets", "matplotlib", "cython"],
+        'plot': ["matplotlib", "cython"],
+        'tutorials': ["ipywidgets", "matplotlib", "wget", "cython"]
         },
       cmdclass={'test': PyTest},
       platforms='any',
