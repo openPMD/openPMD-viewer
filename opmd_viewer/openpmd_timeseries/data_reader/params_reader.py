@@ -66,9 +66,13 @@ def read_openPMD_params(filename, extract_parameters=True):
         if bitmask_all_extensions & bitmask == bitmask:
             params['extensions'].append(extension)
 
-    # Find out whether fields are present and extract their geometry
-    meshes_path = f.attrs['meshesPath'].decode().strip('/')
-    if meshes_path in bpath.keys():
+    # Find out whether fields are present
+    fields_available = False
+    if ('meshesPath' in f.attrs):        # Check for openPMD 1.1 files
+        meshes_path = f.attrs['meshesPath'].decode().strip('/')
+        if meshes_path in bpath.keys():  # Check for openPMD 1.0 files
+            fields_available = True
+    if fields_available:
         avail_fields = bpath[meshes_path].keys()
         # Pick the first field and inspect its geometry
         first_field_path = next(iter(avail_fields))
@@ -113,8 +117,12 @@ def read_openPMD_params(filename, extract_parameters=True):
         params['avail_fields'] = None
 
     # Find out whether particles are present, and if yes of which species
-    particle_path = f.attrs['particlesPath'].decode().strip('/')
-    if particle_path in bpath.keys():
+    particles_available = False
+    if ('particlesPath' in f.attrs):        # Check for openPMD 1.1 files
+        particle_path = f.attrs['particlesPath'].decode().strip('/')
+        if particle_path in bpath.keys():   # Check for openPMD 1.0 files
+            particles_available = True
+    if particles_available:
         # Particles are present ; extract the species
         params['avail_species'] = []
         for species_name in bpath[particle_path].keys():
