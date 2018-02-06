@@ -68,9 +68,9 @@ def read_openPMD_params(filename, extract_parameters=True):
 
     # Find out whether fields are present
     fields_available = False
-    if ('meshesPath' in f.attrs):       # Check for openPMD 1.1 files
+    if ('meshesPath' in f.attrs):        # Check for openPMD 1.1 files
         meshes_path = f.attrs['meshesPath'].decode().strip('/')
-        if meshes_path in bpath.keys(): # Check for openPMD 1.0 files
+        if meshes_path in bpath.keys():  # Check for openPMD 1.0 files
             fields_available = True
     if fields_available:
         avail_fields = bpath[meshes_path].keys()
@@ -118,9 +118,9 @@ def read_openPMD_params(filename, extract_parameters=True):
 
     # Find out whether particles are present, and if yes of which species
     particles_available = False
-    if ('particlesPath' in f.attrs):         # Check for openPMD 1.1 files
+    if ('particlesPath' in f.attrs):        # Check for openPMD 1.1 files
         particle_path = f.attrs['particlesPath'].decode().strip('/')
-        if particle_path in bpath.keys(): # Check for openPMD 1.0 files
+        if particle_path in bpath.keys():   # Check for openPMD 1.0 files
             particles_available = True
     if particles_available:
         # Particles are present ; extract the species
