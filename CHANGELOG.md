@@ -1,5 +1,15 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.8
+
+This version introduces several improvements to the viewer:
+- The ability to read files that contain fields in different geometries
+(e.g. 3D fields and 2D slices).
+- Better support for files that do not contain mesh (or do not contain
+particles), including support for the openPMD 1.1.0 standard.
+- Cloud-In-Cell deposition in histograms.
+- Better handling of `%matplotlib notebook` for newer version of jupyter.
+
 ## 0.7.1
 
 This version adds better support, when the local installation of matplotlib
