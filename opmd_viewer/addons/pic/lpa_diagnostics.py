@@ -240,16 +240,33 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
                                            species=species, select=select )
-        # Calculate diveregence
+        # Calculate divergence
         div_x = w_std( np.arctan2(ux, uz), w )
         div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
-    def get_emittance( self, t=None, iteration=None, species=None,
-                       select=None ):
+    def emittance_from_coord(self, x, y, ux, uy, w):
+        xm = w_ave( x, weights=w )
+        xsq = w_ave( (x-xm) ** 2, weights=w )
+        ym = w_ave( y, weights=w )
+        ysq = w_ave( (y-ym) ** 2, weights=w )
+        uxm    = w_ave( ux, weights=w )
+        uxsq   = w_ave( (ux-uxm) ** 2, weights=w )
+        uym    = w_ave( uy, weights=w )
+        uysq   = w_ave( (uy-uym) ** 2, weights=w )
+        xux    = w_ave( (x-xm) * (ux-uxm), weights=w )
+        yuy    = w_ave( (y-ym) * (uy-uym), weights=w )
+        emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
+        emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
+        return emit_x, emit_y
+
+    def get_emittance(self, t=None, iteration=None, species=None, 
+                      select=None, kind='normalized', nslices=0, 
+                      beam_length=None, sum_slices=True, 
+                      all_iterations=False):
         """
-        Calculate the normalized RMS emittance.
+        Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
 
         Parameters
@@ -272,31 +289,174 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
 
+        kind : string, optional
+            Kind of emittance to be computed. Cam be 'normalized' or 'trace'
+        
+        nslices : integer, optional
+            Default is None
+            Number of slices to compute slice emittance. If not an integer >1, 
+            compute projected emittance instead.
+            
+        beam_length : fload (in meters), optional
+            Beam length, used to calculate slice positions when nslices>1.
+            By default, it is 4 times the standard deviation in z.
+            
+        sum_slices : boolean, optional
+            Used when nslices >1 only. If True, function returns the sum of
+            emittance of all slices. If False, function returns the emittance 
+            in each slice as well as the weight of each slice.
+
         Returns
         -------
-        A tuple with :
-        - normalized beam emittance in the x plane (pi m rad)
-        - normalized beam emittance in the y plane (pi m rad)
+        Default:
+            - normalized beam emittance in the x plane (pi m rad)
+            - normalized beam emittance in the y plane (pi m rad)
+        If nslices>1 and sum_slices=False, returns a tuple with:
+            - A 1d array with normalized beam emittance in the x plane 
+              (pi m rad) for each slice
+            - A 1d array with normalized beam emittance in the y plane 
+              (pi m rad) for each slice
         """
+        if all_iterations:
+            if nslices>1 and not sum_slices:
+                print('ERROR: cannot use all_iterations=True with nslices>1'
+                      'and sum_slices=False')
+                return
+            nb_iterations = len(self.iterations)
+            emit_x_history = np.zeros(nb_iterations)
+            emit_y_history = np.zeros(nb_iterations)
+            # Loop over all iterations and get emittance
+            for count, iteration in enumerate(self.iterations):
+                emit_x, emit_y = self.get_emittance(
+                    iteration=iteration, species=species, select=select,
+                    kind=kind, nslices=nslices, beam_length=beam_length, 
+                    sum_slices=sum_slices, all_iterations=False)
+                emit_x_history[count] = emit_x
+                emit_y_history[count] = emit_y
+            return emit_x_history, emit_y_history
+        # Wheter to compute slice emittance
+        do_slice_emittance = ( nslices>1 )
         # Get particle data
-        x, y, ux, uy, w = self.get_particle(
-            var_list=['x', 'y', 'ux', 'uy', 'w'],
-            t=t, iteration=iteration,
-            species=species, select=select )
-        # Calculate the necessary RMS values
+        x, y, z, ux, uy, uz, w = self.get_particle(
+            var_list=['x', 'y', 'z','ux', 'uy', 'uz','w'], t=t, 
+            iteration=iteration, species=species, select=select )
         x *= 1.e-6
         y *= 1.e-6
-        xsq = w_ave( x ** 2, weights=w )
-        ysq = w_ave( y ** 2, weights=w )
-        uxsq = w_ave( ux ** 2, weights=w )
-        uysq = w_ave( uy ** 2, weights=w )
-        xux = w_ave( x * ux, weights=w )
-        yuy = w_ave( y * uy, weights=w )
-        # Calculate the beam emittances
-        emit_x = np.sqrt( xsq * uxsq - xux ** 2 )
-        emit_y = np.sqrt( ysq * uysq - yuy ** 2 )
-        # Return the results
-        return( emit_x, emit_y )
+        # Normalized or trace-space emittance
+        if kind == 'normalized':
+            ux = ux
+            uy = uy
+        if kind == 'trace':
+            ux = ux/uz
+            uy = uy/uz
+
+        if do_slice_emittance:
+            # Get slice locations
+            zavg = np.average(z, weights=w)
+            z = z - zavg
+            if beam_length is None:
+                std  = np.std(z)
+                beam_length = 4*std
+            bins = np.linspace(-beam_length/2, beam_length/2, nslices)
+            # Initialize slice emittance arrays
+            emit_slice_x = np.zeros(len(bins[:-1]))
+            emit_slice_y = np.zeros(len(bins[:-1]))
+            w_slice = np.zeros(len(bins[:-1]))
+            # Loop over slices
+            for count, leftedge in enumerate(bins[:-1]):
+                # Get emittance in this slice
+                binsmean =  .5*bins[count]+.5*bins[count+1]
+                binswidth = .5*bins[count+1]-.5*bins[count]
+                slice = ( np.abs(z-binsmean)<=binswidth )
+                w_slice[count] = np.sum(w[slice])
+                if w_slice[count]>0:
+                    emit_x, emit_y = self.emittance_from_coord(
+                                x[slice], y[slice],
+                                ux[slice], uy[slice],
+                                w[slice])
+                    emit_slice_x[count] = emit_x
+                    emit_slice_y[count] = emit_y
+            if sum_slices:
+                emit_x = w_ave(emit_slice_x, w_slice)
+                emit_y = w_ave(emit_slice_y, w_slice)
+                return emit_x, emit_y
+            else:
+                return emit_slice_x, emit_slice_y, w_slice
+
+        else:
+            return self.emittance_from_coord(x, y, ux, uy, w)
+
+# 
+#     def get_emittance( self, t=None, iteration=None, species=None,
+#                        select=None ):
+#         """
+#         Calculate the normalized RMS emittance.
+#         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
+# 
+#         Parameters
+#         ----------
+#         t : float (in seconds), optional
+#             Time at which to obtain the data (if this does not correspond to
+#             an available file, the last file before `t` will be used)
+#             Either `t` or `iteration` should be given by the user.
+# 
+#         iteration : int
+#             The iteration at which to obtain the data
+#             Either `t` or `iteration` should be given by the user.
+# 
+#         species : string
+#             Particle species to use for calculations
+# 
+#         select : dict, optional
+#             Either None or a dictionary of rules
+#             to select the particles, of the form
+#             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+#             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+# 
+#         Returns
+#         -------
+#         A tuple with :
+#         - normalized beam emittance in the x plane (pi m rad)
+#         - normalized beam emittance in the y plane (pi m rad)
+#         """
+#         # Get particle data
+#         x, y, ux, uy, w = self.get_particle(
+#             var_list=['x', 'y', 'ux', 'uy', 'w'],
+#             t=t, iteration=iteration,
+#             species=species, select=select )
+#         # Calculate the necessary RMS values
+#         x *= 1.e-6
+#         y *= 1.e-6
+#         xsq = w_ave( x ** 2, weights=w )
+#         ysq = w_ave( y ** 2, weights=w )
+#         uxsq = w_ave( ux ** 2, weights=w )
+#         uysq = w_ave( uy ** 2, weights=w )
+#         xux = w_ave( x * ux, weights=w )
+#         yuy = w_ave( y * uy, weights=w )
+#         # Calculate the beam emittances
+#         emit_x = np.sqrt( xsq * uxsq - xux ** 2 )
+#         emit_y = np.sqrt( ysq * uysq - yuy ** 2 )
+#         # Return the results
+#         return( emit_x, emit_y )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
                      bins=100, plot=False, **kw ):
