@@ -246,40 +246,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( div_x, div_y )
 
-    def emittance_from_coord(self, x, y, ux, uy, w):
-        """ Calculate emittance from arrays of particle coordinates.
-
-        Parameters
-        ----------
-        x : arrays of floats
-            x position of particles
-        y : arrays of floats
-            y position of particles
-        ux : arrays of floats
-            ux normalized momentum of particles
-        uy : arrays of floats
-            uy normalized momentum of particles
-        w : arrays of floats
-            Particle weights
-        """
-        xm = w_ave( x, weights=w )
-        xsq = w_ave( ( x - xm ) ** 2, weights=w )
-        ym = w_ave( y, weights=w )
-        ysq = w_ave( ( y - ym ) ** 2, weights=w )
-        uxm = w_ave( ux, weights=w )
-        uxsq = w_ave( ( ux - uxm ) ** 2, weights=w )
-        uym = w_ave( uy, weights=w )
-        uysq = w_ave( ( uy - uym ) ** 2, weights=w )
-        xux = w_ave( ( x - xm ) * (ux - uxm ), weights=w )
-        yuy = w_ave( ( y - ym ) * ( uy - uym ), weights=w )
-        emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
-        emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
-        return emit_x, emit_y
-
     def get_emittance(self, t=None, iteration=None, species=None,
-                      select=None, kind='normalized', nslices=0,
-                      beam_length=None, sum_slices=True,
-                      all_iterations=False):
+                      select=None, kind='normalized', type='projected',
+                      nslices=0, beam_length=None):
         """
         Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
@@ -301,63 +270,50 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Particle species to use for calculations
 
         select : dict, optional
-            Either None or a dictionary of rules
-            to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            Either None or a dictionary of rules to select the particles,
+            of the form:
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns);
+            'z' : [0, 100] (Particles having x between 0 and 100 microns).
 
         kind : string, optional
-            Kind of emittance to be computed. Cam be 'normalized' or 'trace'
+            Kind of emittance to be computed. Cam be 'normalized' or 'trace'.
+
+        type : string, optional
+            Type of emittance to be computed. Can be 'projected' for
+            projected emittance, 'all-slices' for emittance within slices
+            taken along the z direction or 'slice-averaged' for slice
+            emittance averaged over all slices.
 
         nslices : integer, optional
-            Default is None
-            Number of slices to compute slice emittance. If not an integer >1,
-            compute projected emittance instead.
+            Number of slices to compute slice emittance. Required if
+            type='slice-average' or 'all-slices'.
 
         beam_length : fload (in meters), optional
             Beam length, used to calculate slice positions when nslices>1.
             By default, it is 4 times the standard deviation in z.
 
-        sum_slices : boolean, optional
-            Used when nslices >1 only. If True, function returns the sum of
-            emittance of all slices. If False, function returns the emittance
-            in each slice as well as the weight of each slice.
-
-        all_iterations : bool, optional
-            If False, function returns emittance at iteration or time specified
-            in argument "t" or "iteration".
-            If True, function returns emittance at all iterations.
-
         Returns
         -------
-        Default:
-            - normalized beam emittance in the x plane (pi m rad)
-            - normalized beam emittance in the y plane (pi m rad)
-        If nslices>1 and sum_slices=False, returns a tuple with:
-            - A 1d array with normalized beam emittance in the x plane
+        If type='projected' or 'slice-averaged':
+            - beam emittance in the x plane (pi m rad)
+            - beam emittance in the y plane (pi m rad)
+        If type='all-slices':
+            - A 1d array with beam emittance in the x plane
               (pi m rad) for each slice
-            - A 1d array with normalized beam emittance in the y plane
+            - A 1d array with beam emittance in the y plane
               (pi m rad) for each slice
+            - A 1d array with weigths of each slice
+            - A 1d array with slice centers
         """
-        if all_iterations:
-            if nslices > 1 and not sum_slices:
-                print('ERROR: cannot use all_iterations=True with nslices>1'
-                      ' and sum_slices=False')
-                return
-            nb_iterations = len(self.iterations)
-            emit_x_history = np.zeros(nb_iterations)
-            emit_y_history = np.zeros(nb_iterations)
-            # Loop over all iterations and get emittance
-            for count, iteration in enumerate(self.iterations):
-                emit_x, emit_y = self.get_emittance(
-                    iteration=iteration, species=species, select=select,
-                    kind=kind, nslices=nslices, beam_length=beam_length,
-                    sum_slices=sum_slices, all_iterations=False)
-                emit_x_history[count] = emit_x
-                emit_y_history[count] = emit_y
-            return emit_x_history, emit_y_history
+        if kind not in ['normalized', 'trace']:
+            raise ValueError('Argument `kind` not recognized.')
+        if type not in ['projected', 'slice-averaged', 'all-slices']:
+            raise ValueError('Argument `type` not recognized.')
         # Wheter to compute slice emittance
-        do_slice_emittance = ( nslices > 1 )
+        do_slice_emittance = ( type in ['slice-averaged', 'all-slices'] )
+        if do_slice_emittance and not nslices > 0:
+            raise ValueError('nslices must be given if `type`=' +
+                             type + '.')
         # Get particle data
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
@@ -380,33 +336,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 std = np.std(z)
                 beam_length = 4 * std
             bins = np.linspace( -beam_length / 2, beam_length / 2, nslices )
+            binwidth = .5 * bins[1] - .5 * bins[0]
+            slice_centers = bins + .5 * binwidth
             # Initialize slice emittance arrays
             emit_slice_x = np.zeros(len(bins[:-1]))
             emit_slice_y = np.zeros(len(bins[:-1]))
-            w_slice = np.zeros(len(bins[:-1]))
+            slice_weights = np.zeros(len(bins[:-1]))
             # Loop over slices
             for count, leftedge in enumerate(bins[:-1]):
                 # Get emittance in this slice
-                binsmean = .5 * bins[count] + .5 * bins[count + 1]
-                binswidth = .5 * bins[count + 1] - .5 * bins[count]
-                slice = ( np.abs( z - binsmean ) <= binswidth )
-                w_slice[count] = np.sum(w[slice])
-                if w_slice[count] > 0:
-                    emit_x, emit_y = self.emittance_from_coord(
+                slice = ( np.abs( z - slice_centers[count] ) <= binwidth )
+                slice_weights[count] = np.sum(w[slice])
+                if slice_weights[count] > 0:
+                    emit_x, emit_y = emittance_from_coord(
                         x[slice], y[slice],
                         ux[slice], uy[slice],
                         w[slice])
                     emit_slice_x[count] = emit_x
                     emit_slice_y[count] = emit_y
-            if sum_slices:
-                emit_x = w_ave(emit_slice_x, w_slice)
-                emit_y = w_ave(emit_slice_y, w_slice)
-                return emit_x, emit_y
+            if type == 'all-slices':
+                return (emit_slice_x, emit_slice_y,
+                    slice_weights / np.sum(slice_weights),
+                    slice_centers)
             else:
-                return emit_slice_x, emit_slice_y, w_slice
-
+                emit_x = w_ave(emit_slice_x, slice_weights)
+                emit_y = w_ave(emit_slice_y, slice_weights)
+                return emit_x, emit_y
         else:
-            return self.emittance_from_coord(x, y, ux, uy, w)
+            return emittance_from_coord(x, y, ux, uy, w)
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
                      bins=100, plot=False, **kw ):
@@ -1120,3 +1077,42 @@ def gaussian_profile( x, x0, E0, w0 ):
     A 1darray of floats, of the same length as x
     """
     return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
+
+
+def emittance_from_coord(x, y, ux, uy, w):
+    """
+    Calculate emittance from arrays of particle coordinates.
+
+    Parameters
+    ----------
+    x : arrays of floats
+        x position of particles
+    y : arrays of floats
+        y position of particles
+    ux : arrays of floats
+        ux normalized momentum of particles
+    uy : arrays of floats
+        uy normalized momentum of particles
+    w : arrays of floats
+        Particle weights
+
+    Returns
+    -------
+    emit_x : float
+        emittance in the x direction (m*rad)
+    emit_y : float
+        emittance in the y direction (m*rad)
+    """
+    xm = w_ave( x, weights=w )
+    xsq = w_ave( ( x - xm ) ** 2, weights=w )
+    ym = w_ave( y, weights=w )
+    ysq = w_ave( ( y - ym ) ** 2, weights=w )
+    uxm = w_ave( ux, weights=w )
+    uxsq = w_ave( ( ux - uxm ) ** 2, weights=w )
+    uym = w_ave( uy, weights=w )
+    uysq = w_ave( ( uy - uym ) ** 2, weights=w )
+    xux = w_ave( ( x - xm ) * (ux - uxm ), weights=w )
+    yuy = w_ave( ( y - ym ) * ( uy - uym ), weights=w )
+    emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
+    emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
+    return emit_x, emit_y
