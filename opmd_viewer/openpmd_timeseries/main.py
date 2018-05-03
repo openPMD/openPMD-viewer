@@ -11,6 +11,7 @@ License: 3-Clause-BSD-LBNL
 import os
 import numpy as np
 import h5py as h5
+from tqdm import tqdm
 from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
@@ -19,7 +20,6 @@ from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_1d, read_field_2d, \
     read_field_circ, read_field_3d, get_grid_parameters
 from .interactive import InteractiveViewer
-
 
 # Define a custom Exception
 class OpenPMDException(Exception):
@@ -508,6 +508,40 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Return the result
         return(F, info)
+
+
+    def iterate( self, called_method, *args, **kwargs ):
+        """
+        TODO
+        """
+        # Check the shape of results
+        result = called_method(*args, **kwargs, iteration=self.iterations[0])
+        if type( result ) == tuple:
+            returns_tuple = True
+            tuple_length = len(result)
+            accumulated_result = ( [element] for element in result )
+        else:
+            returns_tuple = False
+            accumulated_result = [ result ]
+
+        # Call the method for all iterations
+        for iteration in tqmd(self.iterations[1:]):
+            result = called_method( *args, **kwargs, iteration=iteration )
+            if returns_tuple:
+                for i in range(tuple_length):
+                    accumulated_result[i].append( result[i] )
+            else:
+                accumulated_result.append( result )
+
+        # Try to stack the arrays
+        if returns_tuple:
+            for i in range(tuple_length):
+                accumulated_result[i] = np.stack(accumulated_result[i], axis=0)
+        else:
+            accumulated_result = np.stack( accumulated_result, axis=0 )
+
+        return accumulated_result
+
 
     def _find_output(self, t, iteration):
         """
