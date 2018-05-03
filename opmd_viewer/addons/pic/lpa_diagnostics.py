@@ -247,7 +247,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( div_x, div_y )
 
     def get_emittance(self, t=None, iteration=None, species=None,
-                      select=None, kind='normalized', type='projected',
+                      select=None, kind='normalized', description='projected',
                       nslices=0, beam_length=None):
         """
         Calculate the RMS emittance.
@@ -259,12 +259,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-            Not read if all_iterations == True.
 
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-            Not read if all_iterations == True.
 
         species : string
             Particle species to use for calculations
@@ -276,28 +274,29 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             'z' : [0, 100] (Particles having x between 0 and 100 microns).
 
         kind : string, optional
-            Kind of emittance to be computed. Cam be 'normalized' or 'trace'.
+            Kind of emittance to be computed. Can be 'normalized' or 'trace'.
 
-        type : string, optional
-            Type of emittance to be computed. Can be 'projected' for
-            projected emittance, 'all-slices' for emittance within slices
-            taken along the z direction or 'slice-averaged' for slice
-            emittance averaged over all slices.
+        description : string, optional
+            Type of emittance to be computed. Available options:
+               - 'projected' : projected emittance
+               - 'all-slices' : emittance within slices taken along the z
+                              direction
+               - 'slice-averaged' : slice emittance averaged over all slices.
 
         nslices : integer, optional
             Number of slices to compute slice emittance. Required if
-            type='slice-average' or 'all-slices'.
+            description='slice-average' or 'all-slices'.
 
-        beam_length : fload (in meters), optional
+        beam_length : float (in meters), optional
             Beam length, used to calculate slice positions when nslices>1.
             By default, it is 4 times the standard deviation in z.
 
         Returns
         -------
-        If type='projected' or 'slice-averaged':
+        If description='projected' or 'slice-averaged':
             - beam emittance in the x plane (pi m rad)
             - beam emittance in the y plane (pi m rad)
-        If type='all-slices':
+        If description='all-slices':
             - A 1d array with beam emittance in the x plane
               (pi m rad) for each slice
             - A 1d array with beam emittance in the y plane
@@ -307,13 +306,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         if kind not in ['normalized', 'trace']:
             raise ValueError('Argument `kind` not recognized.')
-        if type not in ['projected', 'slice-averaged', 'all-slices']:
-            raise ValueError('Argument `type` not recognized.')
+        if description not in ['projected', 'slice-averaged', 'all-slices']:
+            raise ValueError('Argument `description` not recognized.')
         # Wheter to compute slice emittance
-        do_slice_emittance = ( type in ['slice-averaged', 'all-slices'] )
+        do_slice_emittance = ( description in ['slice-averaged',
+                                               'all-slices'] )
         if do_slice_emittance and not nslices > 0:
-            raise ValueError('nslices must be given if `type`=' +
-                             type + '.')
+            raise ValueError('nslices must be given if `description`=' +
+                             description + '.')
         # Get particle data
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
@@ -330,10 +330,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         if do_slice_emittance:
             # Get slice locations
-            zavg = np.average(z, weights=w)
+            zavg = w_ave(z, w)
             z = z - zavg
             if beam_length is None:
-                std = np.std(z)
+                std = w_std(z, w)
                 beam_length = 4 * std
             bins = np.linspace( -beam_length / 2, beam_length / 2, nslices )
             binwidth = .5 * bins[1] - .5 * bins[0]
@@ -354,7 +354,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                         w[slice])
                     emit_slice_x[count] = emit_x
                     emit_slice_y[count] = emit_y
-            if type == 'all-slices':
+            if description == 'all-slices':
                 return (emit_slice_x, emit_slice_y,
                     slice_weights / np.sum(slice_weights),
                     slice_centers)
@@ -1104,15 +1104,15 @@ def emittance_from_coord(x, y, ux, uy, w):
         emittance in the y direction (m*rad)
     """
     xm = w_ave( x, weights=w )
-    xsq = w_ave( ( x - xm ) ** 2, weights=w )
+    xsq = w_std( (x - xm), w ) ** 2
     ym = w_ave( y, weights=w )
-    ysq = w_ave( ( y - ym ) ** 2, weights=w )
+    ysq = w_std( (y - ym), weights=w ) ** 2
     uxm = w_ave( ux, weights=w )
-    uxsq = w_ave( ( ux - uxm ) ** 2, weights=w )
+    uxsq = w_std( (ux - uxm), weights=w ) ** 2
     uym = w_ave( uy, weights=w )
-    uysq = w_ave( ( uy - uym ) ** 2, weights=w )
-    xux = w_ave( ( x - xm ) * (ux - uxm ), weights=w )
-    yuy = w_ave( ( y - ym ) * ( uy - uym ), weights=w )
+    uysq = w_std( (uy - uym), weights=w ) ** 2
+    xux = w_ave( (x - xm) * (ux - uxm), weights=w )
+    yuy = w_ave( (y - ym) * (uy - uym), weights=w )
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
