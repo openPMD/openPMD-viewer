@@ -20,6 +20,7 @@ requirements:
     - scipy
     - matplotlib
     - h5py
+    - tqdm
   run:
     - python
     - cython
@@ -28,6 +29,7 @@ requirements:
     - matplotlib
     - h5py
     - jupyter
+    - tqdm
 
 test:
   imports:
