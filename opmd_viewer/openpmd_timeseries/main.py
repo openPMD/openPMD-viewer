@@ -514,8 +514,11 @@ class OpenPMDTimeSeries(InteractiveViewer):
         """
         TODO
         """
+        # Add the iteration key in the keyword aguments
+        kwargs['iteration'] = self.iterations[0]
+
         # Check the shape of results
-        result = called_method(*args, **kwargs, iteration=self.iterations[0])
+        result = called_method(*args, **kwargs)
         if type( result ) == tuple:
             returns_tuple = True
             tuple_length = len(result)
@@ -526,6 +529,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Call the method for all iterations
         for iteration in tqmd(self.iterations[1:]):
+            kwargs['iteration'] = iteration
             result = called_method( *args, **kwargs, iteration=iteration )
             if returns_tuple:
                 for i in range(tuple_length):
