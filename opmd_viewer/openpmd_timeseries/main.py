@@ -530,7 +530,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Call the method for all iterations
         for iteration in tqdm(self.iterations[1:]):
             kwargs['iteration'] = iteration
-            result = called_method( *args, **kwargs, iteration=iteration )
+            result = called_method( *args, **kwargs )
             if returns_tuple:
                 for i in range(tuple_length):
                     accumulated_result[i].append( result[i] )
