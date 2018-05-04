@@ -301,7 +301,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
               (pi m rad) for each slice
             - A 1d array with beam emittance in the y plane
               (pi m rad) for each slice
-            - A 1d array with weigths of each slice
+            - A 1d array with number of electrons in each slice
             - A 1d array with slice centers
         """
         if kind not in ['normalized', 'trace']:
@@ -345,19 +345,19 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             # Loop over slices
             for count, leftedge in enumerate(bins[:-1]):
                 # Get emittance in this slice
-                slice = ( np.abs( z - slice_centers[count] ) <= binwidth )
-                slice_weights[count] = np.sum(w[slice])
+                current_slice = ( np.abs( z - slice_centers[count] ) <=
+                    binwidth )
+                slice_weights[count] = np.sum(w[current_slice])
                 if slice_weights[count] > 0:
                     emit_x, emit_y = emittance_from_coord(
-                        x[slice], y[slice],
-                        ux[slice], uy[slice],
-                        w[slice])
+                        x[current_slice], y[current_slice],
+                        ux[current_slice], uy[current_slice],
+                        w[current_slice])
                     emit_slice_x[count] = emit_x
                     emit_slice_y[count] = emit_y
             if description == 'all-slices':
                 return (emit_slice_x, emit_slice_y,
-                    slice_weights / np.sum(slice_weights),
-                    slice_centers)
+                    slice_weights, slice_centers)
             else:
                 emit_x = w_ave(emit_slice_x, slice_weights)
                 emit_y = w_ave(emit_slice_y, slice_weights)
@@ -1103,16 +1103,16 @@ def emittance_from_coord(x, y, ux, uy, w):
     emit_y : float
         emittance in the y direction (m*rad)
     """
-    xm = w_ave( x, weights=w )
-    xsq = w_std( (x - xm), w ) ** 2
-    ym = w_ave( y, weights=w )
-    ysq = w_std( (y - ym), weights=w ) ** 2
-    uxm = w_ave( ux, weights=w )
-    uxsq = w_std( (ux - uxm), weights=w ) ** 2
-    uym = w_ave( uy, weights=w )
-    uysq = w_std( (uy - uym), weights=w ) ** 2
-    xux = w_ave( (x - xm) * (ux - uxm), weights=w )
-    yuy = w_ave( (y - ym) * (uy - uym), weights=w )
+    xm = w_ave( x, w )
+    xsq = w_ave( (x - xm) ** 2, w )
+    ym = w_ave( y, w )
+    ysq = w_ave( (y - ym) ** 2, w )
+    uxm = w_ave( ux, w )
+    uxsq = w_ave( (ux - uxm) ** 2, w )
+    uym = w_ave( uy, w )
+    uysq = w_ave( (uy - uym) ** 2, w )
+    xux = w_ave( (x - xm) * (ux - uxm), w )
+    yuy = w_ave( (y - ym) * (uy - uym), w )
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
