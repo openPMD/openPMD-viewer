@@ -21,6 +21,7 @@ from .data_reader.field_reader import read_field_1d, read_field_2d, \
 from .data_reader.utilities import join_infile_path
 from .interactive import InteractiveViewer
 
+
 # Define a custom Exception
 class OpenPMDException(Exception):
     "Exception raised for invalid use of the openPMD-viewer API"
@@ -509,7 +510,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Return the result
         return(F, info)
 
-
     def iterate( self, called_method, *args, **kwargs ):
         """
         TODO
@@ -541,7 +541,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
             accumulated_result = np.stack( accumulated_result, axis=0 )
 
         return accumulated_result
-
 
     def _find_output(self, t, iteration):
         """
