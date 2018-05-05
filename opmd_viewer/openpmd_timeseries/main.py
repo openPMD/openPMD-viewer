@@ -382,19 +382,22 @@ class OpenPMDTimeSeries(InteractiveViewer):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float, optional
-           Only used for 3dcartesian geometry
-           A number between -1 and 1 that indicates where to slice the data,
-           along the direction `slicing_dir`
+        slicing : float or list of float, optional
+           Numbers between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           If slicing is None, the full 3D grid is returned.
+           If slicing is None, the full grid is returned.
+           Default is None for 2D and 0 for 3d Cartesian
 
-        slicing_dir : str, optional
-           Only used for 3dcartesian geometry
-           The direction along which to slice the data
-           Either 'x', 'y' or 'z'
+        slicing_dir : str or list of str, optional
+           Direction along which to slice the data
+           Elements can be:
+             - 2d: 'x' and/or 'z'
+             - 3d: 'x', 'y' and/or 'z'
+             - 1d/circ: not implemented
+           Default is None for 2D and 'y' for 3d Cartesian
 
         output : bool, optional
            Whether to return the requested quantity
@@ -475,9 +478,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For 3D
         elif geometry == "3dcartesian":
-            if slicing_dir == None:
+            if slicing_dir is None:
                 slicing_dir = 'y'
-            if slicing == None:
+            if slicing is None:
                 slicing = 0.
             F, info = read_field_3d(
                 filename, field_path, axis_labels, slicing, slicing_dir)
