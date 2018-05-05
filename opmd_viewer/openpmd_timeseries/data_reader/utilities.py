@@ -74,7 +74,7 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     An np.ndarray (non-constant dataset) or a single double (constant dataset)
     """
     # For back-compatibility: Convert pos_slice and i_slice to
-    # single-element list if they are not lists (e.g. float
+    # single-element lists if they are not lists (e.g. float
     # and int respectively).
     if pos_slice is not None and not isinstance(pos_slice, list):
         pos_slice = [pos_slice]
@@ -95,9 +95,9 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
         if pos_slice is None:
             data = dset[...]
         else:
-            # Get largest element of pos_slice and its index
+            # Get largest element of pos_slice
             max_pos = max(pos_slice)
-            # Create index list list_index of type
+            # Create list of indices list_index of type
             # [:, :, :, ...] where Ellipsis starts at max_pos + 1
             list_index = [np.s_[:]] * (max_pos + 2)
             list_index[max_pos + 1] = np.s_[...]
