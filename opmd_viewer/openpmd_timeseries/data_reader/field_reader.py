@@ -57,7 +57,8 @@ def read_field_1d( filename, field_path, axis_labels ):
     return( F, info )
 
 
-def read_field_2d( filename, field_path, axis_labels ):
+def read_field_2d( filename, field_path, axis_labels,
+                   slicing=None, slicing_dir=None ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 2d cartesian.
@@ -81,24 +82,63 @@ def read_field_2d( filename, field_path, axis_labels ):
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
+    if slicing is not None and not isinstance(slicing, list):
+        slicing = [slicing]
+    if slicing_dir is not None and not isinstance(slicing_dir, list):
+        slicing_dir = [slicing_dir]
+
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
     group, dset = find_dataset( dfile, field_path )
-
-    # Extract the data in 2D Cartesian
-    F = get_data( dset )
-
-    # Extract the metainformation
-    axes = { 0: axis_labels[0], 1: axis_labels[1] }
-    info = FieldMetaInformation( axes, F.shape,
-        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-        group.attrs['gridUnitSI'], dset.attrs['position'] )
+    
+    # Dimensions of the grid
+    shape = list( get_shape( dset ) )
+    grid_spacing = list( group.attrs['gridSpacing'] )
+    global_offset = list( group.attrs['gridGlobalOffset'] )
+    # Slice selection
+    if slicing is not None:
+        # Get the integer that correspond to the slicing direction
+        list_slicing_index = []
+        list_i_cell = []
+        new_labels = axis_labels
+        for count, slicing_dir_item in enumerate(slicing_dir):
+            slicing_index = axis_labels.index(slicing_dir_item)
+            list_slicing_index.append(slicing_index)
+            # Number of cells along the slicing direction
+            n_cells = shape[ slicing_index ]
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            list_i_cell.append(i_cell)
+            
+        # Remove metainformation relative to the slicing index
+        # Successive pops starting from last element
+        list_indices_to_clean = list_slicing_index[:]
+        list_indices_to_clean.sort(reverse=True)
+        for index_to_clean in list_indices_to_clean:
+            shape.pop( index_to_clean )
+            grid_spacing.pop( index_to_clean )
+            global_offset.pop( index_to_clean )
+            new_labels = new_labels[:index_to_clean] + \
+                new_labels[index_to_clean + 1:]
+        
+        axes = { i: new_labels[i] for i in range(len(new_labels)) }
+        # Extraction of the data
+        F = get_data( dset, list_i_cell, list_slicing_index )
+        info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
+                group.attrs['gridUnitSI'], dset.attrs['position'] )
+    else:
+        F = get_data( dset )
+        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+        info = FieldMetaInformation( axes, F.shape,
+            group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+            group.attrs['gridUnitSI'], dset.attrs['position'] )
 
     # Close the file
     dfile.close()
     return( F, info )
-
 
 def read_field_circ( filename, field_path, m=0, theta=0. ):
     """
