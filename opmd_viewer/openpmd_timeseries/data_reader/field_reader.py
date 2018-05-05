@@ -76,7 +76,7 @@ def read_field_2d( filename, field_path, axis_labels,
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     slicing : float or list of float, optional
-        numbers between -1 and 1 that indicates where to slice the data,
+        Number(s) between -1 and 1 that indicates where to slice the data,
         along directions given in `slicing_dir`
         -1 : lower edge of the simulation box
         0 : middle of the simulation box
@@ -84,7 +84,7 @@ def read_field_2d( filename, field_path, axis_labels,
         If slicing is None, the full 3D grid is returned.
 
     slicing_dir : str or list of str, optional
-        Direction along which to slice the data
+        Direction(s) along which to slice the data
         Elements can be 'x' and/or 'z'
 
     Returns
@@ -126,7 +126,7 @@ def read_field_2d( filename, field_path, axis_labels,
             list_i_cell.append(i_cell)
 
         # Remove metainformation relative to the slicing index
-        # Successive pops starting from last element
+        # Successive pops starting from last coordinate to slice
         list_indices_to_clean = list_slicing_index[:]
         list_indices_to_clean.sort(reverse=True)
         for index_to_clean in list_indices_to_clean:
@@ -250,7 +250,7 @@ def read_field_3d( filename, field_path, axis_labels,
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     slicing : float or list of float, optional
-        numbers between -1 and 1 that indicates where to slice the data,
+        number(s) between -1 and 1 that indicates where to slice the data,
         along directions given in `slicing_dir`
         -1 : lower edge of the simulation box
         0 : middle of the simulation box
@@ -258,7 +258,7 @@ def read_field_3d( filename, field_path, axis_labels,
         If slicing is None, the full 3D grid is returned.
 
     slicing_dir : str or list of str, optional
-        Direction along which to slice the data
+        Direction(s) along which to slice the data
         Elements can be 'x', 'y' and/or 'z'
 
     Returns
@@ -301,7 +301,7 @@ def read_field_3d( filename, field_path, axis_labels,
             list_i_cell.append(i_cell)
 
         # Remove metainformation relative to the slicing index
-        # Successive pops starting from last element
+        # Successive pops starting from last coordinate to slice
         list_indices_to_clean = list_slicing_index[:]
         list_indices_to_clean.sort(reverse=True)
         for index_to_clean in list_indices_to_clean:
