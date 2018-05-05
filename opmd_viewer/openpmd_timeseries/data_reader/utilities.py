@@ -60,11 +60,11 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
         The object from which the data is extracted
 
     pos_slice: int or list of int, optional
-        Direction of each slice. 
-        When None, no slice is performed
+        Slice direction(s).
+        When None, no slicing is performed
 
     i_slice: int or list of int, optional
-       Indices of slices to be taken
+       Indices of slices to be taken.
 
     output_type: a numpy type
        The type to which the returned array should be converted
@@ -76,11 +76,11 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     # For back-compatibility: Convert pos_slice and i_slice to
     # single-element list if they are not lists (e.g. float
     # and int respectively).
-    if pos_slice is not None and not isinstance(pos_slice, list) :
+    if pos_slice is not None and not isinstance(pos_slice, list):
         pos_slice = [pos_slice]
-    if i_slice is not None and not isinstance(i_slice, list) :
+    if i_slice is not None and not isinstance(i_slice, list):
         i_slice = [i_slice]
-    
+
     # Case of a constant dataset
     if isinstance(dset, h5py.Group):
         shape = dset.attrs['shape']
@@ -97,12 +97,10 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
         else:
             # Get largest element of pos_slice and its index
             max_pos = max(pos_slice)
-            ind_max_pos = pos_slice.index(max_pos)
-            # Create index list list_index of type 
-            # [:, :, :, ...] where Ellipsis starts at ind_max_pos + 1
-            length_list_index = max_pos + 2
+            # Create index list list_index of type
+            # [:, :, :, ...] where Ellipsis starts at max_pos + 1
             list_index = [np.s_[:]] * (max_pos + 2)
-            list_index[max_pos+1] = np.s_[...]
+            list_index[max_pos + 1] = np.s_[...]
             # Fill list_index with elements of i_slice
             for count, dir_index in enumerate(pos_slice):
                 list_index[dir_index] = i_slice[count]
