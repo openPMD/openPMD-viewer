@@ -59,12 +59,12 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     dset: an h5py.Dataset or h5py.Group (when constant)
         The object from which the data is extracted
 
-    i_slice: int, optional
-       The index of the slice to be taken
+    pos_slice: int or list of int, optional
+        Direction of each slice. 
+        When None, no slice is performed
 
-    pos_slice: int, optional
-       The position at which to slice the array
-       When None, no slice is performed
+    i_slice: int or list of int, optional
+       Indices of slices to be taken
 
     output_type: a numpy type
        The type to which the returned array should be converted
@@ -73,24 +73,43 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     --------
     An np.ndarray (non-constant dataset) or a single double (constant dataset)
     """
+    # For back-compatibility: Convert pos_slice and i_slice to
+    # single-element list if they are not lists (e.g. float
+    # and int respectively).
+    if pos_slice is not None and not isinstance(pos_slice, list) :
+        pos_slice = [pos_slice]
+    if i_slice is not None and not isinstance(i_slice, list) :
+        i_slice = [i_slice]
+    
     # Case of a constant dataset
     if isinstance(dset, h5py.Group):
         shape = dset.attrs['shape']
         # Restrict the shape if slicing is enabled
         if pos_slice is not None:
-            shape = shape[:pos_slice] + shape[pos_slice + 1:]
+            shape = shape[:pos_slice[0]] + shape[pos_slice[0] + 1:]
         # Create the corresponding dataset
         data = dset.attrs['value'] * np.ones(shape)
+
     # Case of a non-constant dataset
     elif isinstance(dset, h5py.Dataset):
         if pos_slice is None:
             data = dset[...]
-        elif pos_slice == 0:
-            data = dset[i_slice, ...]
-        elif pos_slice == 1:
-            data = dset[:, i_slice, ...]
-        elif pos_slice == 2:
-            data = dset[:, :, i_slice]
+        else:
+            # Get largest element of pos_slice and its index
+            max_pos = max(pos_slice)
+            ind_max_pos = pos_slice.index(max_pos)
+            # Create index list list_index of type 
+            # [:, :, :, ...] where Ellipsis starts at ind_max_pos + 1
+            length_list_index = max_pos + 2
+            list_index = [np.s_[:]] * (max_pos + 2)
+            list_index[max_pos+1] = np.s_[...]
+            # Fill list_index with elements of i_slice
+            for count, dir_index in enumerate(pos_slice):
+                list_index[dir_index] = i_slice[count]
+            # Convert list_index into a tuple
+            tuple_index = tuple(list_index)
+            # Slice dset according to tuple_index
+            data = dset[tuple_index]
 
     # Convert to the right type
     if data.dtype != output_type:
