@@ -94,6 +94,12 @@ def read_field_2d( filename, field_path, axis_labels,
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
+    # Simple check for backward compatibility
+    # The slider works and tests pass
+    if slicing_dir == 'y':
+        slicing = None
+        slicing_dir = None
+
     if slicing is not None and not isinstance(slicing, list):
         slicing = [slicing]
     if slicing_dir is not None and not isinstance(slicing_dir, list):
