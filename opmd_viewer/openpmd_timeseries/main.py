@@ -471,16 +471,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Get the field data
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
-        # - For 1D
-        if geometry == "1dcartesian":
-            F, info = read_field_1d(filename, field_path, axis_labels)
-        # - For 2D
-        elif geometry == "2dcartesian":
-            F, info = read_field_2d(
-                filename, field_path, axis_labels, slicing, slicing_dir)
-        # - For 3D
-        elif geometry == "3dcartesian":
-            F, info = read_field_3d(
+        # - For cartesian
+        if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
+            F, info = read_field_cartesian(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For thetaMode
         elif geometry == "thetaMode":
