@@ -348,7 +348,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=None, slicing_dir=None,
+                  m='all', theta=0., slicing=0., slicing_dir='y',
                   output=True, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
@@ -476,14 +476,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
             F, info = read_field_1d(filename, field_path, axis_labels)
         # - For 2D
         elif geometry == "2dcartesian":
+            # This should be removed at some point
+            if slicing_dir is 'y':
+                slicing_dir = None
+                slicing = None
             F, info = read_field_2d(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For 3D
         elif geometry == "3dcartesian":
-            if slicing_dir is None:
-                slicing_dir = ['y']
-            if slicing is None:
-                slicing = [0.]
             F, info = read_field_3d(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For thetaMode

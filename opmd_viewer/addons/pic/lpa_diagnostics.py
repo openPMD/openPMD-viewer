@@ -695,11 +695,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        if "3dcartesian" in self.avail_geom:
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
 
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
@@ -755,13 +760,18 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        if "3dcartesian" in self.avail_geom:
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
+
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol, theta=theta,
@@ -804,11 +814,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        if "3dcartesian" in self.avail_geom:
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
