@@ -389,16 +389,17 @@ class OpenPMDTimeSeries(InteractiveViewer):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
            If slicing is None, the full grid is returned.
-           Default is None for 2D and [0.] for 3d Cartesian
+           Default is None for 1D and 2D and 0. for 3d Cartesian
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
            Elements can be:
+             - 1d: 'z'
              - 2d: 'x' and/or 'z'
-             - 3d: 'x', 'y' and/or 'z'
+             - 3d: 'x' and/or 'y' and/or 'z'
              - 1d/circ: not implemented
            Returned array is reduced by 1 dimension per slicing.
-           Default is None for 2D and ['y'] for 3d Cartesian
+           Default is None for 1D and 2D and 'y' for 3d Cartesian
 
         output : bool, optional
            Whether to return the requested quantity
