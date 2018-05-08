@@ -16,8 +16,8 @@ from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_1d, read_field_2d, \
-    read_field_circ, read_field_3d, get_grid_parameters
+from .data_reader.field_reader import read_field_cartesian, \
+    read_field_circ, get_grid_parameters
 from .interactive import InteractiveViewer
 
 
@@ -470,16 +470,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Get the field data
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
-        # - For 1D
-        if geometry == "1dcartesian":
-            F, info = read_field_1d(filename, field_path, axis_labels)
-        # - For 2D
-        elif geometry == "2dcartesian":
-            F, info = read_field_2d(
-                filename, field_path, axis_labels, slicing, slicing_dir)
-        # - For 3D
-        elif geometry == "3dcartesian":
-            F, info = read_field_3d(
+        # - For cartesian
+        if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
+            F, info = read_field_cartesian(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For thetaMode
         elif geometry == "thetaMode":
