@@ -99,9 +99,13 @@ def read_field_2d( filename, field_path, axis_labels,
         slicing = [slicing]
     if slicing_dir is not None and not isinstance(slicing_dir, list):
         slicing_dir = [slicing_dir]
-    # slicing_dir is the intersection of slicing_dir with axis_labels
+    # Pop slicing directions in arguments that are not in axis_label
     if slicing_dir is not None:
-        slicing_dir = [value for value in slicing_dir if value in axis_labels]
+        ind_to_pop = [slicing_dir.index(val) for val in slicing_dir if
+            val not in axis_labels ]
+        for ind in ind_to_pop:
+            slicing_dir.pop(ind)
+            slicing.pop(ind)
 
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
@@ -112,8 +116,9 @@ def read_field_2d( filename, field_path, axis_labels,
     shape = list( get_shape( dset ) )
     grid_spacing = list( group.attrs['gridSpacing'] )
     global_offset = list( group.attrs['gridGlobalOffset'] )
+
     # Slice selection
-    if slicing_dir is not None:
+    if slicing_dir:
         # Get the integer that correspond to the slicing direction
         list_slicing_index = []
         list_i_cell = []
@@ -277,12 +282,14 @@ def read_field_3d( filename, field_path, axis_labels,
         slicing = [slicing]
     if slicing_dir is not None and not isinstance(slicing_dir, list):
         slicing_dir = [slicing_dir]
-    # slicing_dir is the intersection of slicing_dir with axis_labels
+    # Pop slicing directions in arguments that are not in axis_label
     if slicing_dir is not None:
-        slicing_dir = [value for value in slicing_dir if value in axis_labels]
-    # Need to:
-    # - Do a similar thing for slicing
-    # - Test if list is empty, and replace with None
+        ind_to_pop = [slicing_dir.index(val) for val in slicing_dir if
+            val not in axis_labels ]
+        for ind in ind_to_pop:
+            slicing_dir.pop(ind)
+            slicing.pop(ind)
+
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
@@ -294,7 +301,7 @@ def read_field_3d( filename, field_path, axis_labels,
     global_offset = list( group.attrs['gridGlobalOffset'] )
 
     # Slice selection
-    if slicing_dir is not None:
+    if slicing_dir:
         # Get the integer that correspond to the slicing direction
         list_slicing_index = []
         list_i_cell = []

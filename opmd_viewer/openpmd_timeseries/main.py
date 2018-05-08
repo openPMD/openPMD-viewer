@@ -475,10 +475,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
             F, info = read_field_1d(filename, field_path, axis_labels)
         # - For 2D
         elif geometry == "2dcartesian":
-            # This should be removed at some point
-            if slicing_dir is 'y':
-                slicing_dir = None
-                slicing = None
             F, info = read_field_2d(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For 3D
