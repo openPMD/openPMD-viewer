@@ -330,7 +330,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                        self._current_i, hist_bins[0], hist_range[0],
+                        self._current_i, hist_bins[0], hist_range,
                         deposition=histogram_deposition, **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
