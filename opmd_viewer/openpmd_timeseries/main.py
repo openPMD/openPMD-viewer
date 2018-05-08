@@ -300,7 +300,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # Check if the user specified a value
                 if (plot_range[i_data][0] is not None) and \
                         (plot_range[i_data][1] is not None):
-                    hist_range[i_data] =  plot_range[i_data]
+                    hist_range[i_data] = plot_range[i_data]
                 # Else use min and max of data
                 elif len(data) != 0:
                     hist_range[i_data] = [ data.min(), data.max() ]
