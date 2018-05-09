@@ -33,16 +33,23 @@ def read_field_cartesian( filename, field_path, axis_labels,
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     slicing : float or list of float, optional
-        Number(s) between -1 and 1 that indicates where to slice the data,
-        along directions given in `slicing_dir`
-        -1 : lower edge of the simulation box
-        0 : middle of the simulation box
-        1 : upper edge of the simulation box
-        If slicing is None, the full 3D grid is returned.
+       Number(s) between -1 and 1 that indicate where to slice the data,
+       along the directions in `slicing_dir`
+       -1 : lower edge of the simulation box
+       0 : middle of the simulation box
+       1 : upper edge of the simulation box
+       If slicing is None, the full grid is returned.
+       Default is None for 1D and 2D and 0. for 3d Cartesian
 
     slicing_dir : str or list of str, optional
-        Direction(s) along which to slice the data
-        Elements can be 'x' and/or 'z'
+       Direction(s) along which to slice the data
+       Elements can be:
+         - 1d: 'z'
+         - 2d: 'x' and/or 'z'
+         - 3d: 'x' and/or 'y' and/or 'z'
+         - 1d/circ: not implemented
+       Returned array is reduced by 1 dimension per slicing.
+       Default is None for 1D and 2D and 'y' for 3d Cartesian
 
     Returns
     -------
@@ -51,7 +58,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
-    print(slicing, slicing_dir)
     # Convert slicing and slicing_dir to lists
     if slicing is not None and not isinstance(slicing, list):
         slicing = [slicing]
@@ -64,7 +70,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
         for ind in ind_to_pop:
             slicing_dir.pop(ind)
             slicing.pop(ind)
-    print(slicing, slicing_dir)
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
@@ -81,7 +86,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
         list_slicing_index = []
         list_i_cell = []
         new_labels = axis_labels
-        print(new_labels)
         for count, slicing_dir_item in enumerate(slicing_dir):
             slicing_index = axis_labels.index(slicing_dir_item)
             list_slicing_index.append(slicing_index)
