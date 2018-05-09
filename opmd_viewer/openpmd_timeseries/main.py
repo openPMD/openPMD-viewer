@@ -294,18 +294,18 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
             # Determine the size of the histogram bins
             # - First pick default values
-            hist_range = []
+            hist_range = [[None, None], [None, None]]
             for i_data in range(len(data_list)):
                 data = data_list[i_data]
                 # Check if the user specified a value
                 if (plot_range[i_data][0] is not None) and \
                         (plot_range[i_data][1] is not None):
-                    hist_range.append( plot_range[i_data] )
+                    hist_range[i_data] = plot_range[i_data]
                 # Else use min and max of data
                 elif len(data) != 0:
-                    hist_range.append( [ data.min(), data.max() ] )
+                    hist_range[i_data] = [ data.min(), data.max() ]
                 else:
-                    hist_range.append( [ -1., 1. ] )
+                    hist_range[i_data] = [ -1., 1. ]
             hist_bins = [ nbins for i_data in range(len(data_list)) ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
@@ -330,7 +330,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if len(data_list) == 1:
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                        self._current_i, hist_bins[0], hist_range[0],
+                        self._current_i, hist_bins[0], hist_range,
                         deposition=histogram_deposition, **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
