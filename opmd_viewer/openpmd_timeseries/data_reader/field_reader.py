@@ -125,7 +125,8 @@ def read_field_cartesian( filename, field_path, axis_labels,
     return( F, info )
 
 
-def read_field_circ( filename, field_path, m=0, theta=0. ):
+def read_field_circ( filename, field_path, m=0, theta=0.,
+                   slicing=None, slicing_dir=None ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is 2d cartesian.
@@ -159,9 +160,6 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
 
     # Extract the metainformation
     Nm, Nr, Nz = get_shape( dset )
-    info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
-        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-        group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
 
     # Extract the modes and recombine them properly
     F_total = np.zeros( (2 * Nr, Nz ) )
@@ -198,9 +196,131 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
         F_total[Nr:, :] = F[:, :]
         F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
+    axis_labels = ['r','z']
+    shape = [Nr, Nz]
+    grid_spacing = list( group.attrs['gridSpacing'] )
+    global_offset = list( group.attrs['gridGlobalOffset'] )
+
+    # Perform slicing if needed
+    if slicing_dir is not None:
+#         print(slicing_dir)
+        if not isinstance(slicing, list):
+            slicing = [slicing]
+        if not isinstance(slicing_dir, list):
+            slicing_dir = [slicing_dir]
+        if 'z' in slicing_dir:
+#             print('z in slicing_dir')
+            ind = slicing_dir.index('z')
+            n_cells = shape[ 1 ]
+            i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            F_total = F_total[:,i_cell]
+            shape.pop( ind )
+            grid_spacing.pop( ind )
+            global_offset.pop( ind )
+            axis_labels = axis_labels[:-1]
+        if 'r' in slicing_dir:
+#             print('r in slicing_dir')
+            ind = slicing_dir.index('r')
+            n_cells = shape[ 0 ]
+            i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            F_total = F_total[:,i_cell]
+            shape.pop( ind )
+            grid_spacing.pop( ind )
+            global_offset.pop( ind )
+            axis_labels = axis_labels[1:]
+
+    axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+    print(axes)
+    info = FieldMetaInformation( axes, tuple(shape),
+        grid_spacing, global_offset,
+        group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
+
     # Close the file
     dfile.close()
+
     return( F_total, info )
+
+
+# def read_field_circ( filename, field_path, m=0, theta=0. ):
+#     """
+#     Extract a given field from an HDF5 file in the openPMD format,
+#     when the geometry is 2d cartesian.
+# 
+#     Parameters
+#     ----------
+#     filename : string
+#        The absolute path to the HDF5 file
+# 
+#     field_path : string
+#        The relative path to the requested field, from the openPMD meshes path
+#        (e.g. 'rho', 'E/r', 'B/x')
+# 
+#     m : int or string, optional
+#        The azimuthal mode to be extracted
+# 
+#     theta : float, optional
+#        Angle of the plane of observation with respect to the x axis
+# 
+#     Returns
+#     -------
+#     A tuple with
+#        F : a 2darray containing the required field
+#        info : a FieldMetaInformation object
+#        (contains information about the grid; see the corresponding docstring)
+#     """
+#     # Open the HDF5 file
+#     dfile = h5py.File( filename, 'r' )
+#     # Extract the dataset and and corresponding group
+#     group, dset = find_dataset( dfile, field_path )
+# 
+#     # Extract the metainformation
+#     Nm, Nr, Nz = get_shape( dset )
+#     info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
+#         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+#         group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
+# 
+#     # Extract the modes and recombine them properly
+#     F_total = np.zeros( (2 * Nr, Nz ) )
+#     if m == 'all':
+#         # Sum of all the modes
+#         # - Prepare the multiplier arrays
+#         mult_above_axis = [1]
+#         mult_below_axis = [1]
+#         for mode in range(1, int(Nm / 2) + 1):
+#             cos = np.cos( mode * theta )
+#             sin = np.sin( mode * theta )
+#             mult_above_axis += [cos, sin]
+#             mult_below_axis += [ (-1) ** mode * cos, (-1) ** mode * sin ]
+#         mult_above_axis = np.array( mult_above_axis )
+#         mult_below_axis = np.array( mult_below_axis )
+#         # - Sum the modes
+#         F = get_data( dset )  # (Extracts all modes)
+#         F_total[Nr:, :] = np.tensordot( mult_above_axis,
+#                                         F, axes=(0, 0) )[:, :]
+#         F_total[:Nr, :] = np.tensordot( mult_below_axis,
+#                                         F, axes=(0, 0) )[::-1, :]
+#     elif m == 0:
+#         # Extract mode 0
+#         F = get_data( dset, 0, 0 )
+#         F_total[Nr:, :] = F[:, :]
+#         F_total[:Nr, :] = F[::-1, :]
+#     else:
+#         # Extract higher mode
+#         cos = np.cos( m * theta )
+#         sin = np.sin( m * theta )
+#         F_cos = get_data( dset, 2 * m - 1, 0 )
+#         F_sin = get_data( dset, 2 * m, 0 )
+#         F = cos * F_cos + sin * F_sin
+#         F_total[Nr:, :] = F[:, :]
+#         F_total[:Nr, :] = (-1) ** m * F[::-1, :]
+# 
+#     # Close the file
+#     dfile.close()
+#     return( F_total, info )
 
 
 def find_dataset( dfile, field_path ):
