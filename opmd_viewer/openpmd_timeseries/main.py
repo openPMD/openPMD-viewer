@@ -394,13 +394,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
-           Elements can be:
-             - 1d: 'z'
-             - 2d: 'x' and/or 'z'
-             - 3d: 'x' and/or 'y' and/or 'z'
-             - 1d/circ: not implemented
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+               - 1d/circ: not implemented
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           Default is None for 1D and 2D and 'y' for 3d Cartesian
+           Default is None for cylindrical, 1D cartesian, 2D cartesian,
+           and 'y' for 3d Cartesian
 
         output : bool, optional
            Whether to return the requested quantity
