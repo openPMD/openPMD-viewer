@@ -91,10 +91,11 @@ class FieldMetaInformation(object):
 
         # Create the points below the axis if thetaMode is true
         if thetaMode:
-            self.r = np.concatenate((-self.r[::-1], self.r))
-            # The axis now extends from -rmax to rmax
-            self.rmin = -self.rmax
-            self.imshow_extent[2] = -self.imshow_extent[3]
+            if 'r' in axes:
+                self.r = np.concatenate((-self.r[::-1], self.r))
+                # The axis now extends from -rmax to rmax
+                self.rmin = -self.rmax
+                self.imshow_extent[2] = -self.imshow_extent[3]
 
         # Finalize imshow_extent by converting it from list to array
         self.imshow_extent = np.array(self.imshow_extent)

@@ -480,7 +480,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-#                 print(slicing, slicing_dir)
                 Fr, info = read_field_circ(filename, field + '/r', m, theta, slicing, slicing_dir)
                 Ft, info = read_field_circ(filename, field + '/t', m, theta, slicing, slicing_dir)
                 if coord == 'x':
@@ -488,7 +487,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 elif coord == 'y':
                     F = np.sin(theta) * Fr + np.cos(theta) * Ft
                 # Revert the sign below the axis
-                F[: int(F.shape[0] / 2)] *= -1
+                if 'r' in info.axes.values():
+                    F[: int(F.shape[0] / 2)] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path, m, theta, slicing, slicing_dir)
