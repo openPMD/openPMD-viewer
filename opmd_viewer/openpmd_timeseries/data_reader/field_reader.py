@@ -146,10 +146,25 @@ def read_field_circ( filename, field_path, m=0, theta=0.,
     theta : float, optional
        Angle of the plane of observation with respect to the x axis
 
+    slicing : float or list of float, optional
+       Number(s) between -1 and 1 that indicate where to slice the data,
+       along the directions in `slicing_dir`
+       -1 : lower edge of the simulation box
+       0 : middle of the simulation box
+       1 : upper edge of the simulation box
+       If slicing is None, the full grid is returned.
+       Default is None.
+
+    slicing_dir : str or list of str, optional
+       Direction(s) along which to slice the data
+       Elements can be 'r' and/or 'z'
+       Returned array is reduced by 1 dimension per slicing.
+       Default is None.
+
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field
+       F : a ndarray containing the required field
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
