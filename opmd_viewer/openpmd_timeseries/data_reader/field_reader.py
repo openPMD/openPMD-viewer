@@ -203,13 +203,14 @@ def read_field_circ( filename, field_path, m=0, theta=0.,
 
     # Perform slicing if needed
     if slicing_dir is not None:
-#         print(slicing_dir)
+        # Convert arguments to lists 
         if not isinstance(slicing, list):
             slicing = [slicing]
         if not isinstance(slicing_dir, list):
             slicing_dir = [slicing_dir]
+        # Slice field and clear metadata
+        # First z direction
         if 'z' in slicing_dir:
-#             print('z in slicing_dir')
             ind = slicing_dir.index('z')
             n_cells = shape[ 1 ]
             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
@@ -220,21 +221,19 @@ def read_field_circ( filename, field_path, m=0, theta=0.,
             grid_spacing.pop( ind )
             global_offset.pop( ind )
             axis_labels = axis_labels[:-1]
+        # Then r direction
         if 'r' in slicing_dir:
-#             print('r in slicing_dir')
             ind = slicing_dir.index('r')
             n_cells = shape[ 0 ]
             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
-            F_total = F_total[:,i_cell]
+            F_total = F_total[i_cell,...]
             shape.pop( ind )
             grid_spacing.pop( ind )
             global_offset.pop( ind )
             axis_labels = axis_labels[1:]
-
     axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
-    print(axes)
     info = FieldMetaInformation( axes, tuple(shape),
         grid_spacing, global_offset,
         group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
