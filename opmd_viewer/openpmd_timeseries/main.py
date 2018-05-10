@@ -400,7 +400,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           Default is None for cylindrical, 1D cartesian, 2D cartesian,
+           Default is None for cylindrical, 1D cartesian and 2D cartesian,
            and 'y' for 3d Cartesian
 
         output : bool, optional
