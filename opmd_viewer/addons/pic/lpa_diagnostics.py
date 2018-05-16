@@ -783,11 +783,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = np.pi / 2.
         slicing = 0.
         if "3dcartesian" in self.avail_geom:
+            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
                 slicing_dir = 'x'
         else:
+            slicing = None
             slicing_dir = None
 
         # Get the peak field from field envelope
@@ -838,11 +840,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = np.pi / 2.
         slicing = 0.
         if "3dcartesian" in self.avail_geom:
+            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
                 slicing_dir = 'x'
         else:
+            slicing = None
             slicing_dir = None
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
@@ -868,7 +872,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
+<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
                          slicing=None, slicing_dir=None, method='fit' ):
+=======
+                         slicing=0., slicing_dir='y', method='fit' ):
+>>>>>>> get_field no longer has 'y' as slicing direction by default
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -905,6 +913,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
+<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
+=======
+               - 1d/circ: not implemented
+>>>>>>> get_field no longer has 'y' as slicing direction by default
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            Default is None.
@@ -954,7 +966,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
+<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
                           slicing_dir=None, slicing=0., plot=False, **kw ):
+=======
+                          slicing_dir='y', slicing=0., plot=False, **kw ):
+>>>>>>> get_field no longer has 'y' as slicing direction by default
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
