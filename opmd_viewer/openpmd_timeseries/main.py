@@ -348,7 +348,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=0., slicing_dir='y',
+                  m='all', theta=0., slicing=None, slicing_dir=None,
                   output=True, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
@@ -390,7 +390,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
            If slicing is None, the full grid is returned.
-           Default is None for 1D and 2D and 0. for 3d Cartesian
+           Default is None
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
@@ -401,8 +401,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           Default is None for cylindrical, 1D cartesian and 2D cartesian,
-           and 'y' for 3d Cartesian
+           Default is None.
 
         output : bool, optional
            Whether to return the requested quantity
@@ -475,6 +474,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
         # - For cartesian
+        print(slicing, slicing_dir)
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = read_field_cartesian(
                 filename, field_path, axis_labels, slicing, slicing_dir)
