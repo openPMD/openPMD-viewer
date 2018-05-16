@@ -715,7 +715,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         else:
             theta = np.pi / 2.
         if "3dcartesian" in self.avail_geom:
-            slicing=0.
+            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
