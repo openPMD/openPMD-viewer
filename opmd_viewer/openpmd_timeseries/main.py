@@ -348,7 +348,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=None, slicing_dir=None,
+                  m='all', theta=0., slicing=0., slicing_dir=None,
                   output=True, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
