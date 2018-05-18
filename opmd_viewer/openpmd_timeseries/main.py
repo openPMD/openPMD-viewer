@@ -460,7 +460,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             field_path = field
             field_label = field
         elif self.fields_metadata[field]['type'] == 'vector':
-            field_path = os.path.join(field, coord)
+            field_path = field + '/' + coord
             field_label = field + coord
 
         # Get the field data

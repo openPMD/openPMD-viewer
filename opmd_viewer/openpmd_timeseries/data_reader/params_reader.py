@@ -78,7 +78,7 @@ def read_openPMD_params(filename, extract_parameters=True):
 
         # Loop through the available fields
         for field_name in bpath[meshes_path].keys():
-            field = bpath[os.path.join(meshes_path, field_name)]
+            field = bpath[meshes_path + '/' + field_name]
             metadata = {}
             metadata['geometry'] = field.attrs['geometry'].decode()
             metadata['axis_labels'] = [ coord.decode() for coord in
@@ -133,7 +133,7 @@ def read_openPMD_params(filename, extract_parameters=True):
         record_components = {}
         # Go through all species
         for species_name in iter(params['avail_species']):
-            species = bpath[os.path.join(particle_path, species_name)]
+            species = bpath[particle_path + '/' + species_name]
             record_components[species_name] = []
 
             # Go through all the particle records of this species
@@ -150,7 +150,7 @@ def read_openPMD_params(filename, extract_parameters=True):
                     # Add each component of the vector record
                     for coord in record.keys():
                         record_components[species_name]. \
-                            append(os.path.join(record_name, coord))
+                            append(record_name + '/' + coord)
             # Simplify the name of some standard openPMD records
             record_components[species_name] = \
                 simplify_record(record_components[species_name])
