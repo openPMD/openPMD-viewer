@@ -15,7 +15,7 @@ from .field_metainfo import FieldMetaInformation
 
 
 def read_field_cartesian( filename, field_path, axis_labels,
-                   slicing=None, slicing_dir=None ):
+                          slicing, slicing_dir ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
@@ -38,8 +38,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
-       If slicing is None, the full grid is returned.
-       Default is None for 1D and 2D and 0. for 3d Cartesian
 
     slicing_dir : str or list of str, optional
        Direction(s) along which to slice the data
@@ -47,9 +45,7 @@ def read_field_cartesian( filename, field_path, axis_labels,
          - 1d: 'z'
          - 2d: 'x' and/or 'z'
          - 3d: 'x' and/or 'y' and/or 'z'
-         - 1d/circ: not implemented
        Returned array is reduced by 1 dimension per slicing.
-       Default is None for 1D and 2D and 'y' for 3d Cartesian
 
     Returns
     -------
@@ -58,18 +54,19 @@ def read_field_cartesian( filename, field_path, axis_labels,
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
-    # Convert slicing and slicing_dir to lists
-    if slicing is not None and not isinstance(slicing, list):
-        slicing = [slicing]
-    if slicing_dir is not None and not isinstance(slicing_dir, list):
-        slicing_dir = [slicing_dir]
-    # Pop slicing directions in arguments that are not in axis_label
     if slicing_dir is not None:
-        ind_to_pop = [slicing_dir.index(val) for val in slicing_dir if
-            val not in axis_labels ]
-        for ind in ind_to_pop:
-            slicing_dir.pop(ind)
-            slicing.pop(ind)
+        if not isinstance(slicing_dir, list):
+            slicing_dir = [slicing_dir]
+        if slicing is not None and not isinstance(slicing, list):
+            slicing = [slicing]
+        print(slicing_dir, axis_labels)
+        if any(elem not in axis_labels for elem in slicing_dir):
+            raise ValueError('Found elements in slicing_dir not in '
+                             'axis_labels')
+        if len(slicing_dir) != len(slicing):
+            raise ValueError('Slicing and slicing_dir must have the '
+                             'same length')
+
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
@@ -81,7 +78,7 @@ def read_field_cartesian( filename, field_path, axis_labels,
     global_offset = list( group.attrs['gridGlobalOffset'] )
 
     # Slice selection
-    if slicing_dir:
+    if slicing_dir is not None:
         # Get the integer that correspond to the slicing direction
         list_slicing_index = []
         list_i_cell = []
@@ -99,17 +96,17 @@ def read_field_cartesian( filename, field_path, axis_labels,
 
         # Remove metainformation relative to the slicing index
         # Successive pops starting from last coordinate to slice
-        list_indices_to_clean = list_slicing_index[:]
-        list_indices_to_clean.sort(reverse=True)
-        for index_to_clean in list_indices_to_clean:
-            shape.pop( index_to_clean )
-            grid_spacing.pop( index_to_clean )
-            global_offset.pop( index_to_clean )
-            new_labels = new_labels[:index_to_clean] + \
-                new_labels[index_to_clean + 1:]
+        shape = [ x for index, x in enumerate(shape)
+                  if index not in list_slicing_index ]
+        grid_spacing = [ x for index, x in enumerate(grid_spacing)
+                         if index not in list_slicing_index ]
+        global_offset = [ x for index, x in enumerate(global_offset)
+                          if index not in list_slicing_index ]
+        axis_labels = [ x for index, x in enumerate(axis_labels)
+                         if index not in list_slicing_index ]
 
-        axes = { i: new_labels[i] for i in range(len(new_labels)) }
-        # Extraction of the data
+        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+        # Extract data
         F = get_data( dset, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 group.attrs['gridUnitSI'], dset.attrs['position'] )
@@ -125,11 +122,11 @@ def read_field_cartesian( filename, field_path, axis_labels,
     return( F, info )
 
 
-def read_field_circ( filename, field_path, m=0, theta=0.,
-                   slicing=None, slicing_dir=None ):
+def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
+                     theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is 2d cartesian.
+    when the geometry is circ.
 
     Parameters
     ----------
@@ -152,14 +149,11 @@ def read_field_circ( filename, field_path, m=0, theta=0.,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
-       If slicing is None, the full grid is returned.
-       Default is None.
 
     slicing_dir : str or list of str, optional
        Direction(s) along which to slice the data
        Elements can be 'r' and/or 'z'
        Returned array is reduced by 1 dimension per slicing.
-       Default is None.
 
     Returns
     -------
@@ -218,36 +212,63 @@ def read_field_circ( filename, field_path, m=0, theta=0.,
 
     # Perform slicing if needed
     if slicing_dir is not None:
-        # Convert arguments to lists
-        if not isinstance(slicing, list):
-            slicing = [slicing]
         if not isinstance(slicing_dir, list):
             slicing_dir = [slicing_dir]
+        if slicing is not None and not isinstance(slicing, list):
+            slicing = [slicing]
+        print(slicing_dir, axis_labels)
+        if any(elem not in axis_labels for elem in slicing_dir):
+            raise ValueError('Found elements in slicing_dir not in '
+                             'axis_labels')
+        if len(slicing_dir) != len(slicing):
+            raise ValueError('Slicing and slicing_dir must have the '
+                             'same length')
+
         # Slice field and clear metadata
+        list_slicing_index = []
+        list_i_cell = []
+        for count, slicing_dir_item in enumerate(slicing_dir):
+            slicing_index = axis_labels.index(slicing_dir_item)
+            list_slicing_index.append(slicing_index)
+            # Number of cells along the slicing direction
+            n_cells = shape[ slicing_index ]
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            list_i_cell.append(i_cell)
+        shape = [ x for index, x in enumerate(shape)
+                  if index not in list_slicing_index ]
+        grid_spacing = [ x for index, x in enumerate(grid_spacing)
+                         if index not in list_slicing_index ]
+        global_offset = [ x for index, x in enumerate(global_offset)
+                          if index not in list_slicing_index ]
+        axis_labels = [ x for index, x in enumerate(axis_labels)
+                         if index not in list_slicing_index ]
         # First z direction
-        if 'z' in slicing_dir:
-            ind = slicing_dir.index('z')
-            n_cells = shape[ 1 ]
-            i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
-            i_cell = max( i_cell, 0 )
-            i_cell = min( i_cell, n_cells - 1)
-            F_total = F_total[:, i_cell]
-            shape.pop( ind )
-            grid_spacing.pop( ind )
-            global_offset.pop( ind )
-            axis_labels = axis_labels[:-1]
+#         if 'z' in slicing_dir:
+#             ind = slicing_dir.index('z')
+#             n_cells = shape[ 1 ]
+#             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
+#             i_cell = max( i_cell, 0 )
+#             i_cell = min( i_cell, n_cells - 1)
+#             F_total = F_total[:, i_cell]
+#             shape.pop( ind )
+#             grid_spacing.pop( ind )
+#             global_offset.pop( ind )
+#             axis_labels = axis_labels[:-1]
         # Then r direction
-        if 'r' in slicing_dir:
-            ind = slicing_dir.index('r')
-            n_cells = shape[ 0 ]
-            i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
-            i_cell = max( i_cell, 0 )
-            i_cell = min( i_cell, n_cells - 1)
-            F_total = F_total[i_cell, ...]
-            shape.pop( ind )
-            grid_spacing.pop( ind )
-            global_offset.pop( ind )
-            axis_labels = axis_labels[1:]
+#         if 'r' in slicing_dir:
+#             ind = slicing_dir.index('r')
+#             n_cells = shape[ 0 ]
+#             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
+#             i_cell = max( i_cell, 0 )
+#             i_cell = min( i_cell, n_cells - 1)
+#             F_total = F_total[i_cell, ...]
+#             shape.pop( ind )
+#             grid_spacing.pop( ind )
+#             global_offset.pop( ind )
+#             axis_labels = axis_labels[1:]
     axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
     info = FieldMetaInformation( axes, tuple(shape),
         grid_spacing, global_offset,
