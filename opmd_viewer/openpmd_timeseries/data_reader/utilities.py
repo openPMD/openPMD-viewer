@@ -80,13 +80,13 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
         pos_slice = [pos_slice]
     if i_slice is not None and not isinstance(i_slice, list):
         i_slice = [i_slice]
-
     # Case of a constant dataset
     if isinstance(dset, h5py.Group):
         shape = dset.attrs['shape']
         # Restrict the shape if slicing is enabled
         if pos_slice is not None:
-            shape = shape[:pos_slice[0]] + shape[pos_slice[0] + 1:]
+            shape = [ x for index, x in enumerate(shape) if
+                      index not in pos_slice ]
         # Create the corresponding dataset
         data = dset.attrs['value'] * np.ones(shape)
 

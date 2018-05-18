@@ -438,7 +438,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
-                            slicing_dir='y', slicing=0., plot=False, **kw ):
+                            slicing_dir=None, slicing=None, plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -482,7 +482,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           If slicing is None, the full grid is returned.
            Default is None
 
         slicing_dir : str or list of str, optional
@@ -494,6 +493,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
            Default is None.
 
         plot : bool, optional
@@ -714,7 +714,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         else:
             theta = np.pi / 2.
         if "3dcartesian" in self.avail_geom:
-            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
@@ -781,14 +780,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = 0
         else:
             theta = np.pi / 2.
+        slicing = 0.
         if "3dcartesian" in self.avail_geom:
-            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
                 slicing_dir = 'x'
         else:
-            slicing = None
             slicing_dir = None
 
         # Get the peak field from field envelope
@@ -837,14 +835,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             theta = 0
         else:
             theta = np.pi / 2.
+        slicing = 0.
         if "3dcartesian" in self.avail_geom:
-            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
                 slicing_dir = 'x'
         else:
-            slicing = None
             slicing_dir = None
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
@@ -870,7 +867,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing=0., slicing_dir='y', method='fit' ):
+                         slicing=None, slicing_dir=None, method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -957,7 +954,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y', slicing=0., plot=False, **kw ):
+                          slicing_dir=None, slicing=None, plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 

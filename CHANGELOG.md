@@ -5,7 +5,7 @@
 This version introduces a capability to do slicing along several directions,
 and for 1d, 2d, 3d and circ geometries.
 It breaks backward compatibility: for a 3d field,
-`get_field(field=field, coord=coord, iteration=iteration)
+```get_field(field=field, coord=coord, iteration=iteration)```
 used to return the central slice along `y` while it returns the full 3d field
 now.
 

@@ -483,10 +483,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r', m, theta,
-                    slicing, slicing_dir)
-                Ft, info = read_field_circ(filename, field + '/t', m, theta,
-                    slicing, slicing_dir)
+                Fr, info = read_field_circ(filename, field + '/r', slicing,
+                                           slicing_dir, m, theta)
+                Ft, info = read_field_circ(filename, field + '/t', slicing,
+                                           slicing_dir, m, theta)
                 if coord == 'x':
                     F = np.cos(theta) * Fr - np.sin(theta) * Ft
                 elif coord == 'y':
@@ -496,8 +496,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     F[: int(F.shape[0] / 2)] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path, m, theta,
-                    slicing, slicing_dir)
+                F, info = read_field_circ(filename, field_path, slicing,
+                                          slicing_dir, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
