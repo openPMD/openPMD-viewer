@@ -905,7 +905,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
-               - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            Default is None.
