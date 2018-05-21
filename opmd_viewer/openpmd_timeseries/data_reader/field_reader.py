@@ -81,7 +81,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
         # Get the integer that correspond to the slicing direction
         list_slicing_index = []
         list_i_cell = []
-        new_labels = axis_labels
         for count, slicing_dir_item in enumerate(slicing_dir):
             slicing_index = axis_labels.index(slicing_dir_item)
             list_slicing_index.append(slicing_index)
