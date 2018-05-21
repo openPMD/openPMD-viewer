@@ -398,7 +398,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
-               - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            Default is None.
@@ -474,7 +473,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
         # - For cartesian
-        print(slicing, slicing_dir)
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = read_field_cartesian(
                 filename, field_path, axis_labels, slicing, slicing_dir)
