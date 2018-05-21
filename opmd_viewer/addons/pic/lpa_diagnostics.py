@@ -438,7 +438,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
-                            slicing_dir=None, slicing=None, plot=False, **kw ):
+                            slicing_dir=None, slicing=0., plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -482,7 +482,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           Default is None
+           Default is 0.
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
@@ -490,7 +490,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
-               - 1d/circ: not implemented
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            If slicing_dir is None, the full grid is returned.
@@ -714,6 +713,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         else:
             theta = np.pi / 2.
         if "3dcartesian" in self.avail_geom:
+            slicing = 0.
             if pol == 'x':
                 slicing_dir = 'y'
             else:
@@ -954,7 +954,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir=None, slicing=None, plot=False, **kw ):
+                          slicing_dir=None, slicing=0., plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 

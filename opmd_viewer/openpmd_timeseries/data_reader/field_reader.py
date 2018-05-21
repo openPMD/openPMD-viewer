@@ -59,7 +59,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
             slicing_dir = [slicing_dir]
         if slicing is not None and not isinstance(slicing, list):
             slicing = [slicing]
-        print(slicing_dir, axis_labels)
         if any(elem not in axis_labels for elem in slicing_dir):
             raise ValueError('Found elements in slicing_dir not in '
                              'axis_labels')
@@ -245,30 +244,7 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
                           if index not in list_slicing_index ]
         axis_labels = [ x for index, x in enumerate(axis_labels)
                          if index not in list_slicing_index ]
-        # First z direction
-#         if 'z' in slicing_dir:
-#             ind = slicing_dir.index('z')
-#             n_cells = shape[ 1 ]
-#             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
-#             i_cell = max( i_cell, 0 )
-#             i_cell = min( i_cell, n_cells - 1)
-#             F_total = F_total[:, i_cell]
-#             shape.pop( ind )
-#             grid_spacing.pop( ind )
-#             global_offset.pop( ind )
-#             axis_labels = axis_labels[:-1]
-        # Then r direction
-#         if 'r' in slicing_dir:
-#             ind = slicing_dir.index('r')
-#             n_cells = shape[ 0 ]
-#             i_cell = int( 0.5 * (slicing[ind] + 1.) * n_cells )
-#             i_cell = max( i_cell, 0 )
-#             i_cell = min( i_cell, n_cells - 1)
-#             F_total = F_total[i_cell, ...]
-#             shape.pop( ind )
-#             grid_spacing.pop( ind )
-#             global_offset.pop( ind )
-#             axis_labels = axis_labels[1:]
+
     axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
     info = FieldMetaInformation( axes, tuple(shape),
         grid_spacing, global_offset,
