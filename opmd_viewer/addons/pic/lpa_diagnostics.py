@@ -438,8 +438,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            freq_filter=40, index='center', theta=0,
-                            slicing_dir=None, slicing=0., plot=False, **kw ):
+                            freq_filter=40, theta=0,
+                            slicing_dir=None, slicing=0, plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -467,11 +467,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Range of frequencies in percent which to filter: Frequencies higher
             than freq_filter/100 times the dominant frequencies will be
             filtered out
-
-        index : int or str, optional
-            Transversal index of the slice from which to calculate the envelope
-            Default is 'center', using the center slice.
-            Use 'all' to calculate a full 2D envelope
 
         theta : float, optional
            Only used for thetaMode geometry
@@ -513,41 +508,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol is None:
             raise ValueError('The `pol` argument is missing or erroneous.')
         # Get field data
-        field = self.get_field( t=t, iteration=iteration, field='E',
+        F, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
                                 slicing=slicing, slicing_dir=slicing_dir )
-        info = field[1]
-        if index == 'all':
-            # Filter the full 2D array
-            envelope = self._fft_filter(field[0], freq_filter)
-        elif index == 'center':
-            # Filter the central slice (1D array)
-            field_slice = field[0][int( field[0].shape[0] / 2), :]
-            envelope = self._fft_filter(field_slice, freq_filter)
-        else:
-            # Filter the requested slice (2D array)
-            field_slice = field[0][index, :]
-            envelope = self._fft_filter(field_slice, freq_filter)
-
-        # Restrict the metainformation to 1d if needed
-        if index != 'all':
-            info.restrict_to_1Daxis( info.axes[1] )
+        envelope = self._fft_filter( F, freq_filter)
 
         # Plot the result if needed
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            if index != 'all':
-                plt.plot( 1.e6 * info.z, envelope, **kw)
-                plt.ylabel('$E_%s \;(V/m)$' % pol,
-                           fontsize=self.plotter.fontsize)
-            else:
-                plt.imshow( envelope, extent=1.e6 * info.imshow_extent,
-                            aspect='auto', **kw)
-                plt.colorbar()
-                plt.ylabel('$%s \;(\mu m)$' % pol,
-                            fontsize=self.plotter.fontsize)
+            plt.imshow( envelope, extent=1.e6 * info.imshow_extent,
+                        aspect='auto', **kw)
+            plt.colorbar()
+            plt.ylabel('$%s \;(\mu m)$' % pol,
+                        fontsize=self.plotter.fontsize)
             plt.title("Laser envelope at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
@@ -670,7 +645,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrum( self, t=None, iteration=None, pol=None,
-                      m='all', plot=False, **kw ):
+                      theta=0, m='all', slicing=0, slicing_dir=None,
+                      plot=False, **kw ):
         """
         Return the spectrum of the laser
         (Absolute value of the Fourier transform of the fields.)
@@ -694,6 +670,29 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
+
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
+
         plot: bool, optional
            Whether to plot the data
 
@@ -709,19 +708,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        if "3dcartesian" in self.avail_geom:
-            slicing = 0.
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
-            slicing = None
 
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
@@ -777,25 +763,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            slicing = 0.
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing = None
-            slicing_dir = None
 
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol, theta=theta,
-                                               slicing=slicing,
+                                               slicing=slicing, m=m,
                                                slicing_dir=slicing_dir)[0])
         # Get mean frequency
         omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
@@ -834,20 +806,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            slicing = 0.
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing = None
-            slicing_dir = None
+
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
@@ -872,11 +831,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
-                         slicing=None, slicing_dir=None, method='fit' ):
-=======
-                         slicing=0., slicing_dir='y', method='fit' ):
->>>>>>> get_field no longer has 'y' as slicing direction by default
+                         slicing=0, slicing_dir=None, method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -913,10 +868,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
-<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
-=======
-               - 1d/circ: not implemented
->>>>>>> get_field no longer has 'y' as slicing direction by default
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            Default is None.
@@ -966,11 +917,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-<<<<<<< 821092af561bf33658d7033b9c1217edc1d4109d
                           slicing_dir=None, slicing=0., plot=False, **kw ):
-=======
-                          slicing_dir='y', slicing=0., plot=False, **kw ):
->>>>>>> get_field no longer has 'y' as slicing direction by default
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
