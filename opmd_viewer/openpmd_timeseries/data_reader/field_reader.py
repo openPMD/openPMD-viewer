@@ -224,7 +224,6 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
 
         # Slice field and clear metadata
         list_slicing_index = []
-        list_i_cell = []
         for count, slicing_dir_item in enumerate(slicing_dir):
             slicing_index = axis_labels.index(slicing_dir_item)
             list_slicing_index.append(slicing_index)
@@ -234,7 +233,9 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
             i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
-            list_i_cell.append(i_cell)
+            F_total = np.take( F_total, [i_cell], axis=slicing_index )
+        F_total = np.squeeze(F_total)
+
         shape = [ x for index, x in enumerate(shape)
                   if index not in list_slicing_index ]
         grid_spacing = [ x for index, x in enumerate(grid_spacing)
