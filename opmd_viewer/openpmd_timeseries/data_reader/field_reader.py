@@ -32,14 +32,14 @@ def read_field_cartesian( filename, field_path, axis_labels,
     axis_labels: list of strings
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
-    slicing : float or list of float, optional
+    slicing : list of float or None
        Number(s) between -1 and 1 that indicate where to slice the data,
        along the directions in `slicing_dir`
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
 
-    slicing_dir : str or list of str, optional
+    slicing_dir : list of str or None
        Direction(s) along which to slice the data
        Elements can be:
          - 1d: 'z'
@@ -54,18 +54,6 @@ def read_field_cartesian( filename, field_path, axis_labels,
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
-    if slicing_dir is not None:
-        if not isinstance(slicing_dir, list):
-            slicing_dir = [slicing_dir]
-        if slicing is not None and not isinstance(slicing, list):
-            slicing = [slicing]
-        if any(elem not in axis_labels for elem in slicing_dir):
-            raise ValueError('Found elements in slicing_dir not in '
-                             'axis_labels')
-        if len(slicing_dir) != len(slicing):
-            raise ValueError('Slicing and slicing_dir must have the '
-                             'same length')
-
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
@@ -141,14 +129,14 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
     theta : float, optional
        Angle of the plane of observation with respect to the x axis
 
-    slicing : float or list of float, optional
+    slicing : list of float or None
        Number(s) between -1 and 1 that indicate where to slice the data,
        along the directions in `slicing_dir`
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
 
-    slicing_dir : str or list of str, optional
+    slicing_dir : list of str or None
        Direction(s) along which to slice the data
        Elements can be 'r' and/or 'z'
        Returned array is reduced by 1 dimension per slicing.
@@ -210,18 +198,6 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
 
     # Perform slicing if needed
     if slicing_dir is not None:
-        if not isinstance(slicing_dir, list):
-            slicing_dir = [slicing_dir]
-        if slicing is not None and not isinstance(slicing, list):
-            slicing = [slicing]
-        print(slicing_dir, axis_labels)
-        if any(elem not in axis_labels for elem in slicing_dir):
-            raise ValueError('Found elements in slicing_dir not in '
-                             'axis_labels')
-        if len(slicing_dir) != len(slicing):
-            raise ValueError('Slicing and slicing_dir must have the '
-                             'same length')
-
         # Slice field and clear metadata
         list_slicing_index = []
         for count, slicing_dir_item in enumerate(slicing_dir):

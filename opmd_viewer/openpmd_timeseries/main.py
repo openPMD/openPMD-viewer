@@ -388,8 +388,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           If slicing is None, the full grid is returned.
-           Default is None
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
@@ -399,7 +397,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                - 3d: 'x' and/or 'y' and/or 'z'
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           Default is None.
+           If slicing is None, the full grid is returned.
 
         output : bool, optional
            Whether to return the requested quantity
@@ -433,6 +431,25 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The `field` argument is missing or erroneous.\n"
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
+        # Check slicing
+        if slicing_dir is not None:
+            # Convert to lists
+            if not isinstance(slicing_dir, list):
+                slicing_dir = [slicing_dir]
+            if not isinstance(slicing, list):
+                slicing = [slicing]
+            # Check that the elements are valid
+            axis_labels = self.fields_metadata[field]['axis_labels']
+            for axis in slicing_dir:
+                if axis not in axis_labels:
+                    axes_list = '\n - '.join(axis_labels)
+                    raise OpenPMDException(
+                    'The `slicing_dir` argument is erroneous: contains %s\n'
+                    'The available axes are: \n - %s' %(axis, axes_list) )
+            if len(slicing_dir) != len(slicing):
+                raise OpenPMDException('Slicing and slicing_dir must have the '
+                                 'same length')
+
         # Check the coordinate (for vector fields)
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
