@@ -46,6 +46,7 @@ class FieldMetaInformation(object):
         then these variables will be called x, y.
 
     - imshow_extent: 1darray
+        (Only for 2D data)
         An array of 4 elements that can be passed as the `extent` in
         matplotlib's imshow function.
         Because of the API of the imshow function, the coordinates are
@@ -67,7 +68,8 @@ class FieldMetaInformation(object):
         """
         # Register important initial information
         self.axes = axes
-        self.imshow_extent = []
+        if len(shape) == 2:
+            self.imshow_extent = []
 
         # Create the elements
         for axis in sorted(axes.keys()):
@@ -77,6 +79,11 @@ class FieldMetaInformation(object):
             start = global_offset[axis] * grid_unitSI + position[axis] * step
             end = start + (n_points - 1) * step
             axis_points = np.linspace(start, end, n_points, endpoint=True)
+            # Create the points below the axis if thetaMode is true
+            if axes[axis] == 'r' and thetaMode:
+                axis_points = np.concatenate((-axis_points[::-1], axis_points))
+                start = -end
+                n_points = 2 * n_points
             # Register the results in the object
             axis_name = axes[axis]
             setattr(self, axis_name, axis_points)
@@ -86,19 +93,13 @@ class FieldMetaInformation(object):
             # Fill the imshow_extent in reverse order, so as to match
             # the syntax of imshow ; add a half step on each side since
             # imshow plots a square of finite width for each field value
-            self.imshow_extent = \
-                [start - 0.5 * step, end + 0.5 * step] + self.imshow_extent
-
-        # Create the points below the axis if thetaMode is true
-        if thetaMode:
-            if 'r' in axes:
-                self.r = np.concatenate((-self.r[::-1], self.r))
-                # The axis now extends from -rmax to rmax
-                self.rmin = -self.rmax
-                self.imshow_extent[2] = -self.imshow_extent[3]
+            if len(shape) == 2:
+                self.imshow_extent = \
+                    [start - 0.5 * step, end + 0.5 * step] + self.imshow_extent
 
         # Finalize imshow_extent by converting it from list to array
-        self.imshow_extent = np.array(self.imshow_extent)
+        if len(shape) == 2:
+            self.imshow_extent = np.array(self.imshow_extent)
 
     def restrict_to_1Daxis(self, axis):
         """
