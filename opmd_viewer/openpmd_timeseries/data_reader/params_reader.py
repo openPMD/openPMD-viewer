@@ -7,7 +7,7 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
-import os
+
 import h5py
 import numpy as np
 from .utilities import is_scalar_record, get_shape, get_bpath

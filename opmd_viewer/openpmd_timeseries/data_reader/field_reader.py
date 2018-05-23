@@ -7,7 +7,7 @@ Copyright 2015-2016, openPMD-viewer contributors
 Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
-import os
+
 import h5py
 import numpy as np
 from .utilities import get_shape, get_data, get_bpath

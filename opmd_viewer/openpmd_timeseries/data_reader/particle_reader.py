@@ -9,7 +9,6 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
-import os
 import numpy as np
 from scipy import constants
 from .utilities import get_data, get_bpath

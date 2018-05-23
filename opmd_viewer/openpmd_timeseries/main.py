@@ -8,7 +8,6 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
-import os
 import numpy as np
 import h5py as h5
 from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
