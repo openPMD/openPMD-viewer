@@ -16,8 +16,8 @@ from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_1d, read_field_2d, \
-    read_field_circ, read_field_3d, get_grid_parameters
+from .data_reader.field_reader import read_field_cartesian, \
+    read_field_circ, get_grid_parameters
 from .interactive import InteractiveViewer
 
 
@@ -347,7 +347,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=0., slicing_dir='y',
+                  m='all', theta=0., slicing=0., slicing_dir=None,
                   output=True, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
@@ -382,19 +382,22 @@ class OpenPMDTimeSeries(InteractiveViewer):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float, optional
-           Only used for 3dcartesian geometry
-           A number between -1 and 1 that indicates where to slice the data,
-           along the direction `slicing_dir`
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           If slicing is None, the full 3D grid is returned.
 
-        slicing_dir : str, optional
-           Only used for 3dcartesian geometry
-           The direction along which to slice the data
-           Either 'x', 'y' or 'z'
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing is None, the full grid is returned.
 
         output : bool, optional
            Whether to return the requested quantity
@@ -428,6 +431,25 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The `field` argument is missing or erroneous.\n"
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
+        # Check slicing
+        if slicing_dir is not None:
+            # Convert to lists
+            if not isinstance(slicing_dir, list):
+                slicing_dir = [slicing_dir]
+            if not isinstance(slicing, list):
+                slicing = [slicing]
+            # Check that the elements are valid
+            axis_labels = self.fields_metadata[field]['axis_labels']
+            for axis in slicing_dir:
+                if axis not in axis_labels:
+                    axes_list = '\n - '.join(axis_labels)
+                    raise OpenPMDException(
+                    'The `slicing_dir` argument is erroneous: contains %s\n'
+                    'The available axes are: \n - %s' % (axis, axes_list) )
+            if len(slicing_dir) != len(slicing):
+                raise OpenPMDException(
+                    'The `slicing_dir` argument is erroneous: \nIt should have'
+                    'the same number of elements as `slicing_dir`.')
         # Check the coordinate (for vector fields)
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
@@ -466,45 +488,44 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Get the field data
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
-        # - For 1D
-        if geometry == "1dcartesian":
-            F, info = read_field_1d(filename, field_path, axis_labels)
-        # - For 2D
-        elif geometry == "2dcartesian":
-            F, info = read_field_2d(filename, field_path, axis_labels)
-        # - For 3D
-        elif geometry == "3dcartesian":
-            F, info = read_field_3d(
+        # - For cartesian
+        if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
+            F, info = read_field_cartesian(
                 filename, field_path, axis_labels, slicing, slicing_dir)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r', m, theta)
-                Ft, info = read_field_circ(filename, field + '/t', m, theta)
+                Fr, info = read_field_circ(filename, field + '/r', slicing,
+                                           slicing_dir, m, theta)
+                Ft, info = read_field_circ(filename, field + '/t', slicing,
+                                           slicing_dir, m, theta)
                 if coord == 'x':
                     F = np.cos(theta) * Fr - np.sin(theta) * Ft
                 elif coord == 'y':
                     F = np.sin(theta) * Fr + np.cos(theta) * Ft
                 # Revert the sign below the axis
-                F[: int(F.shape[0] / 2)] *= -1
+                if 'r' in info.axes.values():
+                    F[: int(F.shape[0] / 2)] *= -1
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path, m, theta)
+                F, info = read_field_circ(filename, field_path, slicing,
+                                          slicing_dir, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
-        if (geometry == "3dcartesian") and (slicing is None):
-            plot = False
         if plot:
-            if geometry == "1dcartesian":
+            if F.ndim == 1:
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
-            else:
+            elif F.ndim == 2:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
-                        field_label, geometry, self._current_i,
-                        plot_range=plot_range, **kw)
+                    field_label, geometry, self._current_i,
+                    plot_range=plot_range, **kw)
+            else:
+                raise OpenPMDException('Cannot plot %d-dimensional data.\n'
+                    'Use slicing, or set `plot=False`' % F.ndim)
 
         # Return the result
         return(F, info)
