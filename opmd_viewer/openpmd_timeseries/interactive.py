@@ -111,13 +111,19 @@ class InteractiveViewer(object):
                 plot_range = [ fld_hrange_button.get_range(),
                                 fld_vrange_button.get_range() ]
 
+                # Handle slicing direction
+                if slicing_dir_button.value=='None':
+                    slicing_dir = None
+                else:
+                    slicing_dir = slicing_dir_button.value
+
                 # Call the method get_field
                 self.get_field( iteration=self.current_iteration,
                     output=False, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
-                    slicing_dir=slicing_dir_button.value,
+                    slicing_dir=slicing_dir,
                     plot_range=plot_range, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
@@ -193,6 +199,11 @@ class InteractiveViewer(object):
                 whenever a change of a widget happens
                 (see docstring of ipywidgets.Widget.observe)
             """
+            # Deactivate the field refreshing to avoid callback
+            # while modifying the widgets
+            saved_refresh_value = fld_refresh_toggle.value
+            fld_refresh_toggle.value = False
+
             new_field = change['new']
             # Activate/deactivate vector fields
             if self.fields_metadata[new_field]['type'] == 'vector':
@@ -206,13 +217,19 @@ class InteractiveViewer(object):
             else:
                 mode_button.disabled = True
                 theta_button.disabled = True
-            # Activate/deactivate 3d-specific widgets
+            # Activate the right slicing options
             if self.fields_metadata[new_field]['geometry'] == '3dcartesian':
-                slicing_dir_button.disabled = False
-                slicing_button.disabled = False
+                slicing_dir_button.options = \
+                    self.fields_metadata[new_field]['axis_labels']
+                slicing_dir_button.value = 'y'
             else:
-                slicing_dir_button.disabled = True
-                slicing_button.disabled = True
+                slicing_dir_button.options = ['None'] + \
+                    self.fields_metadata[new_field]['axis_labels']
+                slicing_dir_button.value = 'None'
+
+            # Put back the previous value of the refreshing button
+            fld_refresh_toggle.value = saved_refresh_value
+
             # Show the fields
             refresh_field()
 
@@ -337,9 +354,15 @@ class InteractiveViewer(object):
                     min=-math.pi / 2, max=math.pi / 2)
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
-            # Slicing buttons (for 3D)
-            slicing_dir_button = create_toggle_buttons( value='y',
-                options=['x', 'y', 'z'], description='Slice normal:')
+            # Slicing buttons
+            if self.fields_metadata[field]['geometry'] == '3dcartesian':
+                slicing_dir_button = create_toggle_buttons( value='y',
+                    options=self.fields_metadata[field]['axis_labels'],
+                    description='Slice normal:')
+            else:
+                slicing_dir_button = create_toggle_buttons( value='None',
+                    options=['None'] + self.fields_metadata[field]['axis_labels'],
+                    description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
             set_widget_dimensions( slicing_button, width=180 )
@@ -375,10 +398,8 @@ class InteractiveViewer(object):
                 # Add widgets specific to azimuthal modes
                 field_widget_list += [ mode_button,
                                 add_description('Theta:', theta_button)]
-            elif "3dcartesian" in self.avail_geom:
-                # Add widgets specific to cartesian 3d
-                field_widget_list += [ slicing_dir_button,
-                    add_description("Slicing:", slicing_button) ]
+            field_widget_list += [ slicing_dir_button,
+                add_description("Slicing:", slicing_button) ]
             container_fields = widgets.VBox( children=field_widget_list )
             set_widget_dimensions( container_fields, width=330 )
             # Plotting options container
