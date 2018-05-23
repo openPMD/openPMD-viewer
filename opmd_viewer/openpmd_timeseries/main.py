@@ -446,7 +446,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     axes_list = '\n - '.join(axis_labels)
                     raise OpenPMDException(
                     'The `slicing_dir` argument is erroneous: contains %s\n'
-                    'The available axes are: \n - %s' %(axis, axes_list) )
+                    'The available axes are: \n - %s' % (axis, axes_list) )
             if len(slicing_dir) != len(slicing):
                 raise OpenPMDException(
                     'The `slicing_dir` argument is erroneous: \nIt should have'
@@ -526,7 +526,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     plot_range=plot_range, **kw)
             else:
                 raise OpenPMDException('Cannot plot %d-dimensional data.\n'
-                'Use slicing to reduce dimension, or set `plot=False`'%F.ndim )
+                    'Use slicing, or set `plot=False`' % F.ndim)
 
         # Return the result
         return(F, info)

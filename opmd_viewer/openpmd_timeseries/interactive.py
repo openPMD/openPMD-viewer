@@ -112,7 +112,7 @@ class InteractiveViewer(object):
                                 fld_vrange_button.get_range() ]
 
                 # Handle slicing direction
-                if slicing_dir_button.value=='None':
+                if slicing_dir_button.value == 'None':
                     slicing_dir = None
                 else:
                     slicing_dir = slicing_dir_button.value
@@ -355,13 +355,14 @@ class InteractiveViewer(object):
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
             # Slicing buttons
+            axis_labels = self.fields_metadata[field]['axis_labels']
             if self.fields_metadata[field]['geometry'] == '3dcartesian':
                 slicing_dir_button = create_toggle_buttons( value='y',
-                    options=self.fields_metadata[field]['axis_labels'],
+                    options=axis_labels,
                     description='Slice normal:')
             else:
                 slicing_dir_button = create_toggle_buttons( value='None',
-                    options=['None'] + self.fields_metadata[field]['axis_labels'],
+                    options=['None'] + axis_labels,
                     description='Slice normal:')
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
