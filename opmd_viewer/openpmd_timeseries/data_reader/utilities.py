@@ -152,6 +152,6 @@ def join(base_path, *paths):
     except:
         print("Error joining strings.")
     # Correct double slashes, if any is present
-    path = path.replace('//','/')
+    path = path.replace('//', '/')
 
     return path
