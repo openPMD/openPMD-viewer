@@ -8,6 +8,7 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
+import os
 import h5py
 import numpy as np
 
@@ -124,3 +125,34 @@ def get_shape(dset):
         shape = dset.shape
 
     return(shape)
+
+
+def join(base_path, *paths):
+    """
+    Join path components using '/' as separator.
+    This method is defined as an alternative to os.path.join, which uses '\\'
+    as separator in Windows environments and is therefore not valid to navigate
+    within data files.
+
+    Parameters:
+    -----------
+    base_path: string cointaining the base path
+
+    *paths: all other strings with path components to join
+
+    Returns:
+    --------
+    A string with the complete path using '/' as separator.
+    """
+    # Initialize path
+    path = base_path
+    # Join all path components adding a '/'
+    try:
+        for p in paths:
+            path += '/' + p
+    except:
+        print("Error joining strings.")
+    # Correct double slashes, if any is present
+    path = path.replace('//','/')
+
+    return path
