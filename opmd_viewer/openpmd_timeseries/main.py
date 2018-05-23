@@ -448,9 +448,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     'The `slicing_dir` argument is erroneous: contains %s\n'
                     'The available axes are: \n - %s' %(axis, axes_list) )
             if len(slicing_dir) != len(slicing):
-                raise OpenPMDException('Slicing and slicing_dir must have the '
-                                 'same length')
-
+                raise OpenPMDException(
+                    'The `slicing_dir` argument is erroneous: \nIt should have'
+                    'the same number of elements as `slicing_dir`.')
         # Check the coordinate (for vector fields)
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
@@ -516,16 +516,17 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
-        if (geometry == "3dcartesian") and (slicing is None):
-            plot = False
         if plot:
-            if geometry == "1dcartesian":
+            if F.ndim == 1:
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
-            else:
+            elif F.ndim == 2:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
-                        field_label, geometry, self._current_i,
-                        plot_range=plot_range, **kw)
+                    field_label, geometry, self._current_i,
+                    plot_range=plot_range, **kw)
+            else:
+                raise OpenPMDException('Cannot plot %d-dimensional data.\n'
+                'Use slicing to reduce dimension, or set `plot=False`'%F.ndim )
 
         # Return the result
         return(F, info)
