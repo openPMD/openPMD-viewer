@@ -12,7 +12,8 @@ import os
 import numpy as np
 import h5py as h5
 from tqdm import tqdm
-from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
+from .utilities import list_h5_files, apply_selection, \
+                    fit_bins_to_grid, try_stacking
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
@@ -540,9 +541,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Try to stack the arrays
         if returns_tuple:
             for i in range(tuple_length):
-                accumulated_result[i] = np.stack(accumulated_result[i], axis=0)
+                accumulated_result[i] = try_stacking( accumulated_result[i] )
         else:
-            accumulated_result = np.stack( accumulated_result, axis=0 )
+            accumulated_result = try_stacking( accumulated_result )
 
         return accumulated_result
 
