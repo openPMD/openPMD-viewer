@@ -53,7 +53,8 @@ def read_species_data(file_handle, species, record_comp, extensions):
     particles_path = file_handle.attrs['particlesPath'].decode()
 
     # Extract the right dataset
-    species_grp = file_handle[join_infile_path(base_path, particles_path, species)]
+    species_grp = file_handle[
+        join_infile_path(base_path, particles_path, species) ]
     if opmd_record_comp == 'id':
         output_type = np.uint64
     else:
