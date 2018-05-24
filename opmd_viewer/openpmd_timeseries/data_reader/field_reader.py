@@ -10,7 +10,7 @@ License: 3-Clause-BSD-LBNL
 
 import h5py
 import numpy as np
-from .utilities import get_shape, get_data, get_bpath, join
+from .utilities import get_shape, get_data, get_bpath, join_infile_path
 from .field_metainfo import FieldMetaInformation
 
 
@@ -288,11 +288,11 @@ def find_dataset( dfile, field_path ):
     relative_meshes_path = dfile.attrs["meshesPath"].decode()
 
     # Get the proper dataset
-    full_field_path = join(base_path, relative_meshes_path, field_path)
+    full_field_path = join_infile_path(base_path, relative_meshes_path, field_path)
     dset = dfile[ full_field_path ]
     # Get the proper group
     group_path = field_path.split('/')[0]
-    full_group_path = join(base_path, relative_meshes_path, group_path)
+    full_group_path = join_infile_path(base_path, relative_meshes_path, group_path)
     group = dfile[ full_group_path ]
 
     return( group, dset )

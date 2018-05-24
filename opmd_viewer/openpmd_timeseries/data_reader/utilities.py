@@ -126,7 +126,7 @@ def get_shape(dset):
     return(shape)
 
 
-def join(base_path, *paths):
+def join_infile_path(*paths):
     """
     Join path components using '/' as separator.
     This method is defined as an alternative to os.path.join, which uses '\\'
@@ -135,22 +135,14 @@ def join(base_path, *paths):
 
     Parameters:
     -----------
-    base_path: string cointaining the base path
-
-    *paths: all other strings with path components to join
+    *paths: all strings with path components to join
 
     Returns:
     --------
     A string with the complete path using '/' as separator.
     """
-    # Initialize path
-    path = base_path
-    # Join all path components adding a '/'
-    try:
-        for p in paths:
-            path += '/' + p
-    except:
-        print("Error joining strings.")
+    # Join path components
+    path = '/'.join(paths)
     # Correct double slashes, if any is present
     path = path.replace('//', '/')
 
