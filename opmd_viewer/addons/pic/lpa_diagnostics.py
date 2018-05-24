@@ -437,8 +437,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the current and bin centers
         return(current, info)
 
-    def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            freq_filter=40, theta=0,
+    def get_laser_envelope( self, t=None, iteration=None, pol=None,
+                            freq_filter=40, theta=0, m='all',
                             slicing_dir=None, slicing=0, plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
@@ -458,15 +458,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         pol : string
             Polarization of the field. Options are 'x', 'y'
 
-        m : int or str, optional
-           Only used for thetaMode geometry
-           Either 'all' (for the sum of all the modes)
-           or an integer (for the selection of a particular mode)
-
         freq_filter : float, optional
             Range of frequencies in percent which to filter: Frequencies higher
             than freq_filter/100 times the dominant frequencies will be
             filtered out
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
 
         theta : float, optional
            Only used for thetaMode geometry
@@ -590,7 +590,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope )
 
-    def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
+    def get_main_frequency( self, t=None, iteration=None, pol=None,
+                            theta=0, m='all', slicing_dir=None, slicing=0,
                             method='max'):
         """
         Calculate the angular frequency of a laser pulse.
@@ -614,6 +615,29 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
+
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
+
         method : string, optional
             Method which is used to calculate the frequency of the pulse
             'fit' : Fit a Gaussian curve to find central frequency
@@ -624,7 +648,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A float with mean angular frequency
         """
         # Extract the spectrum
-        spectrum, info = self.get_spectrum( t, iteration, pol, m )
+        spectrum, info = self.get_spectrum( t, iteration, pol, m=m,
+                    theta=theta, slicing_dir=slicing_dir, slicing=slicing )
 
         # Calculate the main frequency
         # Use the maximum
@@ -664,6 +689,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
+
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
 
         m : int or str, optional
            Only used for thetaMode geometry
@@ -739,7 +792,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
-    def get_a0( self, t=None, iteration=None, pol=None ):
+    def get_a0( self, t=None, iteration=None, pol=None,
+                    theta=0, m='all', slicing=0, slicing_dir=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
 
@@ -757,6 +811,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         pol : string
             Polarization of the field. Options are 'x', 'y'
 
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
+
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
+
         Returns
         -------
         Float with normalized vector potential a0
@@ -770,12 +852,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                                slicing=slicing, m=m,
                                                slicing_dir=slicing_dir)[0])
         # Get mean frequency
-        omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
+        omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol,
+                theta=theta, m=m, slicing=slicing, slicing_dir=slicing_dir)
         # Calculate a0
         a0 = Emax * const.e / (const.m_e * const.c * omega)
         return( a0 )
 
-    def get_ctau( self, t=None, iteration=None, pol=None, method='fit' ):
+    def get_ctau( self, t=None, iteration=None, pol=None, method='fit',
+                        theta=0, m='all', slicing=0, slicing_dir=None ):
         """
         Calculate the length of a (gaussian) laser pulse. Here 'length' means
         the 'longitudinal waist' (i.e sqrt(2) * sigma_z).
@@ -800,6 +884,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            'rms': RMS radius, weighted by the longitudinal profile
            ('rms' tends to give more weight to the "wings" of the pulse)
 
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        theta : float, optional
+           Only used for thetaMode geometry
+           The angle of the plane of observation, with respect to the x axis
+
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
+
         Returns
         -------
         Float with ctau in meters
@@ -809,7 +921,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                            pol=pol, theta=theta,
+                                            pol=pol, theta=theta, m=m,
                                             slicing=slicing,
                                             slicing_dir=slicing_dir)
         # Calculate ctau with RMS value
@@ -831,7 +943,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing=0, slicing_dir=None, method='fit' ):
+                m='all', slicing=0, slicing_dir=None, method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -852,6 +964,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
 
         slicing : float or list of float, optional
            Number(s) between -1 and 1 that indicate where to slice the data,
