@@ -9,10 +9,9 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
-import os
 import numpy as np
 from scipy import constants
-from .utilities import get_data, get_bpath
+from .utilities import get_data, get_bpath, join_infile_path
 
 
 def read_species_data(file_handle, species, record_comp, extensions):
@@ -55,7 +54,7 @@ def read_species_data(file_handle, species, record_comp, extensions):
 
     # Extract the right dataset
     species_grp = file_handle[
-        os.path.join(base_path, particles_path, species) ]
+        join_infile_path(base_path, particles_path, species) ]
     if opmd_record_comp == 'id':
         output_type = np.uint64
     else:
