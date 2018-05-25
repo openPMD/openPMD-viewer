@@ -116,14 +116,17 @@ def apply_selection(file_handle, data_list, select, species, extensions):
     return(data_list)
 
 
-def try_stacking( L ):
+def try_array( L ):
     """
-    Attempt to stack the elements of the list L in a single array.
+    Attempt to convert L to a single array.
 
-    This is done only if the elements of L are arrays of the same shape.
+    This is done only if the elements of L are scalars,
+    or arrays of the same shape.
     """
     # Check that all element are arrays of the same shape
-    if all( type(x) is np.ndarray for x in L ) \
+    if all( type(x) in [float, int] for x in L ):
+        return np.array( L )
+    elif all( type(x) is np.ndarray for x in L ) \
             and all( x.shape == L[0].shape for x in L ):
         # Stack the arrays
         return np.stack( L, axis=0 )
