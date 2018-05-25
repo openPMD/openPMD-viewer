@@ -554,10 +554,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Check the shape of results
         result = called_method(*args, **kwargs)
-        if type( result ) == tuple:
+        if type( result ) in [tuple, list]:
             returns_tuple = True
             tuple_length = len(result)
-            accumulated_result = ( [element] for element in result )
+            accumulated_result = list( [element] for element in result )
         else:
             returns_tuple = False
             accumulated_result = [ result ]
