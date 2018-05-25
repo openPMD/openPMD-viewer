@@ -118,7 +118,9 @@ def apply_selection(file_handle, data_list, select, species, extensions):
 
 def try_stacking( L ):
     """
-    TODO
+    Attempt to stack the elements of the list L in a single array.
+
+    This is done only if the elements of L are arrays of the same shape.
     """
     # Check that all element are arrays of the same shape
     if all( type(x) is np.ndarray for x in L ) \

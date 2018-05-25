@@ -534,7 +534,20 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
     def iterate( self, called_method, *args, **kwargs ):
         """
-        TODO
+        Repeated calls the method `called_method` for every iteration of this
+        timeseries, with the arguments `*args` and `*kwargs`.
+
+        The result of these calls is returned as a list, or, whenever possible
+        as a stacked array, where the first axis corresponds to the iterations.
+
+        If `called_method` returns a tuple, then `iterate` returns a
+        tuple of lists (or stacked arrays).
+
+        Parameters
+        ----------
+        *args, **kwargs: arguments and keyword arguments
+            Arguments that would normally be passed to `called_method` for
+            a single iteration. Do not pass the argument `t` or `iteration`.
         """
         # Add the iteration key in the keyword aguments
         kwargs['iteration'] = self.iterations[0]
