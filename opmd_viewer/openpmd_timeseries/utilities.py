@@ -122,12 +122,13 @@ def try_stacking( L ):
     """
     # Check that all element are arrays of the same shape
     if all( type(x) is np.ndarray for x in L ) \
-        and all( x.shape == L[0].shape for x in L ):
-            # Stack the arrays
-            return np.stack( L, axis=0 )
+            and all( x.shape == L[0].shape for x in L ):
+        # Stack the arrays
+        return np.stack( L, axis=0 )
     else:
         # Do not stack
         return L
+
 
 def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     """
