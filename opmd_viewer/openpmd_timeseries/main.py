@@ -13,7 +13,7 @@ import numpy as np
 import h5py as h5
 from tqdm import tqdm
 from .utilities import list_h5_files, apply_selection, \
-    fit_bins_to_grid, try_stacking
+    fit_bins_to_grid, try_array
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
@@ -538,10 +538,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
         timeseries, with the arguments `*args` and `*kwargs`.
 
         The result of these calls is returned as a list, or, whenever possible
-        as a stacked array, where the first axis corresponds to the iterations.
+        as an array, where the first axis corresponds to the iterations.
 
-        If `called_method` returns a tuple, then `iterate` returns a
-        tuple of lists (or stacked arrays).
+        If `called_method` returns a tuple/list, then `iterate` returns a
+        tuple/list of lists (or arrays).
 
         Parameters
         ----------
@@ -554,32 +554,36 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Check the shape of results
         result = called_method(*args, **kwargs)
-        if type( result ) in [tuple, list]:
-            returns_tuple = True
-            tuple_length = len(result)
-            accumulated_result = list( [element] for element in result )
+        result_type = type( result )
+        if result_type in [tuple, list]:
+            returns_iterable = True
+            iterable_length = len(result)
+            accumulated_result = [ [element] for element in result ]
         else:
-            returns_tuple = False
+            returns_iterable = False
             accumulated_result = [ result ]
 
         # Call the method for all iterations
         for iteration in tqdm(self.iterations[1:]):
             kwargs['iteration'] = iteration
             result = called_method( *args, **kwargs )
-            if returns_tuple:
-                for i in range(tuple_length):
+            if returns_iterable:
+                for i in range(iterable_length):
                     accumulated_result[i].append( result[i] )
             else:
                 accumulated_result.append( result )
 
         # Try to stack the arrays
-        if returns_tuple:
-            for i in range(tuple_length):
-                accumulated_result[i] = try_stacking( accumulated_result[i] )
+        if returns_iterable:
+            for i in range(iterable_length):
+                accumulated_result[i] = try_array( accumulated_result[i] )
+            if result_type == tuple:
+                return tuple(accumulated_result)
+            elif result_type == list:
+                return accumulated_result
         else:
-            accumulated_result = try_stacking( accumulated_result )
-
-        return accumulated_result
+            accumulated_result = try_array( accumulated_result )
+            return accumulated_result
 
     def _find_output(self, t, iteration):
         """
