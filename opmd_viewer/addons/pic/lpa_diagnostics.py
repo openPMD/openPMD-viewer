@@ -240,16 +240,17 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
                                            species=species, select=select )
-        # Calculate diveregence
+        # Calculate divergence
         div_x = w_std( np.arctan2(ux, uz), w )
         div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
         return( div_x, div_y )
 
-    def get_emittance( self, t=None, iteration=None, species=None,
-                       select=None ):
+    def get_emittance(self, t=None, iteration=None, species=None,
+                      select=None, kind='normalized', description='projected',
+                      nslices=0, beam_length=None):
         """
-        Calculate the normalized RMS emittance.
+        Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
 
         Parameters
@@ -267,36 +268,102 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Particle species to use for calculations
 
         select : dict, optional
-            Either None or a dictionary of rules
-            to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            Either None or a dictionary of rules to select the particles,
+            of the form:
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns);
+            'z' : [0, 100] (Particles having x between 0 and 100 microns).
+
+        kind : string, optional
+            Kind of emittance to be computed. Can be 'normalized' or 'trace'.
+
+        description : string, optional
+            Type of emittance to be computed. Available options:
+               - 'projected' : projected emittance
+               - 'all-slices' : emittance within slices taken along the z
+                              direction
+               - 'slice-averaged' : slice emittance averaged over all slices.
+
+        nslices : integer, optional
+            Number of slices to compute slice emittance. Required if
+            description='slice-average' or 'all-slices'.
+
+        beam_length : float (in meters), optional
+            Beam length, used to calculate slice positions when nslices>1.
+            By default, it is 4 times the standard deviation in z.
 
         Returns
         -------
-        A tuple with :
-        - normalized beam emittance in the x plane (pi m rad)
-        - normalized beam emittance in the y plane (pi m rad)
+        If description='projected' or 'slice-averaged':
+            - beam emittance in the x plane (pi m rad)
+            - beam emittance in the y plane (pi m rad)
+        If description='all-slices':
+            - A 1d array with beam emittance in the x plane
+              (pi m rad) for each slice
+            - A 1d array with beam emittance in the y plane
+              (pi m rad) for each slice
+            - A 1d array with number of electrons in each slice
+            - A 1d array with slice centers
         """
+        if kind not in ['normalized', 'trace']:
+            raise ValueError('Argument `kind` not recognized.')
+        if description not in ['projected', 'slice-averaged', 'all-slices']:
+            raise ValueError('Argument `description` not recognized.')
+        # Wheter to compute slice emittance
+        do_slice_emittance = ( description in ['slice-averaged',
+                                               'all-slices'] )
+        if do_slice_emittance and not nslices > 0:
+            raise ValueError('nslices must be given if `description`=' +
+                             description + '.')
         # Get particle data
-        x, y, ux, uy, w = self.get_particle(
-            var_list=['x', 'y', 'ux', 'uy', 'w'],
-            t=t, iteration=iteration,
-            species=species, select=select )
-        # Calculate the necessary RMS values
+        x, y, z, ux, uy, uz, w = self.get_particle(
+            var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
+            iteration=iteration, species=species, select=select )
         x *= 1.e-6
         y *= 1.e-6
-        xsq = w_ave( x ** 2, weights=w )
-        ysq = w_ave( y ** 2, weights=w )
-        uxsq = w_ave( ux ** 2, weights=w )
-        uysq = w_ave( uy ** 2, weights=w )
-        xux = w_ave( x * ux, weights=w )
-        yuy = w_ave( y * uy, weights=w )
-        # Calculate the beam emittances
-        emit_x = np.sqrt( xsq * uxsq - xux ** 2 )
-        emit_y = np.sqrt( ysq * uysq - yuy ** 2 )
-        # Return the results
-        return( emit_x, emit_y )
+        # Normalized or trace-space emittance
+        if kind == 'normalized':
+            ux = ux
+            uy = uy
+        if kind == 'trace':
+            ux = ux / uz
+            uy = uy / uz
+
+        if do_slice_emittance:
+            # Get slice locations
+            zavg = w_ave(z, w)
+            z = z - zavg
+            if beam_length is None:
+                std = w_std(z, w)
+                beam_length = 4 * std
+            bins = np.linspace( -beam_length / 2, beam_length / 2, nslices )
+            binwidth = .5 * bins[1] - .5 * bins[0]
+            slice_centers = bins + .5 * binwidth
+            # Initialize slice emittance arrays
+            emit_slice_x = np.zeros(len(bins[:-1]))
+            emit_slice_y = np.zeros(len(bins[:-1]))
+            slice_weights = np.zeros(len(bins[:-1]))
+            # Loop over slices
+            for count, leftedge in enumerate(bins[:-1]):
+                # Get emittance in this slice
+                current_slice = ( np.abs( z - slice_centers[count] ) <=
+                    binwidth )
+                slice_weights[count] = np.sum(w[current_slice])
+                if slice_weights[count] > 0:
+                    emit_x, emit_y = emittance_from_coord(
+                        x[current_slice], y[current_slice],
+                        ux[current_slice], uy[current_slice],
+                        w[current_slice])
+                    emit_slice_x[count] = emit_x
+                    emit_slice_y[count] = emit_y
+            if description == 'all-slices':
+                return (emit_slice_x, emit_slice_y,
+                    slice_weights, slice_centers)
+            else:
+                emit_x = w_ave(emit_slice_x, slice_weights)
+                emit_y = w_ave(emit_slice_y, slice_weights)
+                return emit_x, emit_y
+        else:
+            return emittance_from_coord(x, y, ux, uy, w)
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
                      bins=100, plot=False, **kw ):
@@ -372,7 +439,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
-                            slicing_dir='y', plot=False, **kw ):
+                            slicing_dir=None, slicing=0., plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -410,10 +477,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing_dir : str, optional
-           Only used for 3dcartesian geometry
-           The direction along which to slice the data
-           Either 'x', 'y'
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing_dir is None, the full grid is returned.
+           Default is None.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -434,7 +515,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get field data
         field = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
-                                slicing_dir=slicing_dir )
+                                slicing=slicing, slicing_dir=slicing_dir )
         info = field[1]
         if index == 'all':
             # Filter the full 2D array
@@ -629,16 +710,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        if "3dcartesian" in self.avail_geom:
+            slicing = 0.
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
+            slicing = None
 
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord=pol, theta=theta, m=m,
-                                slicing_dir=slicing_dir )
+                                slicing=slicing, slicing_dir=slicing_dir )
         # Get central field lineout
         field1d = field[ int( field.shape[0] / 2 ), :]
         # FFT of 1d data
@@ -689,16 +777,23 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        slicing = 0.
+        if "3dcartesian" in self.avail_geom:
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
+
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
                                                pol=pol, theta=theta,
+                                               slicing=slicing,
                                                slicing_dir=slicing_dir)[0])
         # Get mean frequency
         omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
@@ -738,14 +833,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         if pol == 'x':
-            slicing_dir = 'y'
             theta = 0
         else:
-            slicing_dir = 'x'
             theta = np.pi / 2.
+        slicing = 0.
+        if "3dcartesian" in self.avail_geom:
+            if pol == 'x':
+                slicing_dir = 'y'
+            else:
+                slicing_dir = 'x'
+        else:
+            slicing_dir = None
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
                                             pol=pol, theta=theta,
+                                            slicing=slicing,
                                             slicing_dir=slicing_dir)
         # Calculate ctau with RMS value
         ctau = np.sqrt(2) * w_std(info.z, E)
@@ -766,7 +868,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing_dir='y', method='fit' ):
+                         slicing=None, slicing_dir=None, method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -788,10 +890,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing_dir : str, optional
-           Only used for 3dcartesian geometry
-           The direction along which to slice the data
-           Either 'x', 'y'
+        slicing : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slicing_dir`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           If slicing is None, the full grid is returned.
+           Default is None
+
+        slicing_dir : str or list of str, optional
+           Direction(s) along which to slice the data
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           Default is None.
 
         method : str, optional
            The method which is used to compute the waist
@@ -806,6 +922,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get the field envelope
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all',
+                                                slicing=slicing,
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
         # Find the indices of the maximum field, and
@@ -837,7 +954,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y', plot=False, **kw ):
+                          slicing_dir=None, slicing=0., plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
@@ -880,7 +997,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
                                     coord=pol, theta=theta,
-                                    slicing_dir=slicing_dir )
+                                    slicing_dir=slicing_dir,
+                                    slicing=slicing)
         # Get central slice
         E = E[ int(E.shape[0] / 2), :]
         Nz = len(E)
@@ -1010,3 +1128,42 @@ def gaussian_profile( x, x0, E0, w0 ):
     A 1darray of floats, of the same length as x
     """
     return( E0 * np.exp( -(x - x0) ** 2 / w0 ** 2 ) )
+
+
+def emittance_from_coord(x, y, ux, uy, w):
+    """
+    Calculate emittance from arrays of particle coordinates.
+
+    Parameters
+    ----------
+    x : arrays of floats
+        x position of particles
+    y : arrays of floats
+        y position of particles
+    ux : arrays of floats
+        ux normalized momentum of particles
+    uy : arrays of floats
+        uy normalized momentum of particles
+    w : arrays of floats
+        Particle weights
+
+    Returns
+    -------
+    emit_x : float
+        emittance in the x direction (m*rad)
+    emit_y : float
+        emittance in the y direction (m*rad)
+    """
+    xm = w_ave( x, w )
+    xsq = w_ave( (x - xm) ** 2, w )
+    ym = w_ave( y, w )
+    ysq = w_ave( (y - ym) ** 2, w )
+    uxm = w_ave( ux, w )
+    uxsq = w_ave( (ux - uxm) ** 2, w )
+    uym = w_ave( uy, w )
+    uysq = w_ave( (uy - uym) ** 2, w )
+    xux = w_ave( (x - xm) * (ux - uxm), w )
+    yuy = w_ave( (y - ym) * (uy - uym), w )
+    emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
+    emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
+    return emit_x, emit_y
