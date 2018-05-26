@@ -22,6 +22,46 @@ try:
 except ImportError:
     cython_function_available = False
 
+# Redefine the default matplotlib formatter for ticks
+if matplotlib_installed:
+    from matplotlib.ticker import ScalarFormatter
+
+    class MyFormatter( ScalarFormatter ):
+        """
+        # TODO
+        """
+        def __init__( self, *args, **kwargs ):
+            mticker.ScalarFormatter.__init__( self, *args, **kwargs )
+            self.set_scientific(False)
+            self._offset_threshold = 2
+
+        def pprint_val( self, x, pos=None ):
+            """
+            # TODO
+            """
+            xp = (x - self.offset)
+            if xp != 0:
+                log_x = 3*math.floor( math.log10(abs(xp))/3 )
+            else:
+                log_x = 0
+            # Show 2 digits at most after decimal point
+            mantissa = round( xp*10**(-log_x), 3)
+            if mantissa !=0  and math.log10(abs(mantissa)) == 3:
+                log_x += 3
+                mantissa /= 1000
+            string = "{:.3f}".format( mantissa )
+            # Limit the string to 3 digits
+            string = string[:5]
+            if '.' in string:
+                # Remove trailing zeros and ., for integer mantissa
+                string = string.rstrip('0')
+                string = string.rstrip('.')
+            if log_x != 0:
+                string += "e{:d}".format( log_x )
+            return string
+
+    tick_formatter = MyFormatter()
+
 
 class Plotter(object):
 
@@ -116,11 +156,16 @@ class Plotter(object):
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
         plt.bar( bin_coords, binned_data, width=bin_size, **kw )
-        plt.xlim( hist_range[0] )
-        plt.ylim( hist_range[1] )
+        plt.set_xlim( hist_range[0] )
+        plt.set_ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f s    (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
+
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
@@ -197,6 +242,11 @@ class Plotter(object):
         plt.ylabel(quantity2, fontsize=self.fontsize)
         plt.title("%s:   t =  %.1f s   (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
+
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
@@ -247,6 +297,11 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
+
 
     def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
                         current_i, plot_range, **kw):
@@ -321,6 +376,10 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
 
 def print_cic_unavailable():
