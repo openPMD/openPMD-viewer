@@ -73,7 +73,7 @@ class ParticleTracker( object ):
         select: dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]  (Particles having x between -4 and 10 microns)
+            'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
 

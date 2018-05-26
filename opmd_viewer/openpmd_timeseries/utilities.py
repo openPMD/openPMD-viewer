@@ -74,7 +74,7 @@ def apply_selection(file_handle, data_list, select, species, extensions):
 
     select: dict
         A dictionary of rules to select the particles
-        'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+        'x' : [-4., 10.]   (Particles having x between -4 and 10)
         'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
         'uz' : [5., None]  (Particles with uz above 5 mc)
 
@@ -143,7 +143,7 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     grid_size: integer
         The number of cells in the grid
 
-    grid_range: list of floats (in meters)
+    grid_range: list of floats (in)
         The extent of the grid
 
     Returns:
@@ -151,7 +151,7 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     hist_size: integer
         The new number of bins
 
-    hist_range: list of floats (in microns)
+    hist_range: list of floats
         The new range of the histogram
     """
     # The new histogram range is the same as the grid range
@@ -172,9 +172,5 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     # Get the corresponding new number of bins, and the new range
     hist_size = int( ( hist_range[1] - hist_range[0] ) / hist_spacing )
     hist_range[1] = hist_range[0] + hist_size * hist_spacing
-
-    # Convert the range to microns (since this is how particle positions
-    # are returned in the openPMD-viewer)
-    hist_range = [ 1.e6 * hist_range[0], 1.e6 * hist_range[1] ]
 
     return( hist_size, hist_range )
