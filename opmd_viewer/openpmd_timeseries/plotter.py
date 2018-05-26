@@ -9,6 +9,7 @@ Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 import numpy as np
+import math
 try:
     import warnings
     import matplotlib
@@ -31,7 +32,7 @@ if matplotlib_installed:
         # TODO
         """
         def __init__( self, *args, **kwargs ):
-            mticker.ScalarFormatter.__init__( self, *args, **kwargs )
+            ScalarFormatter.__init__( self, *args, **kwargs )
             self.set_scientific(False)
             self._offset_threshold = 2
 
@@ -156,8 +157,8 @@ class Plotter(object):
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
         plt.bar( bin_coords, binned_data, width=bin_size, **kw )
-        plt.set_xlim( hist_range[0] )
-        plt.set_ylim( hist_range[1] )
+        plt.xlim( hist_range[0] )
+        plt.ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f s    (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
