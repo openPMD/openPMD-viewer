@@ -19,8 +19,6 @@ def read_species_data(file_handle, species, record_comp, extensions):
     """
     Extract a given species' record_comp
 
-    In the case of positions, the result is returned in microns
-
     Parameters
     ----------
     file_handle: h5py.File object
@@ -74,11 +72,10 @@ def read_species_data(file_handle, species, record_comp, extensions):
             w = get_data( species_grp[ 'weighting' ] )
             data *= w ** (-weighting_power)
 
-    # - Return positions in microns, with an offset
+    # - Return positions, with an offset
     if record_comp in ['x', 'y', 'z']:
         offset = get_data(species_grp['positionOffset/%s' % record_comp])
         data += offset
-        data *= 1.e6
     # - Return momentum in normalized units
     elif record_comp in ['ux', 'uy', 'uz' ]:
         m = get_data(species_grp['mass'])

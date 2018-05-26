@@ -69,8 +69,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10)
+            'z' : [0, 100] (Particles having x between 0 and 100)
 
         Returns
         -------
@@ -122,8 +122,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10)
+            'z' : [0, 100] (Particles having x between 0 and 100)
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -160,12 +160,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
-            time_fs = 1.e15 * self.t[ self._current_i ]
+            time = self.t[ self._current_i ]
             plt.plot(z_pos, spreads, **kw)
-            plt.title("Slice energy spread at %.1f fs   (iteration %d)"
-                % (time_fs, iteration), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
-            plt.ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
+            plt.title("Slice energy spread at %.1f s   (iteration %d)"
+                % (time, iteration), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
+            plt.ylabel('$\sigma_\gamma (\Delta_z=%s m)$' % dz,
                        fontsize=self.plotter.fontsize)
         return(spreads, z_pos)
 
@@ -190,8 +190,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10)
+            'z' : [0, 100] (Particles having x between 0 and 100)
 
         Returns
         -------
@@ -227,8 +227,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10)
+            'z' : [0, 100] (Particles having x between 0 and 100)
 
         Returns
         -------
@@ -270,8 +270,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules to select the particles,
             of the form:
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns);
-            'z' : [0, 100] (Particles having x between 0 and 100 microns).
+            'x' : [-4., 10.]   (Particles having x between -4 and 10);
+            'z' : [0, 100] (Particles having x between 0 and 100).
 
         kind : string, optional
             Kind of emittance to be computed. Can be 'normalized' or 'trace'.
@@ -387,8 +387,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
-            'z' : [0, 100] (Particles having x between 0 and 100 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10)
+            'z' : [0, 100] (Particles having x between 0 and 100)
 
         bins : int, optional
             Number of bins along the z-axis in which to calculate the current
@@ -428,11 +428,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
-            time_fs = 1.e15 * self.t[ self._current_i ]
+            time = self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
-            plt.title("Current at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            plt.title("Current at %.1f s   (iteration %d)"
+                % (time, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
         # Return the current and bin centers
         return(current, info)
@@ -537,20 +537,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
-            time_fs = 1.e15 * self.t[ self._current_i ]
+            time = self.t[ self._current_i ]
             if index != 'all':
-                plt.plot( 1.e6 * info.z, envelope, **kw)
+                plt.plot( info.z, envelope, **kw)
                 plt.ylabel('$E_%s \;(V/m)$' % pol,
                            fontsize=self.plotter.fontsize)
             else:
-                plt.imshow( envelope, extent=1.e6 * info.imshow_extent,
+                plt.imshow( envelope, extent=info.imshow_extent,
                             aspect='auto', **kw)
                 plt.colorbar()
-                plt.ylabel('$%s \;(\mu m)$' % pol,
+                plt.ylabel('$%s \;(m)$' % pol,
                             fontsize=self.plotter.fontsize)
-            plt.title("Laser envelope at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            plt.title("Laser envelope at %.1f s   (iteration %d)"
+                % (time, iteration ), fontsize=self.plotter.fontsize)
+            plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
         # Return the result
         return( envelope, info )
 
@@ -744,13 +744,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
-            time_fs = 1.e15 * self.t[ self._current_i ]
+            time = self.t[ self._current_i ]
             plt.plot( spect_info.omega, spectrum, **kw )
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-            plt.title("Spectrum at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.title("Spectrum at %.1f s   (iteration %d)"
+                % (time, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
     def get_a0( self, t=None, iteration=None, pol=None ):
@@ -1038,11 +1038,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if plot:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
-            time_fs = 1.e15 * self.t[ self._current_i ]
+            time = self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
-            plt.title("Spectrogram at %.1f fs   (iteration %d)"
-                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.title("Spectrogram at %.1f s   (iteration %d)"
+                % (time, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
