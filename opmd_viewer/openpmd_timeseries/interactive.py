@@ -55,6 +55,12 @@ class InteractiveViewer(object):
         if not dependencies_installed:
             raise RuntimeError("Failed to load the openPMD-viewer slider.\n"
                 "(Make sure that ipywidgets and matplotlib are installed.)")
+        elif ipywidgets_version <= 4:
+            raise RuntimeError(
+                'Your version of ipywidgets is too old.\n'
+                'Please install a newer version of ipywidgets.\n'
+                'e.g. with: pip install --upgrade ipywidgets\n'
+                'or with: conda install -c conda-forge ipywidgets')
 
         # -----------------------
         # Define useful functions
@@ -572,22 +578,12 @@ class ColorBarSelector(object):
         # Gather the different widgets on two lines
         cmap_container = widgets.HBox( children=[
             widgets.HTML( "<b>Colorbar:</b>"), self.cmap ])
-        if ipywidgets_version > 4:
-            # For newer version of ipywidgets: add the "x10^" on same line
-            range_container = widgets.HBox( children=[ self.active,
-                add_description("from", self.low_bound, width=30 ),
-                add_description("to", self.up_bound, width=20 ),
-                add_description("x 10^", self.exponent, width=45 ) ] )
-            final_container = widgets.VBox(
-                children=[ cmap_container, range_container ])
-        else:
-            # For older version of ipywidgets: add the "x10^" on new line
-            range_container = widgets.HBox( children=[ self.active,
-                add_description("from", self.low_bound, width=30 ),
-                add_description("to", self.up_bound, width=20 ) ] )
-            final_container = widgets.VBox(
-                children=[ cmap_container, range_container,
-                add_description("x 10^", self.exponent, width=45 ) ])
+        range_container = widgets.HBox( children=[ self.active,
+            add_description("from", self.low_bound, width=30 ),
+            add_description("to", self.up_bound, width=20 ),
+            add_description("x 10^", self.exponent, width=45 ) ] )
+        final_container = widgets.VBox(
+            children=[ cmap_container, range_container ])
         set_widget_dimensions( final_container, width=310 )
         return( final_container )
 
