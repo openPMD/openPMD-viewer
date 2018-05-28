@@ -95,7 +95,7 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Check deposition method
         if deposition == 'cic' and not cython_function_available:
@@ -119,8 +119,8 @@ class Plotter(object):
         plt.xlim( hist_range[0] )
         plt.ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f fs    (iteration %d)"
-                  % (species, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s:   t =  %.0f s    (iteration %d)"
+                  % (species, time, iteration), fontsize=self.fontsize)
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
@@ -168,7 +168,7 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Check deposition method
         if deposition == 'cic' and not cython_function_available:
@@ -195,8 +195,8 @@ class Plotter(object):
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f fs   (iteration %d)"
-                  % (species, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s:   t =  %.1f s   (iteration %d)"
+                  % (species, time, iteration), fontsize=self.fontsize)
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
@@ -226,16 +226,16 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Get the title and labels
-        plt.title("%s at %.1f fs   (iteration %d)"
-                % (field_label, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s at %.1f s   (iteration %d)" % (field_label,
+                    time, iteration), fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
-        # Get the x axis in microns
-        xaxis = 1.e6 * getattr( info, info.axes[0] )
+        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
+        # Get the x axis
+        xaxis = getattr( info, info.axes[0] )
         # Plot the data
         plt.plot( xaxis, F )
         # Get the limits of the plot
@@ -284,33 +284,33 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
-                      % (field_label, mode, time_fs, iteration),
+            plt.title("%s in the mode %s at %.1f s   (iteration %d)"
+                      % (field_label, mode, time, iteration),
                       fontsize=self.fontsize)
         # 2D Cartesian geometry
         elif geometry == "2dcartesian":
-            plt.title("%s at %.1f fs   (iteration %d)"
-                      % (field_label, time_fs, iteration),
+            plt.title("%s at %.1f s   (iteration %d)"
+                      % (field_label, time, iteration),
                       fontsize=self.fontsize)
         # 3D Cartesian geometry
         elif geometry == "3dcartesian":
             slice_plane = info.axes[0] + '-' + info.axes[1]
-            plt.title("%s sliced in %s at %.1f fs  (iteration %d)"
-                      % (field_label, slice_plane, time_fs, iteration),
+            plt.title("%s sliced in %s at %.1f s  (iteration %d)"
+                      % (field_label, slice_plane, time, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
-        plt.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        plt.xlabel('$%s \;(m)$' % info.axes[1], fontsize=self.fontsize)
+        plt.ylabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
+        plt.imshow(F, extent=info.imshow_extent, origin='lower',
                    interpolation='nearest', aspect='auto', **kw)
         plt.colorbar()
 

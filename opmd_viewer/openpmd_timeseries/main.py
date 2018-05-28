@@ -124,7 +124,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
         If two quantities are requested by the user, this plots
         a 2d histogram of these quantities.
 
-        In the case of positions, the result is returned in microns
         In the case of momenta, the result is returned as:
         - unitless momentum (i.e. gamma*beta) for particles with non-zero mass
         - in kg.m.s^-1 for particles with zero mass
@@ -154,7 +153,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         select: dict or ParticleTracker object, optional
             - If `select` is a dictionary:
             then it lists a set of rules to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 meters)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
             - If `select` is a ParticleTracker object:
