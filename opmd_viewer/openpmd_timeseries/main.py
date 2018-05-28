@@ -111,7 +111,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.plotter = Plotter(self.t, self.iterations)
 
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
-            select=None, output=True, plot=False, nbins=150,
+            select=None, plot=False, nbins=150,
             plot_range=[[None, None], [None, None]],
             use_field_mesh=True, histogram_deposition='cic', **kw):
         """
@@ -145,9 +145,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
-        output : bool, optional
-           Whether to return the requested quantity
 
         select: dict or ParticleTracker object, optional
             - If `select` is a dictionary:
@@ -342,13 +339,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Close the file
         file_handle.close()
 
-        # Output
-        if output:
-            return(data_list)
+        # Output the data
+        return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slicing=0., slicing_dir=None,
-                  output=True, plot=False,
+                  plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
@@ -398,9 +394,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            If slicing is None, the full grid is returned.
-
-        output : bool, optional
-           Whether to return the requested quantity
 
         plot : bool, optional
            Whether to plot the requested quantity
