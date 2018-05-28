@@ -116,6 +116,18 @@ def apply_selection(file_handle, data_list, select, species, extensions):
     return(data_list)
 
 
+def try_array( L ):
+    """
+    Attempt to convert L to a single array.
+    """
+    try:
+        # Stack the arrays
+        return np.stack( L, axis=0 )
+    except ValueError:
+        # Do not stack
+        return L
+
+
 def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     """
     Given a tentative number of bins `hist_size` for a histogram over

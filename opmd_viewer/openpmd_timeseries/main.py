@@ -11,7 +11,9 @@ License: 3-Clause-BSD-LBNL
 import os
 import numpy as np
 import h5py as h5
-from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
+from tqdm import tqdm
+from .utilities import list_h5_files, apply_selection, \
+    fit_bins_to_grid, try_array
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
@@ -529,6 +531,59 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Return the result
         return(F, info)
+
+    def iterate( self, called_method, *args, **kwargs ):
+        """
+        Repeated calls the method `called_method` for every iteration of this
+        timeseries, with the arguments `*args` and `*kwargs`.
+
+        The result of these calls is returned as a list, or, whenever possible
+        as an array, where the first axis corresponds to the iterations.
+
+        If `called_method` returns a tuple/list, then `iterate` returns a
+        tuple/list of lists (or arrays).
+
+        Parameters
+        ----------
+        *args, **kwargs: arguments and keyword arguments
+            Arguments that would normally be passed to `called_method` for
+            a single iteration. Do not pass the argument `t` or `iteration`.
+        """
+        # Add the iteration key in the keyword aguments
+        kwargs['iteration'] = self.iterations[0]
+
+        # Check the shape of results
+        result = called_method(*args, **kwargs)
+        result_type = type( result )
+        if result_type in [tuple, list]:
+            returns_iterable = True
+            iterable_length = len(result)
+            accumulated_result = [ [element] for element in result ]
+        else:
+            returns_iterable = False
+            accumulated_result = [ result ]
+
+        # Call the method for all iterations
+        for iteration in tqdm(self.iterations[1:]):
+            kwargs['iteration'] = iteration
+            result = called_method( *args, **kwargs )
+            if returns_iterable:
+                for i in range(iterable_length):
+                    accumulated_result[i].append( result[i] )
+            else:
+                accumulated_result.append( result )
+
+        # Try to stack the arrays
+        if returns_iterable:
+            for i in range(iterable_length):
+                accumulated_result[i] = try_array( accumulated_result[i] )
+            if result_type == tuple:
+                return tuple(accumulated_result)
+            elif result_type == list:
+                return accumulated_result
+        else:
+            accumulated_result = try_array( accumulated_result )
+            return accumulated_result
 
     def _find_output(self, t, iteration):
         """
