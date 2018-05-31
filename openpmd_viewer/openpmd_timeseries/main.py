@@ -9,18 +9,11 @@ License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
-import h5py as h5
 from tqdm import tqdm
-from .utilities import list_h5_files, apply_selection, fit_bins_to_grid, \
-                        combine_cylindrical_components, try_array, \
-                        sanitize_slicing
+from .utilities import apply_selection, fit_bins_to_grid, try_array
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
-from .data_reader.params_reader import read_openPMD_params
-from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_cartesian, \
-    read_field_circ, get_grid_parameters
-from .data_reader.utilities import join_infile_path
+from .data_reader import DataReader
 from .interactive import InteractiveViewer
 
 
@@ -40,7 +33,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True):
+    def __init__(self, path_to_dir, check_all_files=True, backend='h5py'):
         """
         Initialize an openPMD time series
 
@@ -51,32 +44,36 @@ class OpenPMDTimeSeries(InteractiveViewer):
         ----------
         path_to_dir: string
             The path to the directory where the openPMD files are.
-            For the moment, only HDF5 files are supported. There should be
-            one file per iteration, and the name of the files should end
-            with the iteration number, followed by '.h5' (e.g. data0005000.h5)
 
         check_all_files: bool, optional
             Check that all the files in the timeseries are consistent
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
+
+        backend: string
+            Select the backend to use, in order to read the files
+            Available options: 'h5py'
         """
+        # Initialize data reader
+        self.data_reader = DataReader( backend )
+
         # Extract the files and the iterations
-        self.h5_files, self.iterations = list_h5_files(path_to_dir)
+        self._files, self.iterations = self.data_reader.list_files(path_to_dir)
 
         # Check that there are HDF5 files in this directory
-        if len(self.h5_files) == 0:
-            print("Error: Found no HDF5 files in the specified directory.\n"
-                  "Please check that this is the path to the HDF5 files.")
+        if len(self._files) == 0:
+            print("Error: Found no valid files in the specified directory.\n"
+                  "Please check that this is the path to the openPMD files.")
             return(None)
 
         # Go through the files of the series, extract the time
         # and a few parameters.
-        N_files = len(self.h5_files)
+        N_files = len(self._files)
         self.t = np.zeros(N_files)
 
         # - Extract parameters from the first file
-        t, params0 = read_openPMD_params(self.h5_files[0])
+        t, params0 = self.data_reader.read_openPMD_params(self._files[0])
         self.t[0] = t
         self.extensions = params0['extensions']
         self.avail_fields = params0['avail_fields']
@@ -92,14 +89,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # - Extract the time for each file and, if requested, check
         #   that the other files have the same parameters
         for k in range(1, N_files):
-            t, params = read_openPMD_params(self.h5_files[k], check_all_files)
+            t, params = self.data_reader.read_openPMD_params(
+                self._files[k], check_all_files)
             self.t[k] = t
             if check_all_files:
                 for key in params0.keys():
                     if params != params0:
                         print("Warning: File %s has different openPMD "
                               "parameters than the rest of the time series."
-                              % self.h5_files[k])
+                              % self._files[k])
                         break
 
         # - Set the current iteration and time
@@ -258,35 +256,35 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
         # Get the corresponding file name & open the file
-        file_name = self.h5_files[self._current_i]
-        file_handle = h5.File(file_name, 'r')
+        file_name = self._files[self._current_i]
+        self.data_reader.open_file( file_name )
 
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
-            data_list.append(read_species_data(
-                file_handle, species, quantity, self.extensions))
+            data_list.append( self.data_reader.read_species_data(
+                species, quantity, self.extensions))
         # Apply selection if needed
         if isinstance( select, dict ):
-            data_list = apply_selection(
-                file_handle, data_list, select, species, self.extensions)
+            data_list = apply_selection( self.data_reader,
+                data_list, select, species, self.extensions)
         elif isinstance( select, ParticleTracker ):
             data_list = select.extract_tracked_particles(
-                file_handle, data_list, species, self.extensions )
+                self.data_reader, data_list, species, self.extensions )
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
 
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
-                w = read_species_data(
-                    file_handle, species, 'w', self.extensions)
+                w = self.data_reader.read_species_data(
+                    species, 'w', self.extensions)
                 if isinstance( select, dict ):
-                    w, = apply_selection(
-                        file_handle, [w], select, species, self.extensions)
+                    w, = apply_selection( self.data_reader,
+                        [w], select, species, self.extensions)
                 elif isinstance( select, ParticleTracker ):
                     w, = select.extract_tracked_particles(
-                        file_handle, [w], species, self.extensions )
+                        self.data_reader, [w], species, self.extensions )
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])
@@ -320,8 +318,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
             #   fitting them to the spatial grid
             if use_field_mesh and self.avail_fields is not None:
                 # Extract the grid resolution
-                grid_size_dict, grid_range_dict = get_grid_parameters(
-                    file_handle, self.avail_fields, self.fields_metadata )
+                grid_size_dict, grid_range_dict = \
+                    self.data_reader.get_grid_parameters(
+                        self.avail_fields, self.fields_metadata )
                 # For each direction, modify the number of bins, so that
                 # the resolution is a multiple of the grid resolution
                 for i_var in range(len(var_list)):
@@ -349,7 +348,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     self._current_i, hist_bins, hist_range,
                     deposition=histogram_deposition, **kw)
         # Close the file
-        file_handle.close()
+        self.data_reader.close_file()
 
         # Output the data
         return(data_list)
@@ -479,7 +478,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
         # Get the corresponding filename
-        filename = self.h5_files[self._current_i]
+        filename = self._files[self._current_i]
 
         # Find the proper path for vector or scalar fields
         if self.fields_metadata[field]['type'] == 'scalar':
@@ -494,22 +493,26 @@ class OpenPMDTimeSeries(InteractiveViewer):
         axis_labels = self.fields_metadata[field]['axis_labels']
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
-            F, info = read_field_cartesian( filename, field_path,
-                axis_labels, slice_relative_position, slice_across)
+            F, info = self.data_reader.read_field_cartesian(
+                filename, field_path, axis_labels,
+                slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r',
-                    slice_relative_position, slice_across, m, theta)
-                Ft, info = read_field_circ(filename, field + '/t',
-                    slice_relative_position, slice_across, m, theta)
+                Fr, info = self.data_reader.read_field_circ(
+                    filename, field + '/r', slice_relative_position,
+                    slice_across, m, theta)
+                Ft, info = self.data_reader.read_field_circ(
+                    filename, field + '/t', slice_relative_position,
+                    slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path,
-                    slice_relative_position, slice_across, m, theta)
+                F, info = self.data_reader.read_field_circ(
+                    filename, field_path, slice_relative_position,
+                    slice_across, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection

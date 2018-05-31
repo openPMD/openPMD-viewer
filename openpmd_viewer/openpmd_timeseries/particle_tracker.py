@@ -70,7 +70,7 @@ class ParticleTracker( object ):
             'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc).
-            Can also be a 1d array of interegers corresponding to the 
+            Can also be a 1d array of interegers corresponding to the
             selected particles `id`
 
         preserve_particle_index: bool, optional
@@ -106,7 +106,7 @@ class ParticleTracker( object ):
         self.preserve_particle_index = preserve_particle_index
 
 
-    def extract_tracked_particles( self, file_handle, data_list,
+    def extract_tracked_particles( self, data_reader, data_list,
                                     species, extensions ):
         """
         Select the elements of each particle quantities in data_list,
@@ -114,8 +114,8 @@ class ParticleTracker( object ):
 
         Parameters
         ----------
-        file_handle: h5py.File object
-            The HDF5 file from which to extract data
+        data_reader: a DataReader object
+            Used in order to extract the macroparticle IDs
 
         data_list: list of 1darrays
             A list of arrays with one element per macroparticle, that represent
@@ -135,7 +135,7 @@ class ParticleTracker( object ):
         initialization)
         """
         # Extract the particle id, and get the extraction indices
-        pid = read_species_data(file_handle, species, 'id', extensions)
+        pid = data_reader.read_species_data(species, 'id', extensions)
         selected_indices = self.get_extraction_indices( pid )
 
         # For each particle quantity, select only the tracked particles
