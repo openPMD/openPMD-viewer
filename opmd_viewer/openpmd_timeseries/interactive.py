@@ -357,12 +357,10 @@ class InteractiveViewer(object):
             axis_labels = self.fields_metadata[field]['axis_labels']
             if self.fields_metadata[field]['geometry'] == '3dcartesian':
                 slicing_dir_button = create_toggle_buttons( value='y',
-                    options=axis_labels,
-                    description='Slice normal:')
+                    options=axis_labels )
             else:
                 slicing_dir_button = create_toggle_buttons( value='None',
-                    options=['None'] + axis_labels,
-                    description='Slice normal:')
+                    options=['None'] + axis_labels )
             slicing_dir_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
             set_widget_dimensions( slicing_button, width=180 )
@@ -394,14 +392,18 @@ class InteractiveViewer(object):
             # ----------
             # Field type container
             field_widget_list = [fieldtype_button, coord_button]
-            if "thetaMode" in self.avail_geom:
-                # Add widgets specific to azimuthal modes
-                field_widget_list += [ mode_button,
-                                add_description('Theta:', theta_button)]
-            field_widget_list += [ slicing_dir_button,
-                add_description("Slicing:", slicing_button) ]
             container_fields = widgets.VBox( children=field_widget_list )
             set_widget_dimensions( container_fields, width=330 )
+            # Slicing container
+            slices_widget_list = [
+                add_description("Slice normal:", slicing_dir_button, width=100),
+                add_description("Slicing:", slicing_button) ]
+            if "thetaMode" in self.avail_geom:
+                # Add widgets specific to azimuthal modes
+                slices_widget_list += [ mode_button,
+                                add_description('Theta:', theta_button)]
+            container_slicing = widgets.VBox( children=slices_widget_list )
+            set_widget_dimensions( container_slicing, width=330 )
             # Plotting options container
             container_fld_cbar = fld_color_button.to_container()
             container_fld_hrange = fld_hrange_button.to_container()
@@ -412,10 +414,11 @@ class InteractiveViewer(object):
                 container_fld_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
-            accord1 = widgets.Accordion(
-                children=[container_fields, container_fld_plots])
+            accord1 = widgets.Accordion( children=[container_fields,
+                container_slicing, container_fld_plots])
             accord1.set_title(0, 'Field type')
-            accord1.set_title(1, 'Plotting options')
+            accord1.set_title(1, 'Slice selection')
+            accord1.set_title(2, 'Plotting options')
             # Complete field container
             container_fld = widgets.VBox( children=[accord1, widgets.HBox(
                 children=[fld_refresh_toggle, fld_refresh_button])])
