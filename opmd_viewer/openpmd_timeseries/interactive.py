@@ -118,8 +118,7 @@ class InteractiveViewer(object):
                     slicing_dir = slicing_dir_button.value
 
                 # Call the method get_field
-                self.get_field( iteration=self.current_iteration,
-                    output=False, plot=True,
+                self.get_field( iteration=self.current_iteration, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
@@ -170,7 +169,7 @@ class InteractiveViewer(object):
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
                     self.get_particle( iteration=self.current_iteration,
-                        output=False, var_list=[ptcl_xaxis_button.value],
+                        var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
@@ -179,8 +178,8 @@ class InteractiveViewer(object):
                 else:
                     # 2D histogram
                     self.get_particle( iteration=self.current_iteration,
-                        output=False, var_list=[ptcl_xaxis_button.value,
-                                                ptcl_yaxis_button.value],
+                        var_list=[ptcl_xaxis_button.value,
+                            ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
