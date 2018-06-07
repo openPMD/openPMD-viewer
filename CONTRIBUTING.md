@@ -47,12 +47,12 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
 
 - Test and check your code:
   - Use [pyflakes](https://pypi.python.org/pypi/pyflakes) and 
-[pep8](https://pypi.python.org/pypi/pep8) to detect any potential bug, and to 
+[pycodestyle](https://pypi.org/project/pycodestyle/) to detect any potential bug, and to 
 ensure that your code complies with some standard style conventions.
   ```
   cd openPMD-viewer/
   pyflakes opmd_viewer
-  pep8 --ignore=E201,E202,E122,E127,E128,E131 opmd_viewer
+  pycodestyle --ignore=E201,E202,E122,E127,E128,E131 opmd_viewer
   ```
   - Make sure that the tests pass (please install `wget` and `jupyter` before running the tests: `pip install wget jupyter`)
   ```
