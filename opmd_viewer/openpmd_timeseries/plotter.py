@@ -27,41 +27,52 @@ except ImportError:
 if matplotlib_installed:
     from matplotlib.ticker import ScalarFormatter
 
-    class MyFormatter( ScalarFormatter ):
+    class PowerOfThreeFormatter( ScalarFormatter ):
         """
-        # TODO
+        Formatter for matplotlib's axes ticks,
+        that prints numbers as e.g. 1.5e3, 3.2e6, 0.2e-9,
+        where the exponent is always a multiple of 3.
+
+        This helps a human reader to quickly identify the closest units
+        (e.g. nanometer) of the plotted quantity.
+
+        This class derives from `ScalarFormatter`, which
+        provides a nice `offset` feature.
         """
         def __init__( self, *args, **kwargs ):
             ScalarFormatter.__init__( self, *args, **kwargs )
+            # Do not print the order of magnitude on the side of the axis
             self.set_scientific(False)
+            # Reduce the threshold for printing an offset on side of the axis
             self._offset_threshold = 2
 
         def pprint_val( self, x, pos=None ):
             """
-            # TODO
+            Function that is called for each tick of an axis.
+            Returns the string that
             """
+            # Calculate the exponent (power of 3)
             xp = (x - self.offset)
             if xp != 0:
-                log_x = 3*math.floor( math.log10(abs(xp))/3 )
+                exponent = 3 * math.floor( math.log10(abs(xp)) / 3 )
             else:
-                log_x = 0
-            # Show 2 digits at most after decimal point
-            mantissa = round( xp*10**(-log_x), 3)
-            if mantissa !=0  and math.log10(abs(mantissa)) == 3:
-                log_x += 3
+                exponent = 0
+            # Show 3 digits at most after decimal point
+            mantissa = round( xp * 10**(-exponent), 3)
+            # After rounding the exponent might change (e.g. 0.999 -> 1.)
+            if mantissa != 0 and math.log10(abs(mantissa)) == 3:
+                exponent += 3
                 mantissa /= 1000
             string = "{:.3f}".format( mantissa )
-            # Limit the string to 3 digits
-            string = string[:5]
             if '.' in string:
                 # Remove trailing zeros and ., for integer mantissa
                 string = string.rstrip('0')
                 string = string.rstrip('.')
-            if log_x != 0:
-                string += "e{:d}".format( log_x )
+            if exponent != 0:
+                string += "e{:d}".format( exponent )
             return string
 
-    tick_formatter = MyFormatter()
+    tick_formatter = PowerOfThreeFormatter()
 
 
 class Plotter(object):
@@ -167,7 +178,6 @@ class Plotter(object):
         ax.get_xaxis().set_major_formatter( tick_formatter )
         ax.get_yaxis().set_major_formatter( tick_formatter )
 
-
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
                 deposition='cic', **kw):
@@ -248,7 +258,6 @@ class Plotter(object):
         ax.get_xaxis().set_major_formatter( tick_formatter )
         ax.get_yaxis().set_major_formatter( tick_formatter )
 
-
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
         """
@@ -302,7 +311,6 @@ class Plotter(object):
         ax = plt.gca()
         ax.get_xaxis().set_major_formatter( tick_formatter )
         ax.get_yaxis().set_major_formatter( tick_formatter )
-
 
     def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
                         current_i, plot_range, **kw):
