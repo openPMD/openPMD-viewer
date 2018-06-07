@@ -396,7 +396,8 @@ class InteractiveViewer(object):
             set_widget_dimensions( container_fields, width=330 )
             # Slicing container
             slices_widget_list = [
-                add_description("Slice normal:", slicing_dir_button, width=100),
+                add_description("Slice normal:",
+                    slicing_dir_button, width=100),
                 add_description("Slicing:", slicing_button) ]
             if "thetaMode" in self.avail_geom:
                 # Add widgets specific to azimuthal modes
