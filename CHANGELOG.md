@@ -1,5 +1,15 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.8.1
+
+This version includes minor improvements to the viewer:
+- (Experiemental) support for Windows users
+- In the interactive Jupyter GUI, the user can now select the scale of the vertical axis.
+- The function `get_emittance` has more options (including calculation of the slice emttance)
+- The default `openPMD_notebook` now avoids warning messages about matplotlib inline, which used to occur even though `%matplotlib notebook` was used.
+
+Many thanks to @MaxThevenet and @AngelFP for their contributions to this release!
+
 ## 0.8
 
 This version introduces several improvements to the viewer:

@@ -78,8 +78,8 @@ class Plotter(object):
         nbins : int
            Number of bins for the histograms
 
-        hist_range : list of 2 floats
-           Extent of the histogram
+        hist_range : list contains 2 lists of 2 floats
+           Extent of the histogram along each direction
 
         deposition : string
             Either `ngp` (Nearest Grid Point) or `cic` (Cloud-In-Cell)
@@ -105,18 +105,19 @@ class Plotter(object):
         # Bin the particle data
         q1 = q1.astype( np.float64 )
         if deposition == 'ngp':
-            binned_data, _ = np.histogram(q1, nbins, hist_range, weights=w)
+            binned_data, _ = np.histogram(q1, nbins, hist_range[0], weights=w)
         elif deposition == 'cic':
             binned_data = histogram_cic_1d(
-                q1, w, nbins, hist_range[0], hist_range[1])
+                q1, w, nbins, hist_range[0][0], hist_range[0][1])
         else:
             raise ValueError('Unknown deposition method: %s' % deposition)
 
         # Do the plot
-        bin_size = (hist_range[1] - hist_range[0]) / nbins
-        bin_coords = hist_range[0] + bin_size * ( 0.5 + np.arange(nbins) )
+        bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
+        bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
         plt.bar( bin_coords, binned_data, width=bin_size, **kw )
-        plt.xlim( hist_range )
+        plt.xlim( hist_range[0] )
+        plt.ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f fs    (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)

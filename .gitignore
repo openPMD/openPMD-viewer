@@ -6,3 +6,4 @@ dist/
 opmd_viewer.egg-info/
 .cache/
 .eggs/
+.vs/

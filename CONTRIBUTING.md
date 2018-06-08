@@ -88,7 +88,7 @@ the `opmd_viewer/addons` folder.
   [docstring](https://www.python.org/dev/peps/pep-0257/). List the
   parameters and describe what the functions return, as in this
   example:
-  ```python
+```python
 def get_data( dset, i_slice=None, pos_slice=None ) :
     """
     Extract the data from a (possibly constant) dataset
@@ -110,7 +110,7 @@ def get_data( dset, i_slice=None, pos_slice=None ) :
     --------
     An np.ndarray (non-constant dataset) or a single double (constant dataset)
     """
-	```
+```
 Don't use documenting styles like `:param:`, `:return:`, or
 `@param`, `@return`, as they are less readable.
 
