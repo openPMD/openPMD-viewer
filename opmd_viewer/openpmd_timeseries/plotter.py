@@ -9,6 +9,7 @@ Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 import numpy as np
+import math
 try:
     import warnings
     import matplotlib
@@ -21,6 +22,57 @@ try:
     cython_function_available = True
 except ImportError:
     cython_function_available = False
+
+# Redefine the default matplotlib formatter for ticks
+if matplotlib_installed:
+    from matplotlib.ticker import ScalarFormatter
+
+    class PowerOfThreeFormatter( ScalarFormatter ):
+        """
+        Formatter for matplotlib's axes ticks,
+        that prints numbers as e.g. 1.5e3, 3.2e6, 0.2e-9,
+        where the exponent is always a multiple of 3.
+
+        This helps a human reader to quickly identify the closest units
+        (e.g. nanometer) of the plotted quantity.
+
+        This class derives from `ScalarFormatter`, which
+        provides a nice `offset` feature.
+        """
+        def __init__( self, *args, **kwargs ):
+            ScalarFormatter.__init__( self, *args, **kwargs )
+            # Do not print the order of magnitude on the side of the axis
+            self.set_scientific(False)
+            # Reduce the threshold for printing an offset on side of the axis
+            self._offset_threshold = 2
+
+        def pprint_val( self, x, pos=None ):
+            """
+            Function that is called for each tick of an axis.
+            Returns the string that
+            """
+            # Calculate the exponent (power of 3)
+            xp = (x - self.offset)
+            if xp != 0:
+                exponent = 3 * math.floor( math.log10(abs(xp)) / 3 )
+            else:
+                exponent = 0
+            # Show 3 digits at most after decimal point
+            mantissa = round( xp * 10**(-exponent), 3)
+            # After rounding the exponent might change (e.g. 0.999 -> 1.)
+            if mantissa != 0 and math.log10(abs(mantissa)) == 3:
+                exponent += 3
+                mantissa /= 1000
+            string = "{:.3f}".format( mantissa )
+            if '.' in string:
+                # Remove trailing zeros and ., for integer mantissa
+                string = string.rstrip('0')
+                string = string.rstrip('.')
+            if exponent != 0:
+                string += "e{:d}".format( exponent )
+            return string
+
+    tick_formatter = PowerOfThreeFormatter()
 
 
 class Plotter(object):
@@ -121,6 +173,10 @@ class Plotter(object):
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.title("%s:   t =  %.0f s    (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
@@ -197,6 +253,10 @@ class Plotter(object):
         plt.ylabel(quantity2, fontsize=self.fontsize)
         plt.title("%s:   t =  %.1f s   (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
@@ -247,6 +307,10 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
     def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
                         current_i, plot_range, **kw):
@@ -321,6 +385,10 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
 
 def print_cic_unavailable():
