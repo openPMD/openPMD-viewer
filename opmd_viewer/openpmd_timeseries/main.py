@@ -8,7 +8,6 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
-import os
 import numpy as np
 import h5py as h5
 from tqdm import tqdm
@@ -20,6 +19,7 @@ from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
 from .data_reader.field_reader import read_field_cartesian, \
     read_field_circ, get_grid_parameters
+from .data_reader.utilities import join_infile_path
 from .interactive import InteractiveViewer
 
 
@@ -476,7 +476,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             field_path = field
             field_label = field
         elif self.fields_metadata[field]['type'] == 'vector':
-            field_path = os.path.join(field, coord)
+            field_path = join_infile_path(field, coord)
             field_label = field + coord
 
         # Get the field data
