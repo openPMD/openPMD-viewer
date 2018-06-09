@@ -1035,7 +1035,7 @@ def _get_envelope( data, averaging_method, freq_filter ):
     return( envelope )
 
 
-def _fft_filter(self, field, freq_filter):
+def _fft_filter( field, freq_filter):
     """
     Filters out high frequencies in input data. Frequencies higher than
     freq_filter / 100 times the dominant frequency will be filtered.
