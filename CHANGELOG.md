@@ -1,6 +1,6 @@
 # Change Log / Release Log for openPMD-viewer
 
-## 0.9
+## 1.0.0
 
 This version introduces a capability to do slicing along several directions,
 and for 1d, 2d, 3d and circ geometries.
@@ -8,6 +8,16 @@ It breaks backward compatibility: for a 3d field,
 ```get_field(field=field, coord=coord, iteration=iteration)```
 used to return the central slice along `y` while it returns the full 3d field
 now.
+
+## 0.8.1
+
+This version includes minor improvements to the viewer:
+- (Experiemental) support for Windows users
+- In the interactive Jupyter GUI, the user can now select the scale of the vertical axis.
+- The function `get_emittance` has more options (including calculation of the slice emttance)
+- The default `openPMD_notebook` now avoids warning messages about matplotlib inline, which used to occur even though `%matplotlib notebook` was used.
+
+Many thanks to @MaxThevenet and @AngelFP for their contributions to this release!
 
 ## 0.8
 
