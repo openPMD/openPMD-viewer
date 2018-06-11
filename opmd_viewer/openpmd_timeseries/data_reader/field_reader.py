@@ -192,7 +192,7 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
         F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
     axis_labels = ['r', 'z']
-    shape = [Nr, Nz]
+    shape = [2 * Nr, Nz]
     grid_spacing = list( group.attrs['gridSpacing'] )
     global_offset = list( group.attrs['gridGlobalOffset'] )
 
