@@ -91,7 +91,7 @@ class DataReader( object ):
         return self.reader_module.read_openPMD_params(
             filename, extract_parameters)
 
-    def read_field_cartesian( self, filename, field_path, axis_labels,
+    def read_field_cartesian( self, filename, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
         """
         Extract a given field from an HDF5 file in the openPMD format,
@@ -102,9 +102,11 @@ class DataReader( object ):
         filename : string
            The absolute path to the HDF5 file
 
-        field_path : string
-           The relative path to the requested field, from the openPMD meshes path
-           (e.g. 'rho', 'E/z', 'B/x')
+        field : string, optional
+           Which field to extract
+
+        coord : string, optional
+           Which component of the field to extract
 
         axis_labels: list of strings
            The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
@@ -132,10 +134,10 @@ class DataReader( object ):
            (contains information about the grid; see the corresponding docstring)
         """
         return self.reader_module.read_field_cartesian(
-            filename, field_path, axis_labels,
+            filename, field, coord, axis_labels,
             slice_relative_position, slice_across )
 
-    def read_field_circ( self, filename, field_path, slice_relative_position,
+    def read_field_circ( self, filename, field, coord, slice_relative_position,
                         slice_across, m=0, theta=0. ):
         """
         Extract a given field from an HDF5 file in the openPMD format,
@@ -146,9 +148,13 @@ class DataReader( object ):
         filename : string
            The absolute path to the HDF5 file
 
-        field_path : string
-           The relative path to the requested field, from the openPMD meshes path
-           (e.g. 'rho', 'E/r', 'B/x')
+        field : string, optional
+           Which field to extract
+           Either 'rho', 'E', 'B' or 'J'
+
+        coord : string, optional
+           Which component of the field to extract
+           Either 'r', 't' or 'z'
 
         m : int or string, optional
            The azimuthal mode to be extracted
@@ -180,7 +186,7 @@ class DataReader( object ):
            (contains information about the grid; see the corresponding docstring)
         """
         return self.reader_module.read_field_circ(
-            filename, field_path, slice_relative_position,
+            filename, field, coord, slice_relative_position,
             slice_across, m, theta )
 
     def read_species_data( self, species, record_comp, extensions):

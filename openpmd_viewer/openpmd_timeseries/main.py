@@ -12,7 +12,6 @@ import numpy as np
 from tqdm import tqdm
 from .utilities import apply_selection, fit_bins_to_grid, try_array, \
                         sanitize_slicing, combine_cylindrical_components
-from .data_reader.h5py_reader.utilities import join_infile_path
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader import DataReader
@@ -367,11 +366,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         field : string, optional
            Which field to extract
-           Either 'rho', 'E', 'B' or 'J'
 
         coord : string, optional
            Which component of the field to extract
-           Either 'r', 't' or 'z'
 
         m : int or str, optional
            Only used for thetaMode geometry
@@ -484,10 +481,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Find the proper path for vector or scalar fields
         if self.fields_metadata[field]['type'] == 'scalar':
-            field_path = field
             field_label = field
         elif self.fields_metadata[field]['type'] == 'vector':
-            field_path = join_infile_path(field, coord)
             field_label = field + coord
 
         # Get the field data
@@ -496,7 +491,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = self.data_reader.read_field_cartesian(
-                filename, field_path, axis_labels,
+                filename, field, coord, axis_labels,
                 slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
@@ -504,16 +499,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
                 Fr, info = self.data_reader.read_field_circ(
-                    filename, field + '/r', slice_relative_position,
+                    filename, field, 'r', slice_relative_position,
                     slice_across, m, theta)
                 Ft, info = self.data_reader.read_field_circ(
-                    filename, field + '/t', slice_relative_position,
+                    filename, field, 't', slice_relative_position,
                     slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = self.data_reader.read_field_circ(
-                    filename, field_path, slice_relative_position,
+                F, info = self.data_reader.read_field_circ(filename,
+                    field, coord, slice_relative_position,
                     slice_across, m, theta)
 
         # Plot the resulting field
