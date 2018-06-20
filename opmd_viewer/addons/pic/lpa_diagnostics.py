@@ -162,7 +162,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             iteration = self.iterations[ self._current_i ]
             time_s = self.t[ self._current_i ]
             plt.plot(z_pos, spreads, **kw)
-            plt.title("Slice energy spread at %.1f s   (iteration %d)"
+            plt.title("Slice energy spread at %.2e s   (iteration %d)"
                 % (time_s, iteration), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$\sigma_\gamma (\Delta_z=%s m)$' % dz,
@@ -429,7 +429,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             iteration = self.iterations[ self._current_i ]
             time_s = self.t[ self._current_i ]
             plt.plot( info.z, current, **kw)
-            plt.title("Current at %.1f s   (iteration %d)"
+            plt.title("Current at %.2e s   (iteration %d)"
                 % (time_s, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
             plt.ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
@@ -547,7 +547,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 plt.colorbar()
                 plt.ylabel('$%s \;(m)$' % pol,
                             fontsize=self.plotter.fontsize)
-            plt.title("Laser envelope at %.1f s   (iteration %d)"
+            plt.title("Laser envelope at %.2e s   (iteration %d)"
                 % (time_s, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
         # Return the result
@@ -748,7 +748,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-            plt.title("Spectrum at %.1f s   (iteration %d)"
+            plt.title("Spectrum at %.2e s   (iteration %d)"
                 % (time_s, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
@@ -1040,7 +1040,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             time_s = self.t[ self._current_i ]
             plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
-            plt.title("Spectrogram at %.1f s   (iteration %d)"
+            plt.title("Spectrogram at %.2e s   (iteration %d)"
                 % (time_s, iteration ), fontsize=self.plotter.fontsize)
             plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
             plt.ylabel('$\omega \;(rad.s^{-1})$',

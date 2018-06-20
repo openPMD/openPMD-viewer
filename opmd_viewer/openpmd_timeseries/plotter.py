@@ -171,7 +171,7 @@ class Plotter(object):
         plt.xlim( hist_range[0] )
         plt.ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f s    (iteration %d)"
+        plt.title("%s:   t =  %.2e s    (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
         # Format the ticks
         ax = plt.gca()
@@ -251,7 +251,7 @@ class Plotter(object):
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f s   (iteration %d)"
+        plt.title("%s:   t =  %.2e s   (iteration %d)"
                   % (species, time, iteration), fontsize=self.fontsize)
         # Format the ticks
         ax = plt.gca()
@@ -289,7 +289,7 @@ class Plotter(object):
         time = self.t[current_i]
 
         # Get the title and labels
-        plt.title("%s at %.1f s   (iteration %d)" % (field_label,
+        plt.title("%s at %.2e s   (iteration %d)" % (field_label,
                     time, iteration), fontsize=self.fontsize)
 
         # Add the name of the axes
@@ -354,19 +354,13 @@ class Plotter(object):
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f s   (iteration %d)"
+            plt.title("%s in the mode %s at %.2e s   (iteration %d)"
                       % (field_label, mode, time, iteration),
                       fontsize=self.fontsize)
         # 2D Cartesian geometry
-        elif geometry == "2dcartesian":
-            plt.title("%s at %.1f s   (iteration %d)"
+        else:
+            plt.title("%s at %.2e s   (iteration %d)"
                       % (field_label, time, iteration),
-                      fontsize=self.fontsize)
-        # 3D Cartesian geometry
-        elif geometry == "3dcartesian":
-            slice_plane = info.axes[0] + '-' + info.axes[1]
-            plt.title("%s sliced in %s at %.1f s  (iteration %d)"
-                      % (field_label, slice_plane, time, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes
