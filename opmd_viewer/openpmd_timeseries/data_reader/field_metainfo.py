@@ -77,13 +77,16 @@ class FieldMetaInformation(object):
             step = grid_spacing[axis] * grid_unitSI
             n_points = shape[axis]
             start = global_offset[axis] * grid_unitSI + position[axis] * step
-            end = start + (n_points - 1) * step
-            axis_points = np.linspace(start, end, n_points, endpoint=True)
             # Create the points below the axis if thetaMode is true
             if axes[axis] == 'r' and thetaMode:
+                end = start + (n_points / 2 - 1) * step
+                axis_points = np.linspace(start, end, n_points / 2,
+                                            endpoint=True)
                 axis_points = np.concatenate((-axis_points[::-1], axis_points))
                 start = -end
-                n_points = 2 * n_points
+            else:
+                end = start + (n_points - 1) * step
+                axis_points = np.linspace(start, end, n_points, endpoint=True)
             # Register the results in the object
             axis_name = axes[axis]
             setattr(self, axis_name, axis_points)
