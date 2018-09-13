@@ -292,9 +292,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Needs to be in the openPMD dataset. Default is 'z' i.e. silcing
             along the longitudinal coordinate of the bunch.
 
-        slice_range : float (in meters), optional
+        slice_range : float, optional
             Range in 'slice_coordinate', used to calculate slice positions
-            when nslices>1.
+            when nslices>1. Slice emittance is calculated from
+            mean(slice_coordinate) - slice_range/2 to
+            mean(slice_coordinate) + slice_range/2
             By default, it is 4 times the standard deviation
             of 'slice_coordinate'.
 
