@@ -322,8 +322,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         do_slice_emittance = ( description in ['slice-averaged',
                                                'all-slices'] )
         if do_slice_emittance and not nslices > 0:
-            raise ValueError('nslices must be given if `description`=' +
-                             description + '.')
+            raise ValueError(
+                'nslices must be given if `description`=' + description + '.')
         # Get particle data
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
