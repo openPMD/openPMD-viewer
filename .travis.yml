@@ -32,8 +32,10 @@ before_install:
 
 # Install packages
 install:
-  - pip install numpy
-  - conda install --yes cython  scipy h5py
+  - conda install --yes numpy
+  - conda install --yes cython
+  - conda install --yes scipy
+  - conda install --yes h5py
   - pip install matplotlib
   - python setup.py install
   - pip install wget
