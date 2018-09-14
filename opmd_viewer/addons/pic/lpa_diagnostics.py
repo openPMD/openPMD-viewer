@@ -374,9 +374,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             if description == 'all-slices':
                 # Info object with central position of the slices
                 info = FieldMetaInformation( {0: slice_coordinate},
-                            (nslices,), grid_spacing=(slice_range / nslices, ),
-                            grid_unitSI=1, position=(0,),
-                            global_offset=(slice_centers[0],))
+                    (nslices,), grid_spacing=(slice_range / nslices, ),
+                    grid_unitSI=1, position=(0,),
+                    global_offset=(slice_centers[0],))
                 return (emit_slice_x, emit_slice_y,
                         slice_weights, info)
             else:
