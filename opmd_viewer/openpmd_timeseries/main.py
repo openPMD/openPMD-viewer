@@ -17,8 +17,8 @@ from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_1d, read_field_2d, \
-    read_field_circ, read_field_3d, get_grid_parameters
+from .data_reader.field_reader import read_field_cartesian, \
+    read_field_circ, get_grid_parameters
 from .data_reader.utilities import join_infile_path
 from .interactive import InteractiveViewer
 
