@@ -281,6 +281,7 @@ def extract_indices_python( original_indices, selected_indices,
 
     return( i_fill )
 
+
 # The functions `extract_indices_python` and `extract_indices_cython`
 # perform the same operations, but the cython version is much faster
 # since it is compiled
