@@ -248,7 +248,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_emittance(self, t=None, iteration=None, species=None,
                       select=None, kind='normalized', description='projected',
-                      nslices=0, beam_length=None):
+                      nslices=0, slice_coordinate='z', slice_range=None):
         """
         Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
@@ -287,9 +287,18 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Number of slices to compute slice emittance. Required if
             description='slice-average' or 'all-slices'.
 
-        beam_length : float (in meters), optional
-            Beam length, used to calculate slice positions when nslices>1.
-            By default, it is 4 times the standard deviation in z.
+        slice_coordinate: string, optional
+            Phase space coordinate in which to calculate the slice emittance.
+            Needs to be in the openPMD dataset. Default is 'z' i.e. silcing
+            along the longitudinal coordinate of the bunch.
+
+        slice_range : float, optional
+            Range in 'slice_coordinate', used to calculate slice positions
+            when nslices>1. Slice emittance is calculated from
+            mean(slice_coordinate) - slice_range/2 to
+            mean(slice_coordinate) + slice_range/2
+            By default, it is 4 times the standard deviation
+            of 'slice_coordinate'.
 
         Returns
         -------
@@ -302,13 +311,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             - A 1d array with beam emittance in the y plane
               (pi m rad) for each slice
             - A 1d array with number of electrons in each slice
-            - A 1d array with slice centers
+            - A FieldMetaInformation object with the slice centers along
+              'slice_coordinate'
         """
         if kind not in ['normalized', 'trace']:
             raise ValueError('Argument `kind` not recognized.')
         if description not in ['projected', 'slice-averaged', 'all-slices']:
             raise ValueError('Argument `description` not recognized.')
-        # Wheter to compute slice emittance
+        # Whether to compute slice emittance
         do_slice_emittance = ( description in ['slice-averaged',
                                                'all-slices'] )
         if do_slice_emittance and not nslices > 0:
@@ -327,36 +337,48 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if kind == 'trace':
             ux = ux / uz
             uy = uy / uz
-
+        # Again get data over which the slice emittance is calculated
+        slice_data, w = self.get_particle(
+            var_list=[slice_coordinate, 'w'], t=t,
+            iteration=iteration, species=species, select=select )
+        # Calculate slice emittance
         if do_slice_emittance:
             # Get slice locations
-            zavg = w_ave(z, w)
-            z = z - zavg
-            if beam_length is None:
-                std = w_std(z, w)
-                beam_length = 4 * std
-            bins = np.linspace( -beam_length / 2, beam_length / 2, nslices )
-            binwidth = .5 * bins[1] - .5 * bins[0]
-            slice_centers = bins + .5 * binwidth
+            beam_ave = w_ave(slice_data, w)
+            # Center
+            # z = z - zavg
+            if slice_range is None:
+                std = w_std(slice_data, w)
+                slice_range = 4 * std
+            bins = np.linspace( beam_ave - slice_range / 2,
+                                beam_ave + slice_range / 2, nslices + 1 )
+            binwidth = bins[1] - bins[0]
+            slice_centers = bins[:-1] + .5 * binwidth
             # Initialize slice emittance arrays
-            emit_slice_x = np.zeros(len(bins[:-1]))
-            emit_slice_y = np.zeros(len(bins[:-1]))
-            slice_weights = np.zeros(len(bins[:-1]))
+            emit_slice_x = np.zeros(len(slice_centers))
+            emit_slice_y = np.zeros(len(slice_centers))
+            slice_weights = np.zeros(len(slice_centers))
             # Loop over slices
-            for count, leftedge in enumerate(bins[:-1]):
+            for i in range(nslices):
                 # Get emittance in this slice
-                current_slice = (np.abs(z - slice_centers[count]) <= binwidth)
-                slice_weights[count] = np.sum(w[current_slice])
-                if slice_weights[count] > 0:
+                current_slice = np.logical_and((slice_data < bins[i + 1]),
+                                               (slice_data > bins[i]))
+                slice_weights[i] = np.sum(w[current_slice])
+                if slice_weights[i] > 0:
                     emit_x, emit_y = emittance_from_coord(
                         x[current_slice], y[current_slice],
                         ux[current_slice], uy[current_slice],
                         w[current_slice])
-                    emit_slice_x[count] = emit_x
-                    emit_slice_y[count] = emit_y
+                    emit_slice_x[i] = emit_x
+                    emit_slice_y[i] = emit_y
             if description == 'all-slices':
+                # Info object with central position of the slices
+                info = FieldMetaInformation( {0: slice_coordinate},
+                    (nslices,), grid_spacing=(slice_range / nslices, ),
+                    grid_unitSI=1, position=(0,),
+                    global_offset=(slice_centers[0],))
                 return (emit_slice_x, emit_slice_y,
-                    slice_weights, slice_centers)
+                        slice_weights, info)
             else:
                 emit_x = w_ave(emit_slice_x, slice_weights)
                 emit_y = w_ave(emit_slice_y, slice_weights)
