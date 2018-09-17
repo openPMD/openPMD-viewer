@@ -312,8 +312,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         do_slice_emittance = ( description in ['slice-averaged',
                                                'all-slices'] )
         if do_slice_emittance and not nslices > 0:
-            raise ValueError('nslices must be given if `description`=' +
-                             description + '.')
+            raise ValueError(
+                'nslices must be given if `description`=' + description + '.')
         # Get particle data
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
@@ -345,8 +345,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             # Loop over slices
             for count, leftedge in enumerate(bins[:-1]):
                 # Get emittance in this slice
-                current_slice = ( np.abs( z - slice_centers[count] ) <=
-                    binwidth )
+                current_slice = (np.abs(z - slice_centers[count]) <= binwidth)
                 slice_weights[count] = np.sum(w[current_slice])
                 if slice_weights[count] > 0:
                     emit_x, emit_y = emittance_from_coord(
