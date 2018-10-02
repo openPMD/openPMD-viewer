@@ -59,6 +59,9 @@ distribution](https://www.continuum.io/downloads), and then type
 ```
 conda install -c rlehe openpmd_viewer
 ```
+If you are using JupyterLab, please also install the `jupyter-matplotlib`
+extension (See installation instructions
+[here](https://github.com/matplotlib/jupyter-matplotlib)).
 
 #### Installation with pip
 
