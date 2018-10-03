@@ -1,5 +1,10 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.8.2
+
+This is a bug-fix release. It allows the slider to work properly in JupyterLab,
+by using the `%matplotlib widget` magic.
+
 ## 0.8.1
 
 This version includes minor improvements to the viewer:
