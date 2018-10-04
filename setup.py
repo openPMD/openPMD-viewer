@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 # Get the long description
-with open('./README.md', encoding='utf-8') as f:
+with open('./README.md') as f:
     long_description = f.read()
 # Get the package requirements from the requirements.txt file
 with open('./requirements.txt') as f:
