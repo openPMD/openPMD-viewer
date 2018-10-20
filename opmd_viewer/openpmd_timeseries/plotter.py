@@ -51,7 +51,8 @@ class Plotter(object):
         self.iterations = iterations
 
     def hist1d(self, q1, w, quantity1, species, current_i, nbins, hist_range,
-               cmap='Blues', vmin=None, vmax=None, deposition='cic', **kw):
+               cmap='Blues', vmin=None, vmax=None, deposition='cic', ax=None,
+               figsize=None, **kw):
         """
         Plot a 1D histogram of the particle quantity q1
         Sets the proper labels
@@ -115,16 +116,22 @@ class Plotter(object):
         # Do the plot
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
-        plt.bar( bin_coords, binned_data, width=bin_size, **kw )
-        plt.xlim( hist_range[0] )
-        plt.ylim( hist_range[1] )
-        plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f fs    (iteration %d)"
+        if ax is None:
+            if figsize is none:
+                fig, ax = plt.subplots(1, 1)
+            else:
+                fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+        ax.bar( bin_coords, binned_data, width=bin_size, **kw )
+        ax.set_xlim( hist_range[0] )
+        ax.set_ylim( hist_range[1] )
+        ax.set_xlabel(quantity1, fontsize=self.fontsize)
+        ax.set_title("%s:   t =  %.0f fs    (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
-                deposition='cic', **kw):
+                deposition='cic', ax=None, figsize=None, **kw):
         """
         Plot a 2D histogram of the particle quantity q1
         Sets the proper labels
@@ -188,18 +195,24 @@ class Plotter(object):
         else:
             raise ValueError('Unknown deposition method: %s' % deposition)
 
-        # Do the plot
-        plt.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
+        # Plot the data
+        if ax is None:
+            if figsize is none:
+                fig, ax = plt.subplots(1, 1)
+            else:
+                fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+        _ = ax.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
              origin='lower', interpolation='nearest', aspect='auto',
              cmap=cmap, vmin=vmin, vmax=vmax, **kw )
-        plt.colorbar()
-        plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f fs   (iteration %d)"
+        ax.figure.colorbar(mappable=_, ax=ax)
+        ax.set_xlabel(quantity1, fontsize=self.fontsize)
+        ax.ylabel(quantity2, fontsize=self.fontsize)
+        ax.set_title("%s:   t =  %.1f fs   (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
-                            vmin=None, vmax=None, **kw ):
+                       vmin=None, vmax=None, ax=None, figsize=None, **kw ):
         """
         Plot the given field in 1D
 
@@ -228,28 +241,35 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
 
+        # get the axis
+        if ax is None:
+            if figsize is none:
+                fig, ax = plt.subplots(1, 1)
+            else:
+                fig, ax = plt.subplots(1, 1, figsize=figsize)
+
         # Get the title and labels
-        plt.title("%s at %.1f fs   (iteration %d)"
+        ax.set_title("%s at %.1f fs   (iteration %d)"
                 % (field_label, time_fs, iteration), fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        ax.set_xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
         # Get the x axis in microns
         xaxis = 1.e6 * getattr( info, info.axes[0] )
         # Plot the data
-        plt.plot( xaxis, F )
+        ax.plot( xaxis, F )
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
-            plt.xlim( plot_range[0][0], plot_range[0][1] )
+            ax.set_xlim( plot_range[0][0], plot_range[0][1] )
         else:
-            plt.xlim( xaxis.min(), xaxis.max() )  # Full extent of the box
+            ax.set_xlim( xaxis.min(), xaxis.max() )  # Full extent of the box
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
-            plt.ylim( plot_range[1][0], plot_range[1][1] )
+            ax.set_ylim( plot_range[1][0], plot_range[1][1] )
 
     def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
-                        current_i, plot_range, **kw):
+                      current_i, plot_range, ax=None, figsize=None, **kw):
         """
         Plot the given field in 2D
 
@@ -286,41 +306,48 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
 
+        # get the axis
+        if ax is None:
+            if figsize is none:
+                fig, ax = plt.subplots(1, 1)
+            else:
+                fig, ax = plt.subplots(1, 1, figsize=figsize)
+
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
+            ax.set_title("%s in the mode %s at %.1f fs   (iteration %d)"
                       % (field_label, mode, time_fs, iteration),
                       fontsize=self.fontsize)
         # 2D Cartesian geometry
         elif geometry == "2dcartesian":
-            plt.title("%s at %.1f fs   (iteration %d)"
+            ax.set_title("%s at %.1f fs   (iteration %d)"
                       % (field_label, time_fs, iteration),
                       fontsize=self.fontsize)
         # 3D Cartesian geometry
         elif geometry == "3dcartesian":
             slice_plane = info.axes[0] + '-' + info.axes[1]
-            plt.title("%s sliced in %s at %.1f fs  (iteration %d)"
+            ax.set_title("%s sliced in %s at %.1f fs  (iteration %d)"
                       % (field_label, slice_plane, time_fs, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
-        plt.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        ax.set_xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
+        ax.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
+        _ = ax.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
                    interpolation='nearest', aspect='auto', **kw)
-        plt.colorbar()
+        ax.figure.colorbar(mappable=_, ax=ax)
 
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
-            plt.xlim( plot_range[0][0], plot_range[0][1] )
+            ax.set_xlim( plot_range[0][0], plot_range[0][1] )
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
-            plt.ylim( plot_range[1][0], plot_range[1][1] )
+            ax.set_ylim( plot_range[1][0], plot_range[1][1] )
 
 
 def print_cic_unavailable():

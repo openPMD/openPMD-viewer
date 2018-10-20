@@ -113,7 +113,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
             select=None, output=True, plot=False, nbins=150,
             plot_range=[[None, None], [None, None]],
-            use_field_mesh=True, histogram_deposition='cic', **kw):
+            use_field_mesh=True, histogram_deposition='cic',
+            ax=None, figsize=None, **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -331,14 +332,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
                         self._current_i, hist_bins[0], hist_range,
-                        deposition=histogram_deposition, **kw)
+                        deposition=histogram_deposition, ax=ax,
+                        figsize=figsize, **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d(data_list[0], data_list[1], w,
                     var_list[0], var_list[1], species,
                     self._current_i, hist_bins, hist_range,
-                    deposition=histogram_deposition, **kw)
+                    deposition=histogram_deposition, ax=ax,
+                    figsize=figsize, **kw)
         # Close the file
         file_handle.close()
 
@@ -349,7 +352,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slicing=0., slicing_dir='y',
                   output=True, plot=False,
-                  plot_range=[[None, None], [None, None]], **kw):
+                  plot_range=[[None, None], [None, None]], ax=None,
+                  figsize=None, **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
 
@@ -500,11 +504,13 @@ class OpenPMDTimeSeries(InteractiveViewer):
         if plot:
             if geometry == "1dcartesian":
                 self.plotter.show_field_1d(F, info, field_label,
-                self._current_i, plot_range=plot_range, **kw)
+                self._current_i, plot_range=plot_range, ax=ax,
+                figsize=figsize, **kw)
             else:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
                         field_label, geometry, self._current_i,
-                        plot_range=plot_range, **kw)
+                        plot_range=plot_range, ax=ax,
+                        figsize=figsize, **kw)
 
         # Return the result
         return(F, info)
