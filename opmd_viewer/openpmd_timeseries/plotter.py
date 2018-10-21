@@ -117,7 +117,7 @@ class Plotter(object):
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
         if ax is None:
-            if figsize is none:
+            if figsize is None:
                 fig, ax = plt.subplots(1, 1)
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -197,17 +197,17 @@ class Plotter(object):
 
         # Plot the data
         if ax is None:
-            if figsize is none:
+            if figsize is None:
                 fig, ax = plt.subplots(1, 1)
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
 
         _ = ax.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
-             origin='lower', interpolation='nearest', aspect='auto',
+             origin='lower', aspect='auto',
              cmap=cmap, vmin=vmin, vmax=vmax, **kw )
         ax.figure.colorbar(mappable=_, ax=ax)
         ax.set_xlabel(quantity1, fontsize=self.fontsize)
-        ax.ylabel(quantity2, fontsize=self.fontsize)
+        ax.set_ylabel(quantity2, fontsize=self.fontsize)
         ax.set_title("%s:   t =  %.1f fs   (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
@@ -243,7 +243,7 @@ class Plotter(object):
 
         # get the axis
         if ax is None:
-            if figsize is none:
+            if figsize is None:
                 fig, ax = plt.subplots(1, 1)
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -308,7 +308,7 @@ class Plotter(object):
 
         # get the axis
         if ax is None:
-            if figsize is none:
+            if figsize is None:
                 fig, ax = plt.subplots(1, 1)
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
@@ -334,11 +334,11 @@ class Plotter(object):
 
         # Add the name of the axes
         ax.set_xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
-        ax.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        ax.set_ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
         _ = ax.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
-                   interpolation='nearest', aspect='auto', **kw)
+                      aspect='auto', **kw)
         ax.figure.colorbar(mappable=_, ax=ax)
 
         # Get the limits of the plot
