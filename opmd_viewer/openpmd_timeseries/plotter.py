@@ -118,7 +118,7 @@ class Plotter(object):
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
         if ax is None:
             if figsize is None:
-                fig, ax = plt.subplots(1, 1)
+                ax = plt.gca()
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -198,7 +198,7 @@ class Plotter(object):
         # Plot the data
         if ax is None:
             if figsize is None:
-                fig, ax = plt.subplots(1, 1)
+                ax = plt.gca()
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -244,7 +244,7 @@ class Plotter(object):
         # get the axis
         if ax is None:
             if figsize is None:
-                fig, ax = plt.subplots(1, 1)
+                ax = plt.gca()
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
 
@@ -309,7 +309,7 @@ class Plotter(object):
         # get the axis
         if ax is None:
             if figsize is None:
-                fig, ax = plt.subplots(1, 1)
+                ax = plt.gca()
             else:
                 fig, ax = plt.subplots(1, 1, figsize=figsize)
 
