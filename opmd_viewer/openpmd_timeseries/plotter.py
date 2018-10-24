@@ -122,12 +122,6 @@ class Plotter(object):
         # Do the plot
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
-        if ax is None:
-            if figsize is None:
-                ax = plt.gca()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=figsize)
-
         ax.bar( bin_coords, binned_data, width=bin_size, **kw )
         ax.set_xlim( hist_range[0] )
         ax.set_ylim( hist_range[1] )
