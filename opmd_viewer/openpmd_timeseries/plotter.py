@@ -88,8 +88,14 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
-           Additional options to be passed to matplotlib's bar function
+           Additional options to be passed to matplotlib's `bar` function
         """
         # Check if matplotlib is available
         check_matplotlib()
@@ -167,8 +173,14 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
-           Additional options to be passed to matplotlib's imshow function
+           Additional options to be passed to matplotlib's `imshow` function
         """
         # Check if matplotlib is available
         check_matplotlib()
@@ -233,6 +245,15 @@ class Plotter(object):
         plot_range : list of lists
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` function
         """
         # Check if matplotlib is available
         check_matplotlib()
@@ -257,7 +278,7 @@ class Plotter(object):
         # Get the x axis in microns
         xaxis = 1.e6 * getattr( info, info.axes[0] )
         # Plot the data
-        ax.plot( xaxis, F )
+        ax.plot( xaxis, F, **kw )
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
@@ -298,6 +319,15 @@ class Plotter(object):
         plot_range : list of lists
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `imshow` function
         """
         # Check if matplotlib is available
         check_matplotlib()

@@ -194,6 +194,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's
            hist or hist2d.
@@ -411,6 +417,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
            Default: plots the full extent of the simulation box
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's imshow.
