@@ -97,8 +97,8 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's `bar` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -182,8 +182,8 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -208,12 +208,6 @@ class Plotter(object):
             raise ValueError('Unknown deposition method: %s' % deposition)
 
         # Plot the data
-        if ax is None:
-            if figsize is None:
-                ax = plt.gca()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=figsize)
-
         _ = ax.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
              origin='lower', aspect='auto',
              cmap=cmap, vmin=vmin, vmax=vmax, **kw )
@@ -255,19 +249,12 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
-
-        # get the axis
-        if ax is None:
-            if figsize is None:
-                ax = plt.gca()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=figsize)
 
         # Get the title and labels
         ax.set_title("%s at %.1f fs   (iteration %d)"
@@ -329,19 +316,12 @@ class Plotter(object):
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
-
-        # get the axis
-        if ax is None:
-            if figsize is None:
-                ax = plt.gca()
-            else:
-                fig, ax = plt.subplots(1, 1, figsize=figsize)
 
         # Get the title and labels
         # Cylindrical geometry
@@ -389,9 +369,10 @@ def print_cic_unavailable():
         " - then reinstall openPMD-viewer")
 
 
-def check_matplotlib():
+def check_matplotlib_and_axis(ax, figsize):
     """Raise error messages or warnings when potential issues when
-    potenial issues with matplotlib are detected."""
+    potenial issues with matplotlib are detected. Check if axis is
+    defined and if it is not, generate a new axis."""
 
     if not matplotlib_installed:
         raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
@@ -402,3 +383,12 @@ def check_matplotlib():
         "backend. \n(This typically obtained when typing `%matplotlib`.)\n"
         "With recent version of Jupyter, the plots might not appear.\nIn this "
         "case, switch to `%matplotlib notebook` and restart the notebook.")
+
+    # check the axis
+    if ax is None:
+        if figsize is None:
+            ax = plt.gca()
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    return ax

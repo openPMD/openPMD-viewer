@@ -14,7 +14,7 @@ from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
-from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib
+from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib_and_axis
 try:
     import matplotlib.pyplot as plt
 except ImportError:
@@ -165,13 +165,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             i += 1
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            if ax is None:
-                if figsize is None:
-                    ax = plt.gca()
-                else:
-                    fig, ax = plt.subplots(1, 1, figsize=figsize)
-
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             ax.plot(z_pos, spreads, **kw)
@@ -444,13 +438,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            if ax is None:
-                if figsize is None:
-                    ax = plt.gca()
-                else:
-                    fig, ax = plt.subplots(1, 1, figsize=figsize)
-
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             ax.plot( info.z, current, **kw)
@@ -552,13 +540,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            if ax is None:
-                if figsize is None:
-                    ax = plt.gca()
-                else:
-                    fig, ax = plt.subplots(1, 1, figsize=figsize)
-
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
@@ -764,13 +746,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
-            check_matplotlib()
-            if ax is None:
-                if figsize is None:
-                    ax = plt.gca()
-                else:
-                    fig, ax = plt.subplots(1, 1, figsize=figsize)
-
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             ax.plot( spect_info.omega, spectrum, **kw )
@@ -1041,13 +1017,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            if ax is None:
-                if figsize is None:
-                    ax = plt.gca()
-                else:
-                    fig, ax = plt.subplots(1, 1, figsize=figsize)
-
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             ax.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
