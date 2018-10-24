@@ -84,7 +84,7 @@ class InteractiveViewer(object):
             if do_refresh:
                 fig_fld = plt.figure(fld_figure_button.value, figsize=figsize)
                 fig_fld.clf()
-                ax_fld = fig_fld.subplots(1,1)
+                ax_fld = fig_fld.subplots(1, 1)
 
                 # When working in inline mode, in an ipython notebook,
                 # clear the output (prevents the images from stacking
@@ -143,9 +143,10 @@ class InteractiveViewer(object):
                     do_refresh = True
             # Do the refresh
             if do_refresh:
-                fig_ptcl = plt.figure(ptcl_figure_button.value, figsize=figsize)
+                fig_ptcl = plt.figure(ptcl_figure_button.value,
+                                      figsize=figsize)
                 fig_ptcl.clf()
-                ax_ptcl = fig_ptcl.subplots(1,1)
+                ax_ptcl = fig_ptcl.subplots(1, 1)
 
                 # When working in inline mode, in an ipython notebook,
                 # clear the output (prevents the images from stacking
