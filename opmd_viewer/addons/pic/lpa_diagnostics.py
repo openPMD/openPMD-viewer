@@ -16,6 +16,7 @@ import scipy.constants as const
 from scipy.optimize import curve_fit
 from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib_and_axis
 
+
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def __init__( self, path_to_dir, check_all_files=True ):
