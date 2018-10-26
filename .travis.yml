@@ -36,7 +36,7 @@ install:
   - pip install matplotlib
   - python setup.py install
   - pip install wget
-  - pip install pyflakes pycodestyle jupyter
+  - pip install pyflakes pycodestyle jupyter pytest
 
 before_script :
   # static code analysis
