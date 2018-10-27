@@ -302,7 +302,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                         (plot_range[i_data][1] is not None):
                     hist_range[i_data] = plot_range[i_data]
                 # Else use min and max of data
-                elif len(data) != 0 and not np.all(data==0):
+                elif len(data) != 0 and not np.all(data == 0):
                     hist_range[i_data] = [ data.min(), data.max() ]
                     # Avoid error when the min and max are equal
                     if hist_range[i_data][0] == hist_range[i_data][1]:
