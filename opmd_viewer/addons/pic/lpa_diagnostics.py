@@ -438,8 +438,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            freq_filter=40, index='center', theta=0,
-                            slicing_dir='y', plot=False, **kw ):
+                            index='center', theta=0, slicing_dir='y', plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -462,11 +461,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
-        freq_filter : float, optional
-            Range of frequencies in percent which to filter: Frequencies higher
-            than freq_filter/100 times the dominant frequencies will be
-            filtered out
 
         index : int or str, optional
             Transversal index of the slice from which to calculate the envelope
