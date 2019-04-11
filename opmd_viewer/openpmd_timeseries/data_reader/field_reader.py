@@ -119,11 +119,12 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
 
     theta : float, optional
        Angle of the plane of observation with respect to the x axis
+       # TODO: None: return 3D array
 
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field
+       F : a 2darray containing the required field  #TODO not always
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
@@ -137,6 +138,10 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
     info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
         group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
+
+    # Convert to a 3D Cartesian array if theta is None
+    if theta is None:
+        info._convert_cylindrical_to_3Dcartesian()
 
     # Extract the modes and recombine them properly
     F_total = np.zeros( (2 * Nr, Nz ) )
@@ -213,7 +218,7 @@ def read_field_3d( filename, field_path, axis_labels,
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field
+       F : a 2darray containing the required field # TODO: Not always
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
