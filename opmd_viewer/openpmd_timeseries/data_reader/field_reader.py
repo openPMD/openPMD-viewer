@@ -141,42 +141,77 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
-        info._convert_cylindrical_to_3Dcartesian()
+        # Get cylindrical data
+        rmin = info.rmin
+        dr = info.dr
+        Fcirc = get_data( dset )  # (Extracts all modes)
+        nr = Fcirc.shape[1]
 
-    # Extract the modes and recombine them properly
-    F_total = np.zeros( (2 * Nr, Nz ) )
-    if m == 'all':
-        # Sum of all the modes
-        # - Prepare the multiplier arrays
-        mult_above_axis = [1]
-        mult_below_axis = [1]
-        for mode in range(1, int(Nm / 2) + 1):
-            cos = np.cos( mode * theta )
-            sin = np.sin( mode * theta )
-            mult_above_axis += [cos, sin]
-            mult_below_axis += [ (-1) ** mode * cos, (-1) ** mode * sin ]
-        mult_above_axis = np.array( mult_above_axis )
-        mult_below_axis = np.array( mult_below_axis )
-        # - Sum the modes
-        F = get_data( dset )  # (Extracts all modes)
-        F_total[Nr:, :] = np.tensordot( mult_above_axis,
-                                        F, axes=(0, 0) )[:, :]
-        F_total[:Nr, :] = np.tensordot( mult_below_axis,
-                                        F, axes=(0, 0) )[::-1, :]
-    elif m == 0:
-        # Extract mode 0
-        F = get_data( dset, 0, 0 )
-        F_total[Nr:, :] = F[:, :]
-        F_total[:Nr, :] = F[::-1, :]
+        # Convert cylindrical data to Cartesian data
+        info._convert_cylindrical_to_3Dcartesian()
+        nx, ny, nz = len(info.x), len(info.y), len(info.z)
+        F_total = np.zeros( (nx, ny, nz) )
+        for ix in range(nx):
+            for iy in range(ny):
+                x = info.x[ix]
+                y = info.y[iy]
+                r = np.sqrt( x**2 + y**2 )
+                ir = int( (r-rmin)/dr - nr )   # Check...
+                # Handle out-of-bounds
+                if ir < 0:
+                    ir = 0
+                if ir >= nr:
+                    ir = nr-1
+                # Loop over all modes and recontruct data
+                for m in range(0, int(Nm / 2) + 1):
+                    if m==0:
+                        F_total[ix, iy, :] += Fcirc[0, ir, :]
+                    else:
+                        if r == 0:
+                            cos = 1.
+                            sin = 0.
+                        else:
+                            expItheta = ((x-1.j*y)/r)**m
+                            cos = expItheta.real
+                            sin = expItheta.imag
+                        F_total[ix, iy, :] += (Fcirc[2*m-1, ir, :]*cos + Fcirc[2*m, ir, :]*sin)
+
     else:
-        # Extract higher mode
-        cos = np.cos( m * theta )
-        sin = np.sin( m * theta )
-        F_cos = get_data( dset, 2 * m - 1, 0 )
-        F_sin = get_data( dset, 2 * m, 0 )
-        F = cos * F_cos + sin * F_sin
-        F_total[Nr:, :] = F[:, :]
-        F_total[:Nr, :] = (-1) ** m * F[::-1, :]
+
+        # Extract the modes and recombine them properly
+        F_total = np.zeros( (2 * Nr, Nz ) )
+        if m == 'all':
+            # Sum of all the modes
+            # - Prepare the multiplier arrays
+            mult_above_axis = [1]
+            mult_below_axis = [1]
+            for mode in range(1, int(Nm / 2) + 1):
+                cos = np.cos( mode * theta )
+                sin = np.sin( mode * theta )
+                mult_above_axis += [cos, sin]
+                mult_below_axis += [ (-1) ** mode * cos, (-1) ** mode * sin ]
+            mult_above_axis = np.array( mult_above_axis )
+            mult_below_axis = np.array( mult_below_axis )
+            # - Sum the modes
+            F = get_data( dset )  # (Extracts all modes)
+            F_total[Nr:, :] = np.tensordot( mult_above_axis,
+                                            F, axes=(0, 0) )[:, :]
+            F_total[:Nr, :] = np.tensordot( mult_below_axis,
+                                            F, axes=(0, 0) )[::-1, :]
+        elif m == 0:
+            # Extract mode 0
+            F = get_data( dset, 0, 0 )
+            F_total[Nr:, :] = F[:, :]
+            F_total[:Nr, :] = F[::-1, :]
+        else:
+            # Extract higher mode
+            cos = np.cos( m * theta )
+            sin = np.sin( m * theta )
+            F_cos = get_data( dset, 2 * m - 1, 0 )
+            F_sin = get_data( dset, 2 * m, 0 )
+            F = cos * F_cos + sin * F_sin
+            F_total[Nr:, :] = F[:, :]
+            F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
     # Close the file
     dfile.close()
