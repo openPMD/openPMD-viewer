@@ -141,11 +141,16 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
-        # Get cylindrical data
-        rmin = info.rmin
-        dr = info.dr
+
+        # Get cylindrical info
+        rmax = info.rmax
+        inv_dr = 1./info.dr
         Fcirc = get_data( dset )  # (Extracts all modes)
         nr = Fcirc.shape[1]
+        if m == 'all':
+            modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
+        else:
+            modes = [ m ]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
@@ -156,26 +161,25 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
                 x = info.x[ix]
                 y = info.y[iy]
                 r = np.sqrt( x**2 + y**2 )
-                ir = int( (r-rmin)/dr - nr )   # Check...
+                ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
                 # Handle out-of-bounds
                 if ir < 0:
                     ir = 0
                 if ir >= nr:
                     ir = nr-1
                 # Loop over all modes and recontruct data
-                for m in range(0, int(Nm / 2) + 1):
-                    if m==0:
+                if r == 0:
+                    expItheta = 1. + 0.j
+                else:
+                    expItheta = (x+1.j*y)/r
+                for mode in modes:
+                    if mode==0:
                         F_total[ix, iy, :] += Fcirc[0, ir, :]
                     else:
-                        if r == 0:
-                            cos = 1.
-                            sin = 0.
-                        else:
-                            expItheta = ((x-1.j*y)/r)**m
-                            cos = expItheta.real
-                            sin = expItheta.imag
-                        F_total[ix, iy, :] += (Fcirc[2*m-1, ir, :]*cos + Fcirc[2*m, ir, :]*sin)
-
+                        cos = (expItheta**mode).real
+                        sin = (expItheta**mode).imag
+                        F_total[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
+                                              + Fcirc[2*mode, ir, :]*sin
     else:
 
         # Extract the modes and recombine them properly
