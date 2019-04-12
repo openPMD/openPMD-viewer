@@ -381,6 +381,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
+           # TODO: theta is None: 3D Cartesian
 
         slicing : float, optional
            Only used for 3dcartesian geometry
@@ -483,12 +484,23 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # For Cartesian components, combine r and t components
                 Fr, info = read_field_circ(filename, field + '/r', m, theta)
                 Ft, info = read_field_circ(filename, field + '/t', m, theta)
-                if coord == 'x':
-                    F = np.cos(theta) * Fr - np.sin(theta) * Ft
-                elif coord == 'y':
-                    F = np.sin(theta) * Fr + np.cos(theta) * Ft
-                # Revert the sign below the axis
-                F[: int(F.shape[0] / 2)] *= -1
+                if theta is not None:
+                    if coord == 'x':
+                        F = np.cos(theta) * Fr - np.sin(theta) * Ft
+                    elif coord == 'y':
+                        F = np.sin(theta) * Fr + np.cos(theta) * Ft
+                    # Revert the sign below the axis
+                    F[: int(F.shape[0] / 2)] *= -1
+                else: # Fr, Ft are 3Darrays, info corresponds to Cartesian data
+                    r = np.sqrt( info.x[:,np.newaxis]**2 + \
+                                 info.y[np.newaxis,:]**2 )
+                    inv_r = 1./np.where( r!=0, r, 1. )
+                    cos = np.where( r!=0, info.x[:,np.newaxis]*inv_r, 1. )
+                    sin = np.where( r!=0, info.y[np.newaxis,:]*inv_r, 0. )
+                    if coord == 'x':
+                        F = cos[:,:,np.newaxis] * Fr - sin[:,:,np.newaxis] * Ft
+                    elif coord == 'y':
+                        F = sin[:,:,np.newaxis] * Fr + cos[:,:,np.newaxis] * Ft
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path, m, theta)
