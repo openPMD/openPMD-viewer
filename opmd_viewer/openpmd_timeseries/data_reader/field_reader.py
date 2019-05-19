@@ -103,7 +103,7 @@ def read_field_2d( filename, field_path, axis_labels ):
 def read_field_circ( filename, field_path, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is 2d cartesian.
+    when the geometry is thetaMode
 
     Parameters
     ----------
@@ -117,14 +117,17 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
     m : int or string, optional
        The azimuthal mode to be extracted
 
-    theta : float, optional
+    theta : float or None
        Angle of the plane of observation with respect to the x axis
-       # TODO: None: return 3D array
+       If `theta` is not None, then this function returns a 2D array
+       corresponding to the plane of observation given by `theta` ;
+       otherwise it returns a full 3D Cartesian array
 
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field  #TODO not always
+       F : a 3darray or 2darray containing the required field,
+           depending on whether `theta` is None or not
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
@@ -257,7 +260,8 @@ def read_field_3d( filename, field_path, axis_labels,
     Returns
     -------
     A tuple with
-       F : a 2darray containing the required field # TODO: Not always
+       F : a 3darray or 2darray containing the required field,
+           depending on whether `slicing` is None or not
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """

@@ -378,10 +378,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
 
-        theta : float, optional
+        theta : float or None, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
-           # TODO: theta is None: 3D Cartesian
+           If `theta` is not None, then this function returns a 2D array
+           corresponding to the plane of observation given by `theta` ;
+           otherwise it returns a full 3D Cartesian array
 
         slicing : float, optional
            Only used for 3dcartesian geometry
