@@ -6,7 +6,7 @@
 
 In order to contribute, please fork the [main repository](https://github.com/openPMD/openPMD-viewer):
 
-- Click 'Fork' on the page of the main repository, in order to create a personal copy of this repository on your Github account. 
+- Click 'Fork' on the page of the main repository, in order to create a personal copy of this repository on your Github account.
 
 - Clone this copy to your local machine:
 ```
@@ -46,13 +46,10 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
 ```
 
 - Test and check your code:
-  - Use [pyflakes](https://pypi.python.org/pypi/pyflakes) and 
-[pycodestyle](https://pypi.python.org/pypi/pycodestyle) to detect any potential bug, and to 
-ensure that your code complies with some standard style conventions.
+  - Use [pyflakes](https://pypi.python.org/pypi/pyflakes) to detect any potential bug.
   ```
   cd openPMD-viewer/
   pyflakes opmd_viewer
-  pycodestyle --ignore=E201,E202,E122,E127,E128,E131,W605 opmd_viewer
   ```
   - Make sure that the tests pass (please install `wget` and `jupyter` before running the tests: `pip install wget jupyter`)
   ```
@@ -101,7 +98,7 @@ def get_data( dset, i_slice=None, pos_slice=None ) :
 
     i_slice: int, optional
        The index of the slice to be taken
-    
+
     pos_slice: int, optional
        The position at which to slice the array
        When None, no slice is performed
