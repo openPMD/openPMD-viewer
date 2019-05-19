@@ -166,3 +166,49 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     hist_range = [ 1.e6 * hist_range[0], 1.e6 * hist_range[1] ]
 
     return( hist_size, hist_range )
+
+
+def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
+    """
+    Calculate the catesian field Fx or Fy,
+    from the cylindrical components Fr and Ft.
+
+    Parameters:
+    -----------
+    Fr, Ft: 3darrays or 2Darrays (depending on whether `theta` is None)
+        Contains the value of the fields
+    theta: float or None
+        Indicates the angle of the plane in which Fr and Ft where taken
+    coord: string
+        Either 'x' or 'y' ; indicates which component to calculate
+    info:  TODO
+    """
+    if theta is not None:
+        # Fr and Fr are 2Darrays
+        assert (Fr.ndim == 2) and (Ft.ndim == 2)
+
+        if coord == 'x':
+            F = np.cos(theta) * Fr - np.sin(theta) * Ft
+        elif coord == 'y':
+            F = np.sin(theta) * Fr + np.cos(theta) * Ft
+        # Revert the sign below the axis
+        F[: int(F.shape[0] / 2)] *= -1
+
+    else:
+        # Fr, Ft are 3Darrays, info corresponds to Cartesian data
+        assert (Fr.ndim == 3) and (Ft.ndim == 3)
+
+        # Calculate cos(theta) and sin(theta) in the transverse Cartesian plane
+        # while avoiding divisions by 0
+        r = np.sqrt( info.x[:,np.newaxis]**2 + info.y[np.newaxis,:]**2 )
+        inv_r = 1./np.where( r!=0, r, 1. )
+        # The value `1.`` is a placeholder in the above (to avoid division by 0)
+        # The lines below replace this placeholder value.
+        cos = np.where( r!=0, info.x[:,np.newaxis]*inv_r, 1. )
+        sin = np.where( r!=0, info.y[np.newaxis,:]*inv_r, 0. )
+        if coord == 'x':
+            F = cos[:,:,np.newaxis] * Fr - sin[:,:,np.newaxis] * Ft
+        elif coord == 'y':
+            F = sin[:,:,np.newaxis] * Fr + cos[:,:,np.newaxis] * Ft
+
+    return F
