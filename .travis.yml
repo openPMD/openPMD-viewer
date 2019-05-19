@@ -36,14 +36,12 @@ install:
   - pip install matplotlib
   - python setup.py install
   - pip install wget
-  - pip install pyflakes pycodestyle jupyter pytest
+  - pip install pyflakes jupyter pytest
 
 before_script :
   # static code analysis
   #   pyflakes: mainly warnings, unused code, etc.
   - python -m pyflakes opmd_viewer
-  #   pep8: style only, enforce PEP 8
-  - python -m pycodestyle --ignore=E201,E202,E122,E127,E128,E131,W605 opmd_viewer
 
 script:
   - "python setup.py test"
