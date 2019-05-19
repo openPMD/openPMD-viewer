@@ -113,7 +113,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
             select=None, output=True, plot=False, nbins=150,
             plot_range=[[None, None], [None, None]],
-            use_field_mesh=True, histogram_deposition='cic', **kw):
+            use_field_mesh=True, histogram_deposition='cic',
+            ax=None, figsize=None, **kw):
         """
         Extract a list of particle variables
         from an HDF5 file in the openPMD format.
@@ -192,6 +193,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
             When plotting the particle histogram, this determines how
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's
@@ -331,14 +338,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # Do the plotting
                 self.plotter.hist1d(data_list[0], w, var_list[0], species,
                         self._current_i, hist_bins[0], hist_range,
-                        deposition=histogram_deposition, **kw)
+                        deposition=histogram_deposition, ax=ax,
+                        figsize=figsize, **kw)
             # - In the case of two quantities
             elif len(data_list) == 2:
                 # Do the plotting
                 self.plotter.hist2d(data_list[0], data_list[1], w,
                     var_list[0], var_list[1], species,
                     self._current_i, hist_bins, hist_range,
-                    deposition=histogram_deposition, **kw)
+                    deposition=histogram_deposition, ax=ax,
+                    figsize=figsize, **kw)
         # Close the file
         file_handle.close()
 
@@ -349,7 +358,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slicing=0., slicing_dir='y',
                   output=True, plot=False,
-                  plot_range=[[None, None], [None, None]], **kw):
+                  plot_range=[[None, None], [None, None]], ax=None,
+                  figsize=None, **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
 
@@ -407,6 +417,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
            Default: plots the full extent of the simulation box
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's imshow.
@@ -500,11 +516,13 @@ class OpenPMDTimeSeries(InteractiveViewer):
         if plot:
             if geometry == "1dcartesian":
                 self.plotter.show_field_1d(F, info, field_label,
-                self._current_i, plot_range=plot_range, **kw)
+                self._current_i, plot_range=plot_range, ax=ax,
+                figsize=figsize, **kw)
             else:
                 self.plotter.show_field_2d(F, info, slicing_dir, m,
                         field_label, geometry, self._current_i,
-                        plot_range=plot_range, **kw)
+                        plot_range=plot_range, ax=ax,
+                        figsize=figsize, **kw)
 
         # Return the result
         return(F, info)

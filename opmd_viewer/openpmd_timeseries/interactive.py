@@ -82,8 +82,9 @@ class InteractiveViewer(object):
                     do_refresh = True
             # Do the refresh
             if do_refresh:
-                plt.figure(fld_figure_button.value, figsize=figsize)
-                plt.clf()
+                fig_fld = plt.figure(fld_figure_button.value, figsize=figsize)
+                fig_fld.clf()
+                ax_fld = fig_fld.subplots(1, 1)
 
                 # When working in inline mode, in an ipython notebook,
                 # clear the output (prevents the images from stacking
@@ -118,7 +119,7 @@ class InteractiveViewer(object):
                     m=convert_to_int(mode_button.value),
                     slicing=slicing_button.value, theta=theta_button.value,
                     slicing_dir=slicing_dir_button.value,
-                    plot_range=plot_range, **kw_fld )
+                    plot_range=plot_range, ax=ax_fld, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
             """
@@ -142,8 +143,10 @@ class InteractiveViewer(object):
                     do_refresh = True
             # Do the refresh
             if do_refresh:
-                plt.figure(ptcl_figure_button.value, figsize=figsize)
-                plt.clf()
+                fig_ptcl = plt.figure(ptcl_figure_button.value,
+                                      figsize=figsize)
+                fig_ptcl.clf()
+                ax_ptcl = fig_ptcl.subplots(1, 1)
 
                 # When working in inline mode, in an ipython notebook,
                 # clear the output (prevents the images from stacking
@@ -169,7 +172,8 @@ class InteractiveViewer(object):
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
+                        use_field_mesh=ptcl_use_field_button.value,
+                        ax=ax_ptcl, **kw_ptcl )
                 else:
                     # 2D histogram
                     self.get_particle( iteration=self.current_iteration,
@@ -179,7 +183,8 @@ class InteractiveViewer(object):
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
                         plot_range=plot_range,
-                        use_field_mesh=ptcl_use_field_button.value, **kw_ptcl )
+                        use_field_mesh=ptcl_use_field_button.value,
+                        ax=ax_ptcl, **kw_ptcl )
 
         def refresh_field_type(change):
             """

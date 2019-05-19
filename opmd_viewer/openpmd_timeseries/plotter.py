@@ -51,7 +51,8 @@ class Plotter(object):
         self.iterations = iterations
 
     def hist1d(self, q1, w, quantity1, species, current_i, nbins, hist_range,
-               cmap='Blues', vmin=None, vmax=None, deposition='cic', **kw):
+               cmap='Blues', vmin=None, vmax=None, deposition='cic', ax=None,
+               figsize=None, **kw):
         """
         Plot a 1D histogram of the particle quantity q1
         Sets the proper labels
@@ -87,11 +88,17 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
-           Additional options to be passed to matplotlib's bar function
+           Additional options to be passed to matplotlib's `bar` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -115,16 +122,16 @@ class Plotter(object):
         # Do the plot
         bin_size = (hist_range[0][1] - hist_range[0][0]) / nbins
         bin_coords = hist_range[0][0] + bin_size * ( 0.5 + np.arange(nbins) )
-        plt.bar( bin_coords, binned_data, width=bin_size, **kw )
-        plt.xlim( hist_range[0] )
-        plt.ylim( hist_range[1] )
-        plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f fs    (iteration %d)"
+        ax.bar( bin_coords, binned_data, width=bin_size, **kw )
+        ax.set_xlim( hist_range[0] )
+        ax.set_ylim( hist_range[1] )
+        ax.set_xlabel(quantity1, fontsize=self.fontsize)
+        ax.set_title("%s:   t =  %.0f fs    (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
-                deposition='cic', **kw):
+                deposition='cic', ax=None, figsize=None, **kw):
         """
         Plot a 2D histogram of the particle quantity q1
         Sets the proper labels
@@ -160,11 +167,17 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
-           Additional options to be passed to matplotlib's imshow function
+           Additional options to be passed to matplotlib's `imshow` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -188,18 +201,18 @@ class Plotter(object):
         else:
             raise ValueError('Unknown deposition method: %s' % deposition)
 
-        # Do the plot
-        plt.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
-             origin='lower', interpolation='nearest', aspect='auto',
+        # Plot the data
+        _ = ax.imshow( binned_data.T, extent=hist_range[0] + hist_range[1],
+             origin='lower', aspect='auto',
              cmap=cmap, vmin=vmin, vmax=vmax, **kw )
-        plt.colorbar()
-        plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f fs   (iteration %d)"
+        ax.figure.colorbar(mappable=_, ax=ax)
+        ax.set_xlabel(quantity1, fontsize=self.fontsize)
+        ax.set_ylabel(quantity2, fontsize=self.fontsize)
+        ax.set_title("%s:   t =  %.1f fs   (iteration %d)"
                   % (species, time_fs, iteration), fontsize=self.fontsize)
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
-                            vmin=None, vmax=None, **kw ):
+                       vmin=None, vmax=None, ax=None, figsize=None, **kw ):
         """
         Plot the given field in 1D
 
@@ -220,36 +233,45 @@ class Plotter(object):
         plot_range : list of lists
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
         time_fs = 1.e15 * self.t[current_i]
 
         # Get the title and labels
-        plt.title("%s at %.1f fs   (iteration %d)"
+        ax.set_title("%s at %.1f fs   (iteration %d)"
                 % (field_label, time_fs, iteration), fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        ax.set_xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
         # Get the x axis in microns
         xaxis = 1.e6 * getattr( info, info.axes[0] )
         # Plot the data
-        plt.plot( xaxis, F )
+        ax.plot( xaxis, F, **kw )
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
-            plt.xlim( plot_range[0][0], plot_range[0][1] )
+            ax.set_xlim( plot_range[0][0], plot_range[0][1] )
         else:
-            plt.xlim( xaxis.min(), xaxis.max() )  # Full extent of the box
+            ax.set_xlim( xaxis.min(), xaxis.max() )  # Full extent of the box
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
-            plt.ylim( plot_range[1][0], plot_range[1][1] )
+            ax.set_ylim( plot_range[1][0], plot_range[1][1] )
 
     def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
-                        current_i, plot_range, **kw):
+                      current_i, plot_range, ax=None, figsize=None, **kw):
         """
         Plot the given field in 2D
 
@@ -278,9 +300,18 @@ class Plotter(object):
         plot_range : list of lists
            Indicates the values between which to clip the plot,
            along the 1st axis (first list) and 2nd axis (second list)
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `imshow` function
         """
-        # Check if matplotlib is available
-        check_matplotlib()
+        # Check if matplotlib is available and if axis is defined
+        ax = check_matplotlib_and_axis(ax, figsize)
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
@@ -290,37 +321,37 @@ class Plotter(object):
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
+            ax.set_title("%s in the mode %s at %.1f fs   (iteration %d)"
                       % (field_label, mode, time_fs, iteration),
                       fontsize=self.fontsize)
         # 2D Cartesian geometry
         elif geometry == "2dcartesian":
-            plt.title("%s at %.1f fs   (iteration %d)"
+            ax.set_title("%s at %.1f fs   (iteration %d)"
                       % (field_label, time_fs, iteration),
                       fontsize=self.fontsize)
         # 3D Cartesian geometry
         elif geometry == "3dcartesian":
             slice_plane = info.axes[0] + '-' + info.axes[1]
-            plt.title("%s sliced in %s at %.1f fs  (iteration %d)"
+            ax.set_title("%s sliced in %s at %.1f fs  (iteration %d)"
                       % (field_label, slice_plane, time_fs, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
-        plt.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        ax.set_xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
+        ax.set_ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
-                   interpolation='nearest', aspect='auto', **kw)
-        plt.colorbar()
+        _ = ax.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
+                      aspect='auto', **kw)
+        ax.figure.colorbar(mappable=_, ax=ax)
 
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
-            plt.xlim( plot_range[0][0], plot_range[0][1] )
+            ax.set_xlim( plot_range[0][0], plot_range[0][1] )
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
-            plt.ylim( plot_range[1][0], plot_range[1][1] )
+            ax.set_ylim( plot_range[1][0], plot_range[1][1] )
 
 
 def print_cic_unavailable():
@@ -332,9 +363,10 @@ def print_cic_unavailable():
         " - then reinstall openPMD-viewer")
 
 
-def check_matplotlib():
+def check_matplotlib_and_axis(ax, figsize):
     """Raise error messages or warnings when potential issues when
-    potenial issues with matplotlib are detected."""
+    potenial issues with matplotlib are detected. Check if axis is
+    defined and if it is not, generate a new axis."""
 
     if not matplotlib_installed:
         raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
@@ -345,3 +377,12 @@ def check_matplotlib():
         "backend. \n(This typically obtained when typing `%matplotlib`.)\n"
         "With recent version of Jupyter, the plots might not appear.\nIn this "
         "case, switch to `%matplotlib notebook` and restart the notebook.")
+
+    # check the axis
+    if ax is None:
+        if figsize is None:
+            ax = plt.gca()
+        else:
+            fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    return ax

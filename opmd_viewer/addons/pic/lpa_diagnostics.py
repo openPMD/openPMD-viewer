@@ -14,12 +14,7 @@ from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
-from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    # Any error will be caught later by `check_matplotlib`
-    pass
+from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib_and_axis
 
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
@@ -97,7 +92,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return( mean_gamma, std_gamma )
 
     def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
-                              select=None, plot=False, **kw):
+                              select=None, plot=False, ax=None,
+                              figsize=None, **kw):
         """
         Calculate the standard deviation of gamma for particles in z-slices of
         width dz
@@ -127,6 +123,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         plot : bool, optional
            Whether to plot the requested quantity
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
@@ -158,14 +160,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             i += 1
         # Plot the result if needed
         if plot:
-            check_matplotlib()
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.plot(z_pos, spreads, **kw)
-            plt.title("Slice energy spread at %.1f fs   (iteration %d)"
+            ax.plot(z_pos, spreads, **kw)
+            ax.set_title("Slice energy spread at %.1f fs   (iteration %d)"
                 % (time_fs, iteration), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
-            plt.ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
+            ax.set_xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            ax.set_ylabel('$\sigma_\gamma (\Delta_z=%s\mu m)$' % dz,
                        fontsize=self.plotter.fontsize)
         return(spreads, z_pos)
 
@@ -365,7 +367,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             return emittance_from_coord(x, y, ux, uy, w)
 
     def get_current( self, t=None, iteration=None, species=None, select=None,
-                     bins=100, plot=False, **kw ):
+                     bins=100, plot=False, ax=None, figsize=None, **kw ):
         """
         Calculate the electric current along the z-axis for selected particles.
 
@@ -394,6 +396,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         plot : bool, optional
            Whether to plot the requested quantity
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
@@ -425,20 +433,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
-            check_matplotlib()
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.plot( info.z, current, **kw)
-            plt.title("Current at %.1f fs   (iteration %d)"
+            ax.plot( info.z, current, **kw)
+            ax.set_title("Current at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
-            plt.ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
+            ax.set_xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            ax.set_ylabel('$I \;(A)$', fontsize=self.plotter.fontsize)
         # Return the current and bin centers
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
                             freq_filter=40, index='center', theta=0,
-                            slicing_dir='y', plot=False, **kw ):
+                            slicing_dir='y', plot=False, ax=None,
+                            figsize=None, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -484,6 +493,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot : bool, optional
            Whether to plot the requested quantity
 
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot`(1D) or
            `imshow` (2D) method
@@ -520,22 +535,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
             if index != 'all':
-                plt.plot( 1.e6 * info.z, envelope, **kw)
-                plt.ylabel('$E_%s \;(V/m)$' % pol,
-                           fontsize=self.plotter.fontsize)
+                ax.plot( 1.e6 * info.z, envelope, **kw)
+                ax.set_ylabel('$E_%s \;(V/m)$' % pol,
+                              fontsize=self.plotter.fontsize)
             else:
-                plt.imshow( envelope, extent=1.e6 * info.imshow_extent,
-                            aspect='auto', **kw)
-                plt.colorbar()
-                plt.ylabel('$%s \;(\mu m)$' % pol,
+                _ = ax.imshow( envelope, extent=1.e6 * info.imshow_extent,
+                               aspect='auto', **kw)
+                ax.figure.colorbar(mappable=_, ax=ax)
+                ax.set_ylabel('$%s \;(\mu m)$' % pol,
                             fontsize=self.plotter.fontsize)
-            plt.title("Laser envelope at %.1f fs   (iteration %d)"
+            ax.set_title("Laser envelope at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
+            ax.set_xlabel('$z \;(\mu m)$', fontsize=self.plotter.fontsize)
         # Return the result
         return( envelope, info )
 
@@ -655,7 +670,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrum( self, t=None, iteration=None, pol=None,
-                      m='all', plot=False, **kw ):
+                      m='all', plot=False, ax=None, figsize=None, **kw ):
         """
         Return the spectrum of the laser
         (Absolute value of the Fourier transform of the fields.)
@@ -681,6 +696,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         plot: bool, optional
            Whether to plot the data
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
@@ -720,14 +741,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the field if required
         if plot:
-            check_matplotlib()
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.plot( spect_info.omega, spectrum, **kw )
-            plt.xlabel('$\omega \; (rad.s^{-1})$',
+            ax.plot( spect_info.omega, spectrum, **kw )
+            ax.set_xlabel('$\omega \; (rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
-            plt.ylabel('Spectrum', fontsize=self.plotter.fontsize )
-            plt.title("Spectrum at %.1f fs   (iteration %d)"
+            ax.set_ylabel('Spectrum', fontsize=self.plotter.fontsize )
+            ax.set_title("Spectrum at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
@@ -903,7 +924,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir='y', plot=False, **kw ):
+                          slicing_dir='y', plot=False, ax=None,
+                          figsize=None, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
@@ -931,6 +953,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         plot: bool, optional
             Whether to plot the spectrogram
+
+        ax : matplotlib axis, optional
+            Axis to be used for the plot
+
+        figsize : tuple of two integers, optional
+            Size of the figure for the plot, same as defined in matplotlib
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` method
@@ -984,16 +1012,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
+            ax = check_matplotlib_and_axis(ax, figsize)
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
-            plt.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
+            ax.imshow( spectrogram, extent=info.imshow_extent, aspect='auto',
                         **kw)
-            plt.title("Spectrogram at %.1f fs   (iteration %d)"
+            ax.set_title("Spectrogram at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
-            plt.ylabel('$\omega \;(rad.s^{-1})$',
-                       fontsize=self.plotter.fontsize )
+            ax.set_xlabel('$t \;(s)$', fontsize=self.plotter.fontsize )
+            ax.set_ylabel('$\omega \;(rad.s^{-1})$',
+                          fontsize=self.plotter.fontsize )
         return( spectrogram, info )
 
 
