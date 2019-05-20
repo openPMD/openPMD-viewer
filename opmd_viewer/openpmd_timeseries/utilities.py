@@ -181,7 +181,8 @@ def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
         Indicates the angle of the plane in which Fr and Ft where taken
     coord: string
         Either 'x' or 'y' ; indicates which component to calculate
-    info:  TODO
+    info: FieldMetaInformation object
+        Contains info on the coordinate system
     """
     if theta is not None:
         # Fr and Fr are 2Darrays

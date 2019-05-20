@@ -2,7 +2,7 @@ import numpy as np
 cimport numpy as np
 from cpython cimport bool
 cimport cython
-from libc.math cimport floor, sqrt
+from libc.math cimport floor
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
