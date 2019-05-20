@@ -212,3 +212,36 @@ def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
             F = sin[:,:,np.newaxis] * Fr + cos[:,:,np.newaxis] * Ft
 
     return F
+
+
+def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
+    nx, ny, nz, nr, nmodes, inv_dr, rmax ):
+    """
+    Reconstruct the field from a quasi-cylindrical simulation (`Fcirc`), as
+    a 3D cartesian array (`F3d`).
+    """
+    for ix in range(nx):
+        x = x_array[ix]
+        for iy in range(ny):
+            y = y_array[iy]
+            r = np.sqrt( x**2 + y**2 )
+            ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
+            # Handle out-of-bounds
+            if ir < 0:
+                ir = 0
+            if ir >= nr:
+                ir = nr-1
+            # Loop over all modes and recontruct data
+            if r == 0:
+                expItheta = 1. + 0.j
+            else:
+                expItheta = (x+1.j*y)/r
+            for im in range(nmodes):
+                mode = modes[im]
+                if mode==0:
+                    F3d[ix, iy, :] += Fcirc[0, ir, :]
+                else:
+                    cos = (expItheta**mode).real
+                    sin = (expItheta**mode).imag
+                    F3d[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
+                                    + Fcirc[2*mode, ir, :]*sin
