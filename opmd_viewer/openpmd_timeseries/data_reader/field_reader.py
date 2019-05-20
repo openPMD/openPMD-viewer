@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 from .utilities import get_shape, get_data, get_bpath, join_infile_path
 from .field_metainfo import FieldMetaInformation
-
+from ..cython_function import construct_3d_from_circ
 
 def read_field_1d( filename, field_path, axis_labels ):
     """
@@ -154,35 +154,16 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
         else:
             modes = [ m ]
+        modes = np.array( modes, dtype='int' )
+        nmodes = len(modes)
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
         F_total = np.zeros( (nx, ny, nz) )
-        for ix in range(nx):
-            for iy in range(ny):
-                x = info.x[ix]
-                y = info.y[iy]
-                r = np.sqrt( x**2 + y**2 )
-                ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
-                # Handle out-of-bounds
-                if ir < 0:
-                    ir = 0
-                if ir >= nr:
-                    ir = nr-1
-                # Loop over all modes and recontruct data
-                if r == 0:
-                    expItheta = 1. + 0.j
-                else:
-                    expItheta = (x+1.j*y)/r
-                for mode in modes:
-                    if mode==0:
-                        F_total[ix, iy, :] += Fcirc[0, ir, :]
-                    else:
-                        cos = (expItheta**mode).real
-                        sin = (expItheta**mode).imag
-                        F_total[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
-                                              + Fcirc[2*mode, ir, :]*sin
+        construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
+            nx, ny, nz, nr, nmodes, inv_dr, rmax )
+
     else:
 
         # Extract the modes and recombine them properly
