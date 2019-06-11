@@ -10,7 +10,8 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 import h5py as h5
-from .utilities import list_h5_files, apply_selection, fit_bins_to_grid
+from .utilities import list_h5_files, apply_selection, fit_bins_to_grid, \
+                        combine_cylindrical_components
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
@@ -378,9 +379,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
 
-        theta : float, optional
+        theta : float or None, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
+           If `theta` is not None, then this function returns a 2D array
+           corresponding to the plane of observation given by `theta` ;
+           otherwise it returns a full 3D Cartesian array
 
         slicing : float, optional
            Only used for 3dcartesian geometry
@@ -483,12 +487,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # For Cartesian components, combine r and t components
                 Fr, info = read_field_circ(filename, field + '/r', m, theta)
                 Ft, info = read_field_circ(filename, field + '/t', m, theta)
-                if coord == 'x':
-                    F = np.cos(theta) * Fr - np.sin(theta) * Ft
-                elif coord == 'y':
-                    F = np.sin(theta) * Fr + np.cos(theta) * Ft
-                # Revert the sign below the axis
-                F[: int(F.shape[0] / 2)] *= -1
+                F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path, m, theta)

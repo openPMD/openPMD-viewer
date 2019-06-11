@@ -124,3 +124,36 @@ class FieldMetaInformation(object):
         # Suppress imshow_extent and replace the dictionary
         delattr(self, 'imshow_extent')
         self.axes = {0: axis}
+
+    def _convert_cylindrical_to_3Dcartesian(self):
+        """
+        Convert FieldMetaInformation from cylindrical to 3D Cartesian
+        """
+
+        try:
+            assert self.axes[0] == 'r'
+            assert self.axes[1] == 'z'
+        except (KeyError, AssertionError):
+            raise ValueError('_convert_cylindrical_to_3Dcartesian'
+                ' can only be applied to a timeseries in thetaMode geometry')
+
+        # Create x and y arrays
+        self.x = self.r.copy()
+        self.y = self.r.copy()
+        del self.r
+
+        # Create dx and dy
+        self.dx = self.dr
+        self.dy = self.dr
+        del self.dr
+
+        # Create xmin, xmax, ymin, ymax
+        self.xmin = self.rmin
+        self.ymin = self.rmin
+        del self.rmin
+        self.xmax = self.rmax
+        self.ymax = self.rmax
+        del self.rmax
+
+        # Change axes
+        self.axes = {0:'x', 1:'y', 2:'z'}

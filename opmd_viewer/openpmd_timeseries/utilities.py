@@ -166,3 +166,83 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     hist_range = [ 1.e6 * hist_range[0], 1.e6 * hist_range[1] ]
 
     return( hist_size, hist_range )
+
+
+def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
+    """
+    Calculate the catesian field Fx or Fy,
+    from the cylindrical components Fr and Ft.
+
+    Parameters:
+    -----------
+    Fr, Ft: 3darrays or 2Darrays (depending on whether `theta` is None)
+        Contains the value of the fields
+    theta: float or None
+        Indicates the angle of the plane in which Fr and Ft where taken
+    coord: string
+        Either 'x' or 'y' ; indicates which component to calculate
+    info: FieldMetaInformation object
+        Contains info on the coordinate system
+    """
+    if theta is not None:
+        # Fr and Fr are 2Darrays
+        assert (Fr.ndim == 2) and (Ft.ndim == 2)
+
+        if coord == 'x':
+            F = np.cos(theta) * Fr - np.sin(theta) * Ft
+        elif coord == 'y':
+            F = np.sin(theta) * Fr + np.cos(theta) * Ft
+        # Revert the sign below the axis
+        F[: int(F.shape[0] / 2)] *= -1
+
+    else:
+        # Fr, Ft are 3Darrays, info corresponds to Cartesian data
+        assert (Fr.ndim == 3) and (Ft.ndim == 3)
+
+        # Calculate cos(theta) and sin(theta) in the transverse Cartesian plane
+        # while avoiding divisions by 0
+        r = np.sqrt( info.x[:,np.newaxis]**2 + info.y[np.newaxis,:]**2 )
+        inv_r = 1./np.where( r!=0, r, 1. )
+        # The value `1.`` is a placeholder in the above (to avoid division by 0)
+        # The lines below replace this placeholder value.
+        cos = np.where( r!=0, info.x[:,np.newaxis]*inv_r, 1. )
+        sin = np.where( r!=0, info.y[np.newaxis,:]*inv_r, 0. )
+        if coord == 'x':
+            F = cos[:,:,np.newaxis] * Fr - sin[:,:,np.newaxis] * Ft
+        elif coord == 'y':
+            F = sin[:,:,np.newaxis] * Fr + cos[:,:,np.newaxis] * Ft
+
+    return F
+
+
+def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
+    nx, ny, nz, nr, nmodes, inv_dr, rmax ):
+    """
+    Reconstruct the field from a quasi-cylindrical simulation (`Fcirc`), as
+    a 3D cartesian array (`F3d`).
+    """
+    for ix in range(nx):
+        x = x_array[ix]
+        for iy in range(ny):
+            y = y_array[iy]
+            r = np.sqrt( x**2 + y**2 )
+            ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
+            # Handle out-of-bounds
+            if ir < 0:
+                ir = 0
+            if ir >= nr:
+                ir = nr-1
+            # Loop over all modes and recontruct data
+            if r == 0:
+                expItheta = 1. + 0.j
+            else:
+                expItheta = (x+1.j*y)/r
+            for im in range(nmodes):
+                mode = modes[im]
+                if mode==0:
+                    F3d[ix, iy, :] += Fcirc[0, ir, :]
+                else:
+                    cos = (expItheta**mode).real
+                    sin = (expItheta**mode).imag
+                    F3d[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
+                                    + Fcirc[2*mode, ir, :]*sin
