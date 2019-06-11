@@ -1,5 +1,11 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 0.9.0
+
+This release adds two features:
+- Improved calculation of the laser envelope, using the Hilbert transform.
+- Reconstruction of full 3D field from a quasi-3D dataset, when passing `theta=None`.
+
 ## 0.8.2
 
 This is a bug-fix release. It allows the slider to work properly in JupyterLab,
