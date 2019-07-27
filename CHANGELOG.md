@@ -115,7 +115,7 @@ This new version includes:
 - an additional option `use_field_mesh` when plotting the particle. When set
 to `True`, this option uses information from the field mesh to choose the parameters of the particle histograms (esp. the bins). This is useful in order to avoid plotting/binning artifacts (aliasing) when the particles are evenly spaced.
 
-In addition, the package `opmd_viewer` now has an attribute `__version__`.
+In addition, the package `openpmd_viewer` now has an attribute `__version__`.
 
 ## 0.3.3
 

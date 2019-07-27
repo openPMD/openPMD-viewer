@@ -12,7 +12,7 @@ from pkg_resources import resource_string
 
 # Use pkg_resources to retrieve the location and contents
 # of the pre-existing template notebook
-notebook_text = resource_string('opmd_viewer',
+notebook_text = resource_string('openpmd_viewer',
                                 'notebook_starter/Template_notebook.ipynb')
 
 # Create a new notebook in the local directory and copy
