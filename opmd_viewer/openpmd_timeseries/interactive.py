@@ -526,6 +526,22 @@ class InteractiveViewer(object):
         elif self.avail_fields is None:
             display(container_ptcl)
 
+        # When using %matplotlib widget, display the figures at the end
+        if 'ipympl' in matplotlib.get_backend():
+            # Disable interactive mode
+            # This prevents the notebook from showing the figure
+            # when calling `plt.figure` (unreliable with `%matplotlib widget`)
+            # and we use `display` instead.
+            plt.ioff()
+            if self.avail_fields is not None:
+                fig = plt.figure( fld_figure_button.value )
+                display(fig.canvas)
+            if self.avail_species is not None:
+                fig = plt.figure( ptcl_figure_button.value )
+                display(fig.canvas)
+            # Enable interactive mode again
+            plt.ion()
+
 
 def convert_to_int(m):
     """

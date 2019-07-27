@@ -68,8 +68,6 @@ class FieldMetaInformation(object):
         """
         # Register important initial information
         self.axes = axes
-        if len(shape) == 2:
-            self.imshow_extent = []
 
         # Create the elements
         for axis in sorted(axes.keys()):
@@ -93,16 +91,9 @@ class FieldMetaInformation(object):
             setattr(self, 'd' + axis_name, step)
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
-            # Fill the imshow_extent in reverse order, so as to match
-            # the syntax of imshow ; add a half step on each side since
-            # imshow plots a square of finite width for each field value
-            if len(shape) == 2:
-                self.imshow_extent = \
-                    [start - 0.5 * step, end + 0.5 * step] + self.imshow_extent
 
-        # Finalize imshow_extent by converting it from list to array
-        if len(shape) == 2:
-            self.imshow_extent = np.array(self.imshow_extent)
+        self._generate_imshow_extent()
+
 
     def restrict_to_1Daxis(self, axis):
         """
@@ -120,12 +111,73 @@ class FieldMetaInformation(object):
                              'that are present in this object.')
 
         # Loop through the coordinates and suppress them
-        for obsolete_axis in self.axes.values():
+        for obsolete_axis in list(self.axes.values()):
             if obsolete_axis != axis:
-                delattr(self, obsolete_axis)
-                delattr(self, obsolete_axis + 'min')
-                delattr(self, obsolete_axis + 'max')
+                self._remove_axis(obsolete_axis)
 
-        # Suppress imshow_extent and replace the dictionary
-        delattr(self, 'imshow_extent')
-        self.axes = {0: axis}
+
+    def _generate_imshow_extent(self):
+        """
+        Generate the list `imshow_extent`, which can be used directly
+        as the argument `extent` of matplotlib's `imshow` command
+        """
+        if len(self.axes) == 2:
+            self.imshow_extent = []
+            for label in [self.axes[1], self.axes[0]]:
+                coord_min = getattr( self, label+'min' )
+                coord_max = getattr( self, label+'max' )
+                coord_step = getattr( self, 'd'+label )
+                self.imshow_extent += [ coord_min - 0.5*coord_step,
+                                   coord_max + 0.5*coord_step ]
+        else:
+            if hasattr(self, 'imshow_extent'):
+                delattr(self, 'imshow_extent')
+
+
+    def _remove_axis(self, obsolete_axis):
+        """
+        Remove the axis `obsolete_axis` from the MetaInformation object
+        """
+        delattr(self, obsolete_axis)
+        delattr(self, obsolete_axis + 'min')
+        delattr(self, obsolete_axis + 'max')
+        # Remove from dictionary
+        for key in list(self.axes.keys()):
+            if self.axes[key] == obsolete_axis:
+                del self.axes[key]
+
+        self._generate_imshow_extent()
+
+
+    def _convert_cylindrical_to_3Dcartesian(self):
+        """
+        Convert FieldMetaInformation from cylindrical to 3D Cartesian
+        """
+
+        try:
+            assert self.axes[0] == 'r'
+            assert self.axes[1] == 'z'
+        except (KeyError, AssertionError):
+            raise ValueError('_convert_cylindrical_to_3Dcartesian'
+                ' can only be applied to a timeseries in thetaMode geometry')
+
+        # Create x and y arrays
+        self.x = self.r.copy()
+        self.y = self.r.copy()
+        del self.r
+
+        # Create dx and dy
+        self.dx = self.dr
+        self.dy = self.dr
+        del self.dr
+
+        # Create xmin, xmax, ymin, ymax
+        self.xmin = self.rmin
+        self.ymin = self.rmin
+        del self.rmin
+        self.xmax = self.rmax
+        self.ymax = self.rmax
+        del self.rmax
+
+        # Change axes
+        self.axes = {0:'x', 1:'y', 2:'z'}

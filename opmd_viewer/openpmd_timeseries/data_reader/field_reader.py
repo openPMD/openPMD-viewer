@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 from .utilities import get_shape, get_data, get_bpath, join_infile_path
 from .field_metainfo import FieldMetaInformation
-
+from ..utilities import construct_3d_from_circ
 
 def read_field_cartesian( filename, field_path, axis_labels,
                           slicing, slicing_dir ):
@@ -112,7 +112,7 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
                      theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is circ.
+    when the geometry is thetaMode
 
     Parameters
     ----------
@@ -126,8 +126,11 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
     m : int or string, optional
        The azimuthal mode to be extracted
 
-    theta : float, optional
+    theta : float or None
        Angle of the plane of observation with respect to the x axis
+       If `theta` is not None, then this function returns a 2D array
+       corresponding to the plane of observation given by `theta` ;
+       otherwise it returns a full 3D Cartesian array
 
     slicing : list of float or None
        Number(s) between -1 and 1 that indicate where to slice the data,
@@ -144,7 +147,8 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
     Returns
     -------
     A tuple with
-       F : a ndarray containing the required field
+       F : a 3darray or 2darray containing the required field,
+           depending on whether `theta` is None or not
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
@@ -155,76 +159,87 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
 
     # Extract the metainformation
     Nm, Nr, Nz = get_shape( dset )
+    info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
+        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+        group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
 
-    # Extract the modes and recombine them properly
-    F_total = np.zeros( (2 * Nr, Nz ) )
-    if m == 'all':
-        # Sum of all the modes
-        # - Prepare the multiplier arrays
-        mult_above_axis = [1]
-        mult_below_axis = [1]
-        for mode in range(1, int(Nm / 2) + 1):
-            cos = np.cos( mode * theta )
-            sin = np.sin( mode * theta )
-            mult_above_axis += [cos, sin]
-            mult_below_axis += [ (-1) ** mode * cos, (-1) ** mode * sin ]
-        mult_above_axis = np.array( mult_above_axis )
-        mult_below_axis = np.array( mult_below_axis )
-        # - Sum the modes
-        F = get_data( dset )  # (Extracts all modes)
-        F_total[Nr:, :] = np.tensordot( mult_above_axis,
-                                        F, axes=(0, 0) )[:, :]
-        F_total[:Nr, :] = np.tensordot( mult_below_axis,
-                                        F, axes=(0, 0) )[::-1, :]
-    elif m == 0:
-        # Extract mode 0
-        F = get_data( dset, 0, 0 )
-        F_total[Nr:, :] = F[:, :]
-        F_total[:Nr, :] = F[::-1, :]
+    # Convert to a 3D Cartesian array if theta is None
+    if theta is None:
+
+        # Get cylindrical info
+        rmax = info.rmax
+        inv_dr = 1./info.dr
+        Fcirc = get_data( dset )  # (Extracts all modes)
+        nr = Fcirc.shape[1]
+        if m == 'all':
+            modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
+        else:
+            modes = [ m ]
+        modes = np.array( modes, dtype='int' )
+        nmodes = len(modes)
+
+        # Convert cylindrical data to Cartesian data
+        info._convert_cylindrical_to_3Dcartesian()
+        nx, ny, nz = len(info.x), len(info.y), len(info.z)
+        F_total = np.zeros( (nx, ny, nz) )
+        construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
+            nx, ny, nz, nr, nmodes, inv_dr, rmax )
+
     else:
-        # Extract higher mode
-        cos = np.cos( m * theta )
-        sin = np.sin( m * theta )
-        F_cos = get_data( dset, 2 * m - 1, 0 )
-        F_sin = get_data( dset, 2 * m, 0 )
-        F = cos * F_cos + sin * F_sin
-        F_total[Nr:, :] = F[:, :]
-        F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
-    axis_labels = ['r', 'z']
-    shape = [2 * Nr, Nz]
-    grid_spacing = list( group.attrs['gridSpacing'] )
-    global_offset = list( group.attrs['gridGlobalOffset'] )
+        # Extract the modes and recombine them properly
+        F_total = np.zeros( (2 * Nr, Nz ) )
+        if m == 'all':
+            # Sum of all the modes
+            # - Prepare the multiplier arrays
+            mult_above_axis = [1]
+            mult_below_axis = [1]
+            for mode in range(1, int(Nm / 2) + 1):
+                cos = np.cos( mode * theta )
+                sin = np.sin( mode * theta )
+                mult_above_axis += [cos, sin]
+                mult_below_axis += [ (-1) ** mode * cos, (-1) ** mode * sin ]
+            mult_above_axis = np.array( mult_above_axis )
+            mult_below_axis = np.array( mult_below_axis )
+            # - Sum the modes
+            F = get_data( dset )  # (Extracts all modes)
+            F_total[Nr:, :] = np.tensordot( mult_above_axis,
+                                            F, axes=(0, 0) )[:, :]
+            F_total[:Nr, :] = np.tensordot( mult_below_axis,
+                                            F, axes=(0, 0) )[::-1, :]
+        elif m == 0:
+            # Extract mode 0
+            F = get_data( dset, 0, 0 )
+            F_total[Nr:, :] = F[:, :]
+            F_total[:Nr, :] = F[::-1, :]
+        else:
+            # Extract higher mode
+            cos = np.cos( m * theta )
+            sin = np.sin( m * theta )
+            F_cos = get_data( dset, 2 * m - 1, 0 )
+            F_sin = get_data( dset, 2 * m, 0 )
+            F = cos * F_cos + sin * F_sin
+            F_total[Nr:, :] = F[:, :]
+            F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
     # Perform slicing if needed
     if slicing_dir is not None:
         # Slice field and clear metadata
-        list_slicing_index = []
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
         for count, slicing_dir_item in enumerate(slicing_dir):
-            slicing_index = axis_labels.index(slicing_dir_item)
-            list_slicing_index.append(slicing_index)
+            slicing_index = inverted_axes_dict(slicing_dir_item)
+            coord_array = getattr( info, slicing_dir_item )
             # Number of cells along the slicing direction
-            n_cells = shape[ slicing_index ]
+            n_cells = len(coord_array)
             # Index of the slice (prevent stepping out of the array)
             i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             F_total = np.take( F_total, [i_cell], axis=slicing_index )
         F_total = np.squeeze(F_total)
-
-        shape = [ x for index, x in enumerate(shape)
-                  if index not in list_slicing_index ]
-        grid_spacing = [ x for index, x in enumerate(grid_spacing)
-                         if index not in list_slicing_index ]
-        global_offset = [ x for index, x in enumerate(global_offset)
-                          if index not in list_slicing_index ]
-        axis_labels = [ x for index, x in enumerate(axis_labels)
-                         if index not in list_slicing_index ]
-
-    axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
-    info = FieldMetaInformation( axes, tuple(shape),
-        grid_spacing, global_offset,
-        group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )
+        # Remove the sliced labels from the FieldMetaInformation
+        for slicing_dir_item in slicing_dir:
+            info._remove_axis(slicing_dir_item)
 
     # Close the file
     dfile.close()

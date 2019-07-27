@@ -55,10 +55,13 @@ browser**. To use this executable, simply type in a regular terminal:
 #### Installation with conda (recommended)
 
 In order to install `openPMD-viewer` with `conda`, please install the [Anaconda
-distribution](https://www.continuum.io/downloads), and then type
+distribution](https://docs.anaconda.com/anaconda/install/), and then type
 ```
 conda install -c rlehe openpmd_viewer
 ```
+If you are using JupyterLab, please also install the `jupyter-matplotlib`
+extension (See installation instructions
+[here](https://github.com/matplotlib/jupyter-matplotlib)).
 
 #### Installation with pip
 

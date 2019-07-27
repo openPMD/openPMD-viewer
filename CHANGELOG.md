@@ -9,6 +9,17 @@ It breaks backward compatibility: for a 3d field,
 used to return the central slice along `y` while it returns the full 3d field
 now.
 
+## 0.9.0
+
+This release adds two features:
+- Improved calculation of the laser envelope, using the Hilbert transform.
+- Reconstruction of full 3D field from a quasi-3D dataset, when passing `theta=None`.
+
+## 0.8.2
+
+This is a bug-fix release. It allows the slider to work properly in JupyterLab,
+by using the `%matplotlib widget` magic.
+
 ## 0.8.1
 
 This version includes minor improvements to the viewer:

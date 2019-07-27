@@ -15,6 +15,7 @@ import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
 from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib
+from scipy.signal import hilbert
 try:
     import matplotlib.pyplot as plt
 except ImportError:
@@ -437,8 +438,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            freq_filter=40, index='center', theta=0,
-                            slicing_dir=None, slicing=0., plot=False, **kw ):
+                            index='center', theta=0, slicing=0,
+                            slicing_dir=None, plot=False, **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -461,11 +462,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
-        freq_filter : float, optional
-            Range of frequencies in percent which to filter: Frequencies higher
-            than freq_filter/100 times the dominant frequencies will be
-            filtered out
 
         index : int or str, optional
             Transversal index of the slice from which to calculate the envelope
@@ -518,16 +514,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         info = field[1]
         if index == 'all':
             # Filter the full 2D array
-            envelope = self._fft_filter(field[0], freq_filter)
+            e_complx = hilbert(field[0], axis=1)
         elif index == 'center':
             # Filter the central slice (1D array)
             field_slice = field[0][int( field[0].shape[0] / 2), :]
-            envelope = self._fft_filter(field_slice, freq_filter)
+            e_complx = hilbert(field_slice)
         else:
             # Filter the requested slice (2D array)
             field_slice = field[0][index, :]
-            envelope = self._fft_filter(field_slice, freq_filter)
-
+            e_complx = hilbert(field_slice)
+        envelope = np.abs(e_complx)
         # Restrict the metainformation to 1d if needed
         if index != 'all':
             info.restrict_to_1Daxis( info.axes[1] )
@@ -552,67 +548,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
         # Return the result
         return( envelope, info )
-
-    def _fft_filter(self, field, freq_filter):
-        """
-        Filters out high frequencies in input data. Frequencies higher than
-        freq_filter / 100 times the dominant frequency will be filtered.
-
-        Parameters
-        ----------
-        field : 1D array or 2D array
-            Array with input data in time/space domain
-            When a 2D array is provided, filtering is performed along
-            the last dimension.
-
-        freq_filter : float
-            Frequency range in percent around the dominant frequency which will
-            not be filtered out
-
-        Returns
-        -------
-        A 1D array or 2D array with filtered input data in time/space domain
-        """
-        # Number of sample points along the filtered direction
-        N = field.shape[-1]
-        fft_freqs = np.fft.fftfreq(N)
-        # Fourier transform of the field
-        fft_field = np.fft.fft(field, axis=-1)
-        # Find central frequency
-        # (the code below works for both 1D and 2D arrays, and finds
-        # the global maximum across all dimensions in the case of the 2D array)
-        central_freq_i = np.unravel_index( np.argmax( np.abs(fft_field) ),
-                dims=fft_field.shape )[-1]
-        if central_freq_i > int( N / 2 ):
-            # Wrap index around, if it turns out to be in the
-            # negative-frequency part of the fft range
-            central_freq_i = N - central_freq_i
-        central_freq = fft_freqs[central_freq_i]
-        # Filter frequencies higher than central_freq * freq_filter/100
-        filter_bound = central_freq * freq_filter / 100.
-        # Find index from where to filter
-        filter_i = np.argmin(np.abs(filter_bound - fft_freqs))
-        filter_freq_range_i = central_freq_i - filter_i
-        # Write filtered FFT array
-        filtered_fft = np.zeros_like( field, dtype=np.complex )
-        # - Indices in the original fft array
-        i_fft_min = central_freq_i - filter_freq_range_i
-        i_fft_max = central_freq_i + filter_freq_range_i
-        # - Indices in the new filtered array
-        i_filter_min = int(N / 2) - filter_freq_range_i
-        i_filter_max = int(N / 2) + filter_freq_range_i
-        if field.ndim == 2:
-            filtered_fft[ :, i_filter_min:i_filter_max] = \
-                2 * fft_field[ :, i_fft_min:i_fft_max ]
-        elif field.ndim == 1:
-            filtered_fft[ i_filter_min:i_filter_max] = \
-                2 * fft_field[ i_fft_min:i_fft_max ]
-        # Calculate inverse FFT of filtered FFT array (along the last axis)
-        envelope = np.abs( np.fft.ifft(
-            np.fft.fftshift( filtered_fft, axes=-1 ), axis=-1 ) )
-
-        # Return the result
-        return( envelope )
 
     def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
                             method='max'):
