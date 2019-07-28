@@ -10,11 +10,11 @@ License: 3-Clause-BSD-LBNL
 
 # Class that inherits from OpenPMDTimeSeries, and implements
 # some standard diagnostics (emittance, etc.)
-from opmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
+from openpmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
-from opmd_viewer.openpmd_timeseries.plotter import check_matplotlib
+from openpmd_viewer.openpmd_timeseries.plotter import check_matplotlib
 from scipy.signal import hilbert
 try:
     import matplotlib.pyplot as plt
