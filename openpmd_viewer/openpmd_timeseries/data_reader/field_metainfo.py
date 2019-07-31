@@ -129,6 +129,7 @@ class FieldMetaInformation(object):
                 coord_step = getattr( self, 'd'+label )
                 self.imshow_extent += [ coord_min - 0.5*coord_step,
                                    coord_max + 0.5*coord_step ]
+            self.imshow_extent = np.array(self.imshow_extent)
         else:
             if hasattr(self, 'imshow_extent'):
                 delattr(self, 'imshow_extent')
