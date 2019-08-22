@@ -46,10 +46,17 @@ if matplotlib_installed:
             # Reduce the threshold for printing an offset on side of the axis
             self._offset_threshold = 2
 
-        def pprint_val( self, x, pos=None ):
+        def __call__(self, x, pos=None):
             """
-            Function that is called for each tick of an axis.
-            Returns the string that
+            Function called for each tick of an axis (for matplotlib>=3.1)
+            Returns the string that appears in the plot.
+            """
+            return self.pprint_val( x, pos )
+
+        def pprint_val( self, x, pos=None):
+            """
+            Function called for each tick of an axis (for matplotlib<3.1)
+            Returns the string that appears in the plot.
             """
             # Calculate the exponent (power of 3)
             xp = (x - self.offset)
