@@ -2,12 +2,28 @@
 
 ## 1.0
 
-This version introduces a capability to do slicing along several directions,
-and for 1d, 2d, 3d and circ geometries.
-It breaks backward compatibility: for a 3d field,
+This version introduces major changes and breaks backward compatibility.
+
+Here is a list of the changes:
+- The import statement now uses `openpmd_viewer` instead of `opmd_viewer`, e.g.
+```
+from openpmd_viewer import OpenPMDTimeSeries
+```
+- For consistency, `ts.get_particle` now return particle positions in meters,
+instead of microns. For instance, in the code below, `x`, `y`, `z` will be in
+meters
+```
+x, y, z = ts.get_particle(['x', 'y', 'z'], iteration=1000)
+```
+- In `ts.get_field`, slicing can now be done in several directions
+(by passing a list as the argument `slicing_dir`), and for
+1d, 2d, 3d, and circ geometries. As a consequence, this breaks backward
+compatibility for 3d field:
 ```get_field(field=field, coord=coord, iteration=iteration)```
-used to return the central slice along `y` while it returns the full 3d field
-now.
+used to return the central slice along `y` while it now returns the full 3d field.
+- A new function (`ts.iterate`) was introduced in order to quickly apply a
+given function to all iterations of a time series. See the docstring of
+`ts.iterate` for more information.
 
 ## 0.9.0
 
