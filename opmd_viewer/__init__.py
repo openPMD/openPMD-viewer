@@ -2,7 +2,7 @@
 This is a stub that detects whether the user is attempting to use the
 old import statement from openPMD-viewer 0.X (`import opmd_viewer`).
 
-In that case, an exception is raise, that prompts the user to use the new API.
+In that case, an exception is raised that prompts the user to use the new API.
 """
 # Define the version number
 from openpmd_viewer import __version__
