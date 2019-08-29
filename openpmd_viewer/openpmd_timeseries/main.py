@@ -344,7 +344,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=0., slicing_dir=None,
+                  m='all', theta=0., slicing=None, slicing_dir=None,
                   plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
@@ -388,6 +388,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
+           Default: None, which results in slicing at 0 in all direction
+           of `slicing_dir`.
 
         slicing_dir : str or list of str, optional
            Direction(s) along which to slice the data
@@ -433,6 +435,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
             # Convert to lists
             if not isinstance(slicing_dir, list):
                 slicing_dir = [slicing_dir]
+            if slicing is None:
+                slicing = [0]*len(slicing_dir)
             if not isinstance(slicing, list):
                 slicing = [slicing]
             # Check that the elements are valid
