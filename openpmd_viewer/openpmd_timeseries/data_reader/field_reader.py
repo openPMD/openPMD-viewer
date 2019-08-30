@@ -227,7 +227,7 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
         # Slice field and clear metadata
         inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
         for count, slicing_dir_item in enumerate(slicing_dir):
-            slicing_index = inverted_axes_dict(slicing_dir_item)
+            slicing_index = inverted_axes_dict[slicing_dir_item]
             coord_array = getattr( info, slicing_dir_item )
             # Number of cells along the slicing direction
             n_cells = len(coord_array)

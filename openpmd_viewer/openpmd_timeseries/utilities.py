@@ -193,16 +193,15 @@ def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
         Contains info on the coordinate system
     """
     if theta is not None:
-        # Fr and Fr are 2Darrays
-        assert (Fr.ndim == 2) and (Ft.ndim == 2)
-
         if coord == 'x':
             F = np.cos(theta) * Fr - np.sin(theta) * Ft
         elif coord == 'y':
             F = np.sin(theta) * Fr + np.cos(theta) * Ft
         # Revert the sign below the axis
-        F[: int(F.shape[0] / 2)] *= -1
-
+        if info.axes[0] == 'r':
+            F[ : int(F.shape[0]/2) ] *= -1
+        elif (F.ndim == 2) and (info.axes[1] == 'r'):
+            F[ : , : int(F.shape[1]/2) ] *= -1
     else:
         # Fr, Ft are 3Darrays, info corresponds to Cartesian data
         assert (Fr.ndim == 3) and (Ft.ndim == 3)

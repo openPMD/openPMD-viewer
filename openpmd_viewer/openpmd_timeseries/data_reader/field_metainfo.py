@@ -75,16 +75,12 @@ class FieldMetaInformation(object):
             step = grid_spacing[axis] * grid_unitSI
             n_points = shape[axis]
             start = global_offset[axis] * grid_unitSI + position[axis] * step
+            end = start + (n_points - 1) * step
+            axis_points = np.linspace(start, end, n_points, endpoint=True)
             # Create the points below the axis if thetaMode is true
             if axes[axis] == 'r' and thetaMode:
-                end = start + (n_points / 2 - 1) * step
-                axis_points = np.linspace(start, end, n_points / 2,
-                                            endpoint=True)
                 axis_points = np.concatenate((-axis_points[::-1], axis_points))
                 start = -end
-            else:
-                end = start + (n_points - 1) * step
-                axis_points = np.linspace(start, end, n_points, endpoint=True)
             # Register the results in the object
             axis_name = axes[axis]
             setattr(self, axis_name, axis_points)
@@ -142,10 +138,12 @@ class FieldMetaInformation(object):
         delattr(self, obsolete_axis)
         delattr(self, obsolete_axis + 'min')
         delattr(self, obsolete_axis + 'max')
-        # Remove from dictionary
-        for key in list(self.axes.keys()):
-            if self.axes[key] == obsolete_axis:
-                del self.axes[key]
+        # Rebuild the dictionary `axes`, by including the axis
+        # label in the same order, but omitting obsolete_axis
+        ndim = len(self.axes)
+        self.axes = dict( enumerate([
+            self.axes[i] for i in range(ndim) \
+            if self.axes[i] != obsolete_axis ]))
 
         self._generate_imshow_extent()
 
