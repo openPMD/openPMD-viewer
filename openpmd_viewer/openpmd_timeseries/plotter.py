@@ -17,11 +17,10 @@ try:
     matplotlib_installed = True
 except ImportError:
     matplotlib_installed = False
-try:
-    from .cython_function import histogram_cic_1d, histogram_cic_2d
-    cython_function_available = True
-except ImportError:
-    cython_function_available = False
+
+from .numba_wrapper import numba_installed
+if numba_installed:
+    from .utilities import histogram_cic_1d, histogram_cic_2d
 
 # Redefine the default matplotlib formatter for ticks
 if matplotlib_installed:
@@ -150,7 +149,7 @@ class Plotter(object):
         time = self.t[current_i]
 
         # Check deposition method
-        if deposition == 'cic' and not cython_function_available:
+        if deposition == 'cic' and not numba_installed:
             print_cic_unavailable()
             deposition = 'ngp'
 
@@ -227,7 +226,7 @@ class Plotter(object):
         time = self.t[current_i]
 
         # Check deposition method
-        if deposition == 'cic' and not cython_function_available:
+        if deposition == 'cic' and not numba_installed:
             print_cic_unavailable()
             deposition = 'ngp'
 
@@ -388,10 +387,8 @@ class Plotter(object):
 def print_cic_unavailable():
     warnings.warn(
         "\nCIC particle histogramming is unavailable because \n"
-        "Cython is not installed. NGP histogramming is used instead.\n"
-        "For CIC histogramming: \n"
-        " - make sure that Cython is installed \n"
-        " - then reinstall openPMD-viewer")
+        "Numba is not installed. NGP histogramming is used instead.\n"
+        "Please considering installing numba (e.g. `pip install numba`)")
 
 
 def check_matplotlib():

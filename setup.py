@@ -22,18 +22,6 @@ class PyTest(TestCommand):
         errcode = pytest.main([])
         sys.exit(errcode)
 
-# Try to compile the Cython function
-try:
-    import numpy
-    include_dirs = [numpy.get_include()]
-    from Cython.Build import cythonize
-    ext_modules = cythonize(
-      "openpmd_viewer/openpmd_timeseries/cython_function.pyx")
-except ImportError:
-    # If the compilation fails, still install the package in a robust way
-    include_dirs = []
-    ext_modules = []
-
 # Main setup command
 setup(name='openPMD-viewer',
       version=__version__,
@@ -48,13 +36,11 @@ setup(name='openPMD-viewer',
       package_data={'openpmd_viewer': ['notebook_starter/*.ipynb']},
       scripts=['openpmd_viewer/notebook_starter/openPMD_notebook'],
       tests_require=['pytest', 'jupyter'],
-      ext_modules=ext_modules,
-      include_dirs=include_dirs,
       install_requires=install_requires,
       extras_require = {
-        'GUI':  ["ipywidgets", "matplotlib", "cython"],
-        'plot': ["matplotlib", "cython"],
-        'tutorials': ["ipywidgets", "matplotlib", "wget", "cython"]
+        'GUI':  ["ipywidgets", "matplotlib"],
+        'plot': ["matplotlib"],
+        'tutorials': ["ipywidgets", "matplotlib", "wget"]
         },
       cmdclass={'test': PyTest},
       platforms='any',
