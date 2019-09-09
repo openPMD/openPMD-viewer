@@ -16,18 +16,18 @@ requirements:
   build:
     - python
     - setuptools
-    - cython
     - numpy
     - scipy
     - matplotlib
+    - numba
     - h5py
     - tqdm
   run:
     - python
-    - cython
     - numpy
     - scipy
     - matplotlib
+    - numba
     - h5py
     - jupyter
     - tqdm
