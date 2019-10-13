@@ -893,8 +893,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         else:
             raise ValueError('Unknown method: {:s}'.format(method))
 
-    def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir=None, slicing=0., plot=False, **kw ):
+    def get_spectrogram( self, t=None, iteration=None, pol=None,
+                          plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
@@ -932,15 +932,25 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - info : a FieldMetaInformation object
            (see the corresponding docstring)
         """
+        # Get a lineout along the 'z' axis,
+        # i.e. slice across all transverse directions
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == "2dcartesian":
+            slicing_dir = 'x'
+        elif geometry == "3dcartesian":
+            slicing_dir = ['x', 'y']
+        elif geometry == "thetaMode":
+            slicing_dir = 'r'
+        else:
+            raise OpenPMDException('Unknown geometry: %s' %geometry)
+
         # Get the field envelope
-        env, _ = self.get_laser_envelope(t=t, iteration=iteration, pol=pol)
+        env, _ = self.get_laser_envelope(t=t, iteration=iteration,
+                                    pol=pol, slicing_dir=slicing_dir)
+        print(env.shape)
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
-                                    coord=pol, theta=theta,
-                                    slicing_dir=slicing_dir,
-                                    slicing=slicing)
-        # Get central slice
-        E = E[ int(E.shape[0] / 2), :]
+                                    coord=pol, slicing_dir=slicing_dir)
         Nz = len(E)
         # Get time domain of the data
         tmin = info.zmin / const.c
