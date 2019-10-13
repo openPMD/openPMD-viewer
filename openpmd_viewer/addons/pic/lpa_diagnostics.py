@@ -508,7 +508,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - A FieldMetaInformation object
         """
         # Check if polarization has been entered
-        if pol is None:
+        if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         # Prevent slicing across z at this point
         # (z axis is needed for calculation of envelope)
@@ -650,15 +650,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         # Get a lineout along the 'z' axis,
-        geometry = self.fields_metadata['E']['geometry']
-        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
+        slicing_dir = self._get_slicing_for_longitudinal_lineout()
 
         # Get field data
-        field, info = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=pol, theta=theta, m=m,
-                                slicing=slicing, slicing_dir=slicing_dir )
-        # Get central field lineout
-        field1d = field[ int( field.shape[0] / 2 ), :]
+        field1d, info = self.get_field( t=t, iteration=iteration, field='E',
+                                coord=pol, m=m, slicing_dir=slicing_dir )
         # FFT of 1d data
         dt = (info.z[1] - info.z[0]) / const.c  # Integration step for the FFT
         fft_field = np.fft.fft(field1d) * dt
@@ -705,18 +701,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with normalized vector potential a0
         """
-        # Check that the polarization has been properly entered
-        if pol not in ['x', 'y']:
-            raise ValueError('The `pol` argument is missing or erroneous.')
         # Get a lineout along the 'z' axis,
-        geometry = self.fields_metadata['E']['geometry']
-        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
+        slicing_dir = self._get_slicing_for_longitudinal_lineout()
 
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
-                                               pol=pol, theta=theta,
-                                               slicing=slicing,
-                                               slicing_dir=slicing_dir)[0])
+                                       pol=pol, slicing_dir=slicing_dir)[0])
         # Get mean frequency
         omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
@@ -752,12 +742,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with ctau in meters
         """
-        # Check that the polarization has been properly entered
-        if pol not in ['x', 'y']:
-            raise ValueError('The `pol` argument is missing or erroneous.')
         # Get a lineout along the 'z' axis,
-        geometry = self.fields_metadata['E']['geometry']
-        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
+        slicing_dir = self._get_slicing_for_longitudinal_lineout()
 
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
@@ -803,25 +789,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           If slicing is None, the full grid is returned.
-           Default is None
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
-           + In cartesian geometry, elements can be:
-               - 1d: 'z'
-               - 2d: 'x' and/or 'z'
-               - 3d: 'x' and/or 'y' and/or 'z'
-           + In cylindrical geometry, elements can be 'r' and/or 'z'
-           Returned array is reduced by 1 dimension per slicing.
-           Default is None.
-
         method : str, optional
            The method which is used to compute the waist
            'fit': Gaussian fit of the transverse profile
@@ -832,17 +799,19 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with laser waist in meters
         """
-        # In 3D slice across 'y' by default
-        if slicing_dir is None:
+        # In 3D, slice across 'y' by default
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == '3dcartesian':
             slicing_dir = 'y'
-            slicing = 0
+        else:
+            slicing_dir = None
 
-        # Get the field envelope
+        # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all',
-                                                slicing=slicing,
                                                 slicing_dir=slicing_dir,
                                                 theta=theta)
+        assert field.ndim == 2
         # Find the indices of the maximum field, and
         # pick the corresponding transverse slice
         itrans_max, iz_max = np.unravel_index(
@@ -910,9 +879,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - info : a FieldMetaInformation object
            (see the corresponding docstring)
         """
-        # Get a lineout along the 'z' axis,
-        geometry = self.fields_metadata['E']['geometry']
-        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
+        # Get a lineout along the 'z' axis
+        slicing_dir = self._get_slicing_for_longitudinal_lineout()
 
         # Get the field envelope
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
@@ -967,6 +935,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
         return( spectrogram, info )
+
+
+    def _get_slicing_for_longitudinal_lineout(self):
+        """
+        TODO
+        """
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == "2dcartesian":
+            return 'x'
+        elif geometry == "3dcartesian":
+            return ['x', 'y']
+        elif geometry == "thetaMode":
+            return 'r'
+        else:
+            raise ValueError('Unknown geometry: %s' %geometry)
 
 
 def w_ave( a, weights ):
@@ -1087,16 +1070,3 @@ def emittance_from_coord(x, y, ux, uy, w):
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
-
-def get_slicing_for_longitudinal_lineout(geometry):
-    """
-    TODO
-    """
-    if geometry == "2dcartesian":
-        return 'x'
-    elif geometry == "3dcartesian":
-        return ['x', 'y']
-    elif geometry == "thetaMode":
-        return 'r'
-    else:
-        raise ValueError('Unknown geometry: %s' %geometry)
