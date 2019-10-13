@@ -649,19 +649,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        if "3dcartesian" in self.avail_geom:
-            slicing = 0.
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
-            slicing = None
+        # Get a lineout along the 'z' axis,
+        geometry = self.fields_metadata['E']['geometry']
+        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
 
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
@@ -715,20 +705,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with normalized vector potential a0
         """
+        # Check that the polarization has been properly entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
+        # Get a lineout along the 'z' axis,
+        geometry = self.fields_metadata['E']['geometry']
+        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
 
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
@@ -770,25 +752,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with ctau in meters
         """
+        # Check that the polarization has been properly entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
+        # Get a lineout along the 'z' axis,
+        geometry = self.fields_metadata['E']['geometry']
+        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
+
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                            pol=pol, theta=theta,
-                                            slicing=slicing,
-                                            slicing_dir=slicing_dir)
+                                            pol=pol, slicing_dir=slicing_dir)
         # Calculate ctau with RMS value
         ctau = np.sqrt(2) * w_std(info.z, E)
         if method == 'rms':
@@ -859,6 +832,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with laser waist in meters
         """
+        # In 3D slice across 'y' by default
+        if slicing_dir is None:
+            slicing_dir = 'y'
+            slicing = 0
+
         # Get the field envelope
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
                                                 pol=pol, index='all',
@@ -933,16 +911,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            (see the corresponding docstring)
         """
         # Get a lineout along the 'z' axis,
-        # i.e. slice across all transverse directions
         geometry = self.fields_metadata['E']['geometry']
-        if geometry == "2dcartesian":
-            slicing_dir = 'x'
-        elif geometry == "3dcartesian":
-            slicing_dir = ['x', 'y']
-        elif geometry == "thetaMode":
-            slicing_dir = 'r'
-        else:
-            raise ValueError('Unknown geometry: %s' %geometry)
+        slicing_dir = get_slicing_for_longitudinal_lineout(geometry)
 
         # Get the field envelope
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
@@ -1117,3 +1087,16 @@ def emittance_from_coord(x, y, ux, uy, w):
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
+
+def get_slicing_for_longitudinal_lineout(geometry):
+    """
+    TODO
+    """
+    if geometry == "2dcartesian":
+        return 'x'
+    elif geometry == "3dcartesian":
+        return ['x', 'y']
+    elif geometry == "thetaMode":
+        return 'r'
+    else:
+        raise ValueError('Unknown geometry: %s' %geometry)
