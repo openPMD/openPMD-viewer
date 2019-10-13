@@ -32,7 +32,7 @@ def sanitize_slicing(slicing_dir, slicing):
         slicing = [slicing]
     # Check that the length are matching
     if len(slicing_dir) != len(slicing):
-        raise OpenPMDException(
+        raise ValueError(
             'The `slicing_dir` argument is erroneous: \nIt should have'
             'the same number of elements as `slicing_dir`.')
     return slicing_dir, slicing

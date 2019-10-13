@@ -15,6 +15,7 @@ import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
 from openpmd_viewer.openpmd_timeseries.utilities import sanitize_slicing
+from openpmd_viewer.openpmd_timeseries.plotter import check_matplotlib
 from scipy.signal import hilbert
 try:
     import matplotlib.pyplot as plt
