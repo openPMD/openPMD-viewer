@@ -942,7 +942,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         elif geometry == "thetaMode":
             slicing_dir = 'r'
         else:
-            raise OpenPMDException('Unknown geometry: %s' %geometry)
+            raise ValueError('Unknown geometry: %s' %geometry)
 
         # Get the field envelope
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
