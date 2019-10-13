@@ -15,6 +15,29 @@ import h5py
 from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
 
+def sanitize_slicing(slicing_dir, slicing):
+    """
+    TODO
+    """
+    # Skip None and empty lists
+    if slicing_dir is None or slicing_dir == []:
+        return None, None
+
+    # Convert to lists
+    if not isinstance(slicing_dir, list):
+        slicing_dir = [slicing_dir]
+    if slicing is None:
+        slicing = [0]*len(slicing_dir)
+    if not isinstance(slicing, list):
+        slicing = [slicing]
+    # Check that the length are matching
+    if len(slicing_dir) != len(slicing):
+        raise OpenPMDException(
+            'The `slicing_dir` argument is erroneous: \nIt should have'
+            'the same number of elements as `slicing_dir`.')
+    return slicing_dir, slicing
+
+
 def list_h5_files(path_to_dir):
     """
     Return a list of the hdf5 files in this directory,

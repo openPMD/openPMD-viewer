@@ -14,7 +14,7 @@ from openpmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
-from openpmd_viewer.openpmd_timeseries.plotter import check_matplotlib
+from openpmd_viewer.openpmd_timeseries.utilities import sanitize_slicing
 from scipy.signal import hilbert
 try:
     import matplotlib.pyplot as plt
@@ -438,8 +438,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            index='center', theta=0, slicing=0,
-                            slicing_dir=None, plot=False, **kw ):
+                            theta=0, slicing=0, slicing_dir=None,
+                            plot=False,
+                            plot_range=[[None, None], [None, None]], **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -462,11 +463,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
-        index : int or str, optional
-            Transversal index of the slice from which to calculate the envelope
-            Default is 'center', using the center slice.
-            Use 'all' to calculate a full 2D envelope
 
         theta : float, optional
            Only used for thetaMode geometry
@@ -494,6 +490,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot : bool, optional
            Whether to plot the requested quantity
 
+        plot_range : list of lists
+           A list containing 2 lists of 2 elements each
+           Indicates the values between which to clip the plot,
+           along the 1st axis (first list) and 2nd axis (second list)
+           Default: plots the full extent of the simulation box
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot`(1D) or
            `imshow` (2D) method
@@ -507,45 +509,48 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol is None:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        # Get field data
-        field = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=pol, theta=theta, m=m,
-                                slicing=slicing, slicing_dir=slicing_dir )
-        info = field[1]
-        if index == 'all':
-            # Filter the full 2D array
-            e_complx = hilbert(field[0], axis=1)
-        elif index == 'center':
-            # Filter the central slice (1D array)
-            field_slice = field[0][int( field[0].shape[0] / 2), :]
-            e_complx = hilbert(field_slice)
-        else:
-            # Filter the requested slice (2D array)
-            field_slice = field[0][index, :]
-            e_complx = hilbert(field_slice)
+        # Prevent slicing across z at this point
+        # (z axis is needed for calculation of envelope)
+        slicing_coord_z = None
+        if slicing_dir is not None:
+            slicing_dir, slicing = sanitize_slicing(slicing_dir, slicing)
+            if 'z' in slicing_dir:
+                index_slicing_z = slicing_dir.index('z')
+                slicing_dir.pop(index_slicing_z)
+                slicing_coord_z = slicing.pop(index_slicing_z)
+        # Get field data, and perform Hilbert transform
+        field, info = self.get_field( t=t, iteration=iteration, field='E',
+                              coord=pol, theta=theta, m=m,
+                              slicing=slicing, slicing_dir=slicing_dir )
+        e_complx = hilbert(field, axis=-1)
         envelope = np.abs(e_complx)
-        # Restrict the metainformation to 1d if needed
-        if index != 'all':
-            info.restrict_to_1Daxis( info.axes[1] )
+        # If the user asked for slicing along z, add it at this point
+        if slicing_coord_z is not None:
+            inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+            slicing_index = inverted_axes_dict['z']
+            coord_array = getattr( info, 'z' )
+            # Number of cells along the slicing direction
+            n_cells = len(coord_array)
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slicing_coord_z + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            envelope = np.take( envelope, [i_cell], axis=slicing_index )
+            envelope = np.squeeze(envelope)
+            # Remove the sliced labels from the FieldMetaInformation
+            info._remove_axis('z')
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            iteration = self.iterations[ self._current_i ]
-            time_s = self.t[ self._current_i ]
-            if index != 'all':
-                plt.plot( info.z, envelope, **kw)
-                plt.ylabel('$E_%s \;(V/m)$' % pol,
-                           fontsize=self.plotter.fontsize)
-            else:
-                plt.imshow( envelope, extent=info.imshow_extent,
-                            aspect='auto', **kw)
-                plt.colorbar()
-                plt.ylabel('$%s \;(m)$' % pol,
-                            fontsize=self.plotter.fontsize)
-            plt.title("Laser envelope at %.2e s   (iteration %d)"
-                % (time_s, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
+            geometry = self.fields_metadata['E']['geometry']
+            field_label = 'E%s (envelope)' %pol
+            if envelope.ndim == 1:
+                self.plotter.show_field_1d(envelope, info, field_label,
+                self._current_i, plot_range=plot_range, **kw)
+            elif envelope.ndim == 2:
+                self.plotter.show_field_2d(envelope, info, slicing_dir, m,
+                    field_label, geometry, self._current_i,
+                    plot_range=plot_range, **kw)
         # Return the result
         return( envelope, info )
 
