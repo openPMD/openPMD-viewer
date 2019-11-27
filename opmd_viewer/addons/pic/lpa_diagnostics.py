@@ -411,15 +411,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
             t=t, iteration=iteration,
             species=species, select=select )
-        # Calculate Lorentz factor for all particles
-        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-        # Calculate particle velocities
-        vz = uz / gamma * const.c
         # Length to be seperated in bins
         len_z = np.max(z) - np.min(z)
-        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
-        # Calculete the current in each bin
-        current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+        if w.size > 0:
+            # Calculate Lorentz factor for all particles
+            gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+            # Calculate particle velocities
+            vz = uz / gamma * const.c
+            # Length to be seperated in bins
+            len_z = np.max(z) - np.min(z)
+            vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
+            # Calculate the current in each bin
+            current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+        else:
+            current = np.zeros(bins)
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
