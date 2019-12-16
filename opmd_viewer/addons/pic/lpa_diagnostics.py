@@ -412,8 +412,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             t=t, iteration=iteration,
             species=species, select=select )
         # Length to be seperated in bins
-        len_z = np.max(z) - np.min(z)
+
         if w.size > 0:
+            min_z = np.min(z)
+            len_z = np.max(z) - min_z
             # Calculate Lorentz factor for all particles
             gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
             # Calculate particle velocities
@@ -425,10 +427,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
         else:
             current = np.zeros(bins)
+            len_z = 0
+            min_z = 0
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
+            global_offset=(min_z + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
             check_matplotlib()
