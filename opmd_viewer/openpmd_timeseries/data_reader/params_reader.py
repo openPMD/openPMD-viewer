@@ -45,8 +45,9 @@ def read_openPMD_params(filename, extract_parameters=True):
     bpath = f[get_bpath(f)]
     t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
 
-    # If the user did not request more parameters, exit now.
+    # If the user did not request more parameters, close file and exit
     if not extract_parameters:
+        f.close()
         return(t, None)
 
     # Otherwise, extract the rest of the parameters
