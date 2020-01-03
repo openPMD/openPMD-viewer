@@ -411,28 +411,19 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
             t=t, iteration=iteration,
             species=species, select=select )
+        # Calculate Lorentz factor for all particles
+        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+        # Calculate particle velocities
+        vz = uz / gamma * const.c
         # Length to be seperated in bins
-
-        if w.size > 0:
-            min_z = np.min(z)
-            len_z = np.max(z) - min_z
-            # Calculate Lorentz factor for all particles
-            gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-            # Calculate particle velocities
-            vz = uz / gamma * const.c
-            # Length to be seperated in bins
-            len_z = np.max(z) - np.min(z)
-            vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
-            # Calculate the current in each bin
-            current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
-        else:
-            current = np.zeros(bins)
-            len_z = 0
-            min_z = 0
+        len_z = np.max(z) - np.min(z)
+        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
+        # Calculete the current in each bin
+        current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(min_z + len_z / bins / 2,), position=(0,))
+            global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -939,6 +930,94 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                        fontsize=self.plotter.fontsize )
         return( spectrogram, info )
 
+    def get_z_phase( self, t=None, iteration=None,
+                      m='all', plot=False, start_ratio=1.e-2, wavelength_guess = 2.e-5, **kw ):
+        """
+        Return the z position of phase points of E_z.
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        plot: bool, optional
+           Whether to plot the data
+
+        start_ratio: float, optional
+           The start Ez ratio respect to the maximum value
+
+        wavelength_guess: float, optional
+           The guess of plasma wavelength, in unit of metre
+
+        **kw : dict, otional
+           Additional options to be passed to matplotlib's `plot` method
+
+        Returns
+        -------
+        A array with z position of 5 points:
+            - The point with the first non-zero E_z
+            - The first maximum of E_z
+            - The first zero-crossing of E_z
+            - The first minimum of E_z
+            - The second zero-crossing of E_z
+            - The second maximum of E_z
+        """
+        # Get field data
+        field, info = self.get_field( t=t, iteration=iteration, field='E',
+                                coord='z', theta=0, m=m,
+                                slicing_dir='y', plot=plot )
+        # Get central field lineout
+        field1d = field[ int( field.shape[0] / 2 ), :]
+        xaxis = getattr( info, 'z' )
+        len_xaxis = len(xaxis)
+
+        # Looking for ind_start
+        ind_start = start_index(field1d, np.max(np.abs(field1d))*start_ratio)
+
+        wavelength_range = int(wavelength_guess/(xaxis[1]-xaxis[0]))
+        # Looking for 1st maximum ind_max
+        ind_max = next_local_max(field1d, start_index=ind_start, local_range = wavelength_range//2)
+
+        # Look for ind_start again
+        ind_start = start_index(field1d, field1d[ind_max]*start_ratio)
+
+        # Looking for 1st minimum ind_min
+        ind_min = next_local_min(field1d, start_index=ind_max, local_range = wavelength_range)
+
+        # Looking for 2nd maximum ind_max2
+        ind_max2 = next_local_max(field1d, start_index=ind_min, local_range = wavelength_range//2)
+
+        # Looking for 1st zero point
+        x_zero = zero_point(field1d, ind_min, ind_max, xaxis)
+
+        # Looking for 2nd zero point
+        x_zero2 = zero_point(field1d, ind_max2, ind_min, xaxis)
+        # Plot the field if required
+        if plot:
+            check_matplotlib()
+            iteration = self.iterations[ self._current_i ]
+            time_fs = 1.e15 * self.t[ self._current_i ]
+            plt.figure()
+            plt.plot( 1.e6*xaxis, field1d, **kw )
+            plt.xlabel('$z \; [\mu m]$',
+                       fontsize=self.plotter.fontsize )
+            plt.ylabel('$E_z$', fontsize=self.plotter.fontsize )
+            plt.title("$E_z$ lineout at %.1f fs   (iteration %d)"
+                % (time_fs, iteration ), fontsize=self.plotter.fontsize)
+            plt.plot(1.e6*np.array([xaxis[ind_max2], x_zero2, xaxis[ind_min], x_zero, xaxis[ind_max], xaxis[ind_start]]),np.array([field1d[ind_max2], 0., field1d[ind_min], 0., field1d[ind_max], field1d[ind_start]]),'ro')
+        plt.show()
+        return np.array([xaxis[ind_start], xaxis[ind_max], x_zero, xaxis[ind_min], x_zero2, xaxis[ind_max2]])
 
 def w_ave( a, weights ):
     """
@@ -1058,3 +1137,78 @@ def emittance_from_coord(x, y, ux, uy, w):
     emit_x = ( abs(xsq * uxsq - xux ** 2) )**.5
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
+
+def start_index(F, threshold = 1.e-2):
+    '''Find the start index when F abslute value > threshold.'''
+    if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
+    for i in range(len(F)-1, -1, -1):
+        if np.absolute(F[i])>threshold:
+            return i
+    raise RuntimeError('Cannot find start index! You can try to reduce threshold.')
+
+def next_local_max(F, start_index=None, local_range = None):
+    '''
+    Find the next local maximum point for a 1D data F from the start_index to start_index-local_range.
+
+    Parameters
+    ----------
+    F : 1D array of floats
+        Field array. If F is not 1D, raise an exception.
+    start_index : int
+                  The upper index in F to search for. If start_index is None, start_index = len(F).
+    local_range : int
+                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2'''
+    if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
+    if start_index is None: start_index = len(F)
+    if local_range is None: local_range = len(F)//2
+    till_index = start_index - local_range
+    if till_index<0: till_index = 0
+    return_ind=np.argmax(F[till_index:start_index])+till_index
+    return return_ind
+
+def next_local_min(F, start_index=None, local_range = None):
+    '''
+    Find the next local minimum point for a 1D data F from the start_index to start_index-local_range.
+
+    Parameters
+    ----------
+    F : 1D array of floats
+        Field array. If F is not 1D, raise an exception.
+    start_index : int
+                  The upper index in F to search for. If start_index is None, start_index = len(F).
+    local_range : int
+                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2'''
+    return next_local_max(-F, start_index=start_index, local_range = local_range)
+
+def zero_point(F, start, stop, xaxis):
+    '''
+    Find the zero point for a 1D data F from index of start to stop.
+
+    Parameters
+    ----------
+    F : 1D array of floats
+        Field array. If F is not 1D, raise an exception.
+    start : int
+    stop : int
+    xaxis : 1D array of float
+            The axis of points
+
+    Return
+    ----------
+    The axis of zero point
+    '''
+    if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
+    if np.sign(F[start])*np.sign(F[stop])>0:
+        raise RuntimeError('F[start] and F[stop] have the same sign! There may be no zero point between them.')
+    ind1 = start
+    ind2 = stop
+    while ind2-ind1 > 1:
+        ind_mid = (ind1 + ind2) // 2
+        if np.sign(F[ind1])*np.sign(F[ind_mid]) > 0: ind1 = ind_mid
+        else: ind2 = ind_mid
+    # Do linear interpolation between ind1 and ind2 for the zero point location
+    x1 = xaxis[ind1]
+    x2 = xaxis[ind2]
+    y1 = F[ind1]
+    y2 = F[ind2]
+    return (x1*y2-x2*y1)/(y2-y1)
