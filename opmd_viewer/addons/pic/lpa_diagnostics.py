@@ -1,6 +1,8 @@
 """
 This file is part of the openPMD-viewer.
+
 This file contains diagnostics relevant for laser-plasma acceleration
+
 Copyright 2015-2016, openPMD-viewer contributors
 Authors: Soeren Jalas, Remi Lehe
 License: 3-Clause-BSD-LBNL
@@ -27,6 +29,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Initialize an OpenPMD time series with various methods to diagnose the
         data
+
         Parameter
         ---------
         path_to_dir : string
@@ -34,6 +37,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             For the moment, only HDF5 files are supported. There should be
             one file per iteration, and the name of the files should end
             with the iteration number, followed by '.h5' (e.g. data0005000.h5)
+
         check_all_files: bool, optional
             Check that all the files in the timeseries are consistent
             (i.e. that they contain the same fields and particles,
@@ -48,22 +52,27 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the mean gamma and standard deviation according to the
         particle weights
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
         Returns
         -------
         A tuple of floats with:
@@ -93,33 +102,42 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the standard deviation of gamma for particles in z-slices of
         width dz
+
         Parameters
         ----------
         dz : float (in micrometers)
             Width of slices in which to calculate sigma gamma
+
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
         plot : bool, optional
            Whether to plot the requested quantity
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
+
         Returns
         -------
         A tuple of arrays:
         - Sigma gamma in each slice
         - Central z position of each slice
+
         """
         z, uz, ux, uy, w = self.get_particle(t=t, species=species,
             select=select, var_list=['z', 'uz', 'ux', 'uy', 'w'],
@@ -155,22 +173,27 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
         Calculate the charge of the selcted particles.
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
         Returns
         -------
         A float with the electric charge of the selected particles in Coulomb
@@ -187,22 +210,27 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                         select=None ):
         """
         Calculate the divergence of the selected particles.
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
         Returns
         -------
         A tuple with:
@@ -225,36 +253,45 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules to select the particles,
             of the form:
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns);
             'z' : [0, 100] (Particles having x between 0 and 100 microns).
+
         kind : string, optional
             Kind of emittance to be computed. Can be 'normalized' or 'trace'.
+
         description : string, optional
             Type of emittance to be computed. Available options:
                - 'projected' : projected emittance
                - 'all-slices' : emittance within slices taken along the z
                               direction
                - 'slice-averaged' : slice emittance averaged over all slices.
+
         nslices : integer, optional
             Number of slices to compute slice emittance. Required if
             description='slice-average' or 'all-slices'.
+
         beam_length : float (in meters), optional
             Beam length, used to calculate slice positions when nslices>1.
             By default, it is 4 times the standard deviation in z.
+
         Returns
         -------
         If description='projected' or 'slice-averaged':
@@ -332,26 +369,33 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                      bins=100, plot=False, **kw ):
         """
         Calculate the electric current along the z-axis for selected particles.
+
         Parameters
         ----------
          t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user
+
         species : string
             Particle species to use for calculations
+
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
+
         bins : int, optional
             Number of bins along the z-axis in which to calculate the current
+
         plot : bool, optional
            Whether to plot the requested quantity
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
         Returns
@@ -360,6 +404,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - The current in each bin in Ampere
         - A FieldMetaInformation object
           (see object's docstring for more details)
+
         """
         # Get particle data
         z, uz, uy, ux, w, q = self.get_particle(
@@ -406,37 +451,47 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
+
         index : int or str, optional
             Transversal index of the slice from which to calculate the envelope
             Default is 'center', using the center slice.
             Use 'all' to calculate a full 2D envelope
+
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
+
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
            The direction along which to slice the data
            Either 'x', 'y'
+
         plot : bool, optional
            Whether to plot the requested quantity
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot`(1D) or
            `imshow` (2D) method
+
         Returns
         -------
         A tuple with:
@@ -492,25 +547,31 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                             method='max'):
         """
         Calculate the angular frequency of a laser pulse.
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
+
         method : string, optional
             Method which is used to calculate the frequency of the pulse
             'fit' : Fit a Gaussian curve to find central frequency
             'max' : Take frequency with highest intensity in the spectrum
+
         Returns
         -------
         A float with mean angular frequency
@@ -541,25 +602,32 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Return the spectrum of the laser
         (Absolute value of the Fourier transform of the fields.)
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
+
         plot: bool, optional
            Whether to plot the data
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
+
         Returns
         -------
         A tuple with:
@@ -609,17 +677,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         Returns
         -------
         Float with normalized vector potential a0
@@ -647,22 +719,27 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the length of a (gaussian) laser pulse. Here 'length' means
         the 'longitudinal waist' (i.e sqrt(2) * sigma_z).
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         method : str, optional
            The method which is used to compute ctau
            'fit': Gaussian fit of the longitudinal profile
            'rms': RMS radius, weighted by the longitudinal profile
            ('rms' tends to give more weight to the "wings" of the pulse)
+
         Returns
         -------
         Float with ctau in meters
@@ -701,29 +778,36 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                          slicing_dir='y', method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the field. Options are 'x', 'y'
+
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
+
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
            The direction along which to slice the data
            Either 'x', 'y'
+
         method : str, optional
            The method which is used to compute the waist
            'fit': Gaussian fit of the transverse profile
            'rms': RMS radius, weighted by the transverse profile
            ('rms' tends to give more weight to the "wings" of the pulse)
+
         Returns
         -------
         Float with laser waist in meters
@@ -765,27 +849,35 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                           slicing_dir='y', plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
+
         Mathematically:
         $$ s(\omega, \tau) = | \int_{-\infty}^{\infty} E(t) |E(t-\tau)|^2
             \exp( -i\omega t) dt |^2 $$
         See Trebino, R: Frequency Resolved Optical Gating: The measurements of
         Ultrashort Laser Pulses: year 2000: formula 5.2
+
         The time is centered around the laser pulse.
+
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
+
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
+
         pol : string
             Polarization of the laser field. Options are 'x', 'y'
+
         plot: bool, optional
             Whether to plot the spectrogram
+
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` method
+
         Returns
         -------
         - A 2d array with spectrogram
@@ -846,7 +938,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
         return( spectrogram, info )
-
 
     def get_z_phase( self, t=None, iteration=None,
                       m='all', plot2D=False, plot1D=False, start_ratio=1.e-2, wavelength_guess = 2.e-5, **kw ):
@@ -952,12 +1043,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 def w_ave( a, weights ):
     """
     Calculate the weighted average of array `a`
+
     Parameters
     ----------
     a : 1d array
         Calculate the weighted average for these a.
+
     weights : 1d array
         An array of weights for the values in a.
+
     Returns
     -------
     Float with the weighted average
@@ -976,12 +1070,15 @@ def w_ave( a, weights ):
 def w_std( a, weights ):
     """
     Calculate the weighted standard deviation.
+
     Parameters
     ----------
     a : array_like
         Calculate the weighted standard deviation for these a.
+
     weights : array_like
         An array of weights for the values in a.
+
     Returns
     -------
     Float with the weighted standard deviation.
@@ -1002,16 +1099,21 @@ def gaussian_profile( x, x0, E0, w0 ):
     """
     Returns a Gaussian profile with amplitude E0 and waist w0.
     (Used in order to fit the transverse laser profile and find the waist.)
+
     Parameters
     ----------
     x: 1darray of floats
         An array of transverse positions (in meters)
+
     x0: float
         Position of the peak of the profile
+
     E0: float
         The amplitude at the peak of the profile
+
     w0: float
         The waist of the profile
+
     Returns
     -------
     A 1darray of floats, of the same length as x
@@ -1022,6 +1124,7 @@ def gaussian_profile( x, x0, E0, w0 ):
 def emittance_from_coord(x, y, ux, uy, w):
     """
     Calculate emittance from arrays of particle coordinates.
+
     Parameters
     ----------
     x : arrays of floats
@@ -1034,6 +1137,7 @@ def emittance_from_coord(x, y, ux, uy, w):
         uy normalized momentum of particles
     w : arrays of floats
         Particle weights
+
     Returns
     -------
     emit_x : float
