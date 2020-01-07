@@ -1,8 +1,6 @@
 """
 This file is part of the openPMD-viewer.
-
 This file contains diagnostics relevant for laser-plasma acceleration
-
 Copyright 2015-2016, openPMD-viewer contributors
 Authors: Soeren Jalas, Remi Lehe
 License: 3-Clause-BSD-LBNL
@@ -29,7 +27,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Initialize an OpenPMD time series with various methods to diagnose the
         data
-
         Parameter
         ---------
         path_to_dir : string
@@ -37,7 +34,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             For the moment, only HDF5 files are supported. There should be
             one file per iteration, and the name of the files should end
             with the iteration number, followed by '.h5' (e.g. data0005000.h5)
-
         check_all_files: bool, optional
             Check that all the files in the timeseries are consistent
             (i.e. that they contain the same fields and particles,
@@ -52,27 +48,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the mean gamma and standard deviation according to the
         particle weights
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-
         Returns
         -------
         A tuple of floats with:
@@ -102,42 +93,33 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the standard deviation of gamma for particles in z-slices of
         width dz
-
         Parameters
         ----------
         dz : float (in micrometers)
             Width of slices in which to calculate sigma gamma
-
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-
         plot : bool, optional
            Whether to plot the requested quantity
-
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
-
         Returns
         -------
         A tuple of arrays:
         - Sigma gamma in each slice
         - Central z position of each slice
-
         """
         z, uz, ux, uy, w = self.get_particle(t=t, species=species,
             select=select, var_list=['z', 'uz', 'ux', 'uy', 'w'],
@@ -173,27 +155,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
         Calculate the charge of the selcted particles.
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-
         Returns
         -------
         A float with the electric charge of the selected particles in Coulomb
@@ -210,27 +187,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                         select=None ):
         """
         Calculate the divergence of the selected particles.
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-
         Returns
         -------
         A tuple with:
@@ -253,45 +225,36 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the RMS emittance.
         (See K Floetmann: Some basic features of beam emittance. PRSTAB 2003)
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules to select the particles,
             of the form:
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns);
             'z' : [0, 100] (Particles having x between 0 and 100 microns).
-
         kind : string, optional
             Kind of emittance to be computed. Can be 'normalized' or 'trace'.
-
         description : string, optional
             Type of emittance to be computed. Available options:
                - 'projected' : projected emittance
                - 'all-slices' : emittance within slices taken along the z
                               direction
                - 'slice-averaged' : slice emittance averaged over all slices.
-
         nslices : integer, optional
             Number of slices to compute slice emittance. Required if
             description='slice-average' or 'all-slices'.
-
         beam_length : float (in meters), optional
             Beam length, used to calculate slice positions when nslices>1.
             By default, it is 4 times the standard deviation in z.
-
         Returns
         -------
         If description='projected' or 'slice-averaged':
@@ -369,33 +332,26 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                      bins=100, plot=False, **kw ):
         """
         Calculate the electric current along the z-axis for selected particles.
-
         Parameters
         ----------
          t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user
-
         species : string
             Particle species to use for calculations
-
         select : dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
             'z' : [0, 100] (Particles having x between 0 and 100 microns)
-
         bins : int, optional
             Number of bins along the z-axis in which to calculate the current
-
         plot : bool, optional
            Whether to plot the requested quantity
-
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
         Returns
@@ -404,26 +360,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - The current in each bin in Ampere
         - A FieldMetaInformation object
           (see object's docstring for more details)
-
         """
         # Get particle data
         z, uz, uy, ux, w, q = self.get_particle(
             var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
             t=t, iteration=iteration,
             species=species, select=select )
-        # Calculate Lorentz factor for all particles
-        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-        # Calculate particle velocities
-        vz = uz / gamma * const.c
         # Length to be seperated in bins
-        len_z = np.max(z) - np.min(z)
-        vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
-        # Calculete the current in each bin
-        current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+
+        if w.size > 0:
+            min_z = np.min(z)
+            len_z = np.max(z) - min_z
+            # Calculate Lorentz factor for all particles
+            gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+            # Calculate particle velocities
+            vz = uz / gamma * const.c
+            # Length to be seperated in bins
+            len_z = np.max(z) - np.min(z)
+            vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
+            # Calculate the current in each bin
+            current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+        else:
+            current = np.zeros(bins)
+            len_z = 0
+            min_z = 0
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
+            global_offset=(min_z + len_z / bins / 2,), position=(0,))
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -442,47 +406,37 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
         index : int or str, optional
             Transversal index of the slice from which to calculate the envelope
             Default is 'center', using the center slice.
             Use 'all' to calculate a full 2D envelope
-
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
-
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
            The direction along which to slice the data
            Either 'x', 'y'
-
         plot : bool, optional
            Whether to plot the requested quantity
-
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot`(1D) or
            `imshow` (2D) method
-
         Returns
         -------
         A tuple with:
@@ -538,31 +492,25 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                             method='max'):
         """
         Calculate the angular frequency of a laser pulse.
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
         method : string, optional
             Method which is used to calculate the frequency of the pulse
             'fit' : Fit a Gaussian curve to find central frequency
             'max' : Take frequency with highest intensity in the spectrum
-
         Returns
         -------
         A float with mean angular frequency
@@ -593,32 +541,25 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Return the spectrum of the laser
         (Absolute value of the Fourier transform of the fields.)
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
-
         plot: bool, optional
            Whether to plot the data
-
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot` method
-
         Returns
         -------
         A tuple with:
@@ -668,21 +609,17 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         Returns
         -------
         Float with normalized vector potential a0
@@ -710,27 +647,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         """
         Calculate the length of a (gaussian) laser pulse. Here 'length' means
         the 'longitudinal waist' (i.e sqrt(2) * sigma_z).
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         method : str, optional
            The method which is used to compute ctau
            'fit': Gaussian fit of the longitudinal profile
            'rms': RMS radius, weighted by the longitudinal profile
            ('rms' tends to give more weight to the "wings" of the pulse)
-
         Returns
         -------
         Float with ctau in meters
@@ -769,36 +701,29 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                          slicing_dir='y', method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the field. Options are 'x', 'y'
-
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
-
         slicing_dir : str, optional
            Only used for 3dcartesian geometry
            The direction along which to slice the data
            Either 'x', 'y'
-
         method : str, optional
            The method which is used to compute the waist
            'fit': Gaussian fit of the transverse profile
            'rms': RMS radius, weighted by the transverse profile
            ('rms' tends to give more weight to the "wings" of the pulse)
-
         Returns
         -------
         Float with laser waist in meters
@@ -840,35 +765,27 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                           slicing_dir='y', plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
-
         Mathematically:
         $$ s(\omega, \tau) = | \int_{-\infty}^{\infty} E(t) |E(t-\tau)|^2
             \exp( -i\omega t) dt |^2 $$
         See Trebino, R: Frequency Resolved Optical Gating: The measurements of
         Ultrashort Laser Pulses: year 2000: formula 5.2
-
         The time is centered around the laser pulse.
-
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
             an available file, the last file before `t` will be used)
             Either `t` or `iteration` should be given by the user.
-
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
-
         pol : string
             Polarization of the laser field. Options are 'x', 'y'
-
         plot: bool, optional
             Whether to plot the spectrogram
-
         **kw : dict, otional
            Additional options to be passed to matplotlib's `imshow` method
-
         Returns
         -------
         - A 2d array with spectrogram
@@ -930,8 +847,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                        fontsize=self.plotter.fontsize )
         return( spectrogram, info )
 
+
     def get_z_phase( self, t=None, iteration=None,
-                      m='all', plot=False, start_ratio=1.e-2, wavelength_guess = 2.e-5, **kw ):
+                      m='all', plot2D=False, plot1D=False, start_ratio=1.e-2, wavelength_guess = 2.e-5, **kw ):
         """
         Return the z position of phase points of E_z.
 
@@ -951,8 +869,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
-        plot: bool, optional
-           Whether to plot the data
+        plot2D: bool, optional
+           Whether to plot the 2D field in pseudocolor map
+
+        plot1D: bool, optional
+           Whether to plot the axial field lineout
 
         start_ratio: float, optional
            The start Ez ratio respect to the maximum value
@@ -966,7 +887,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A array with z position of 5 points:
-            - The point with the first non-zero E_z
+            - The point with the first E_z exceeding a threshold
             - The first maximum of E_z
             - The first zero-crossing of E_z
             - The first minimum of E_z
@@ -976,35 +897,44 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get field data
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                                 coord='z', theta=0, m=m,
-                                slicing_dir='y', plot=plot )
+                                slicing_dir='y', plot=plot2D )
         # Get central field lineout
         field1d = field[ int( field.shape[0] / 2 ), :]
         xaxis = getattr( info, 'z' )
         len_xaxis = len(xaxis)
 
-        # Looking for ind_start
-        ind_start = start_index(field1d, np.max(np.abs(field1d))*start_ratio)
+        # Initialization
+        z_array = np.full(6, np.nan)
+        # Looking for start point
+        try: z_array[0], ind_start = start_point(field1d, xaxis, np.max(np.abs(field1d))*start_ratio)
+        except RuntimeError: return z_array
 
         wavelength_range = int(wavelength_guess/(xaxis[1]-xaxis[0]))
         # Looking for 1st maximum ind_max
-        ind_max = next_local_max(field1d, start_index=ind_start, local_range = wavelength_range//2)
+        try: ind_max = next_local_max(field1d, start_index=ind_start, local_range = wavelength_range//2)
+        except RuntimeError: return z_array
+        z_array[1] = xaxis[ind_max]
 
         # Look for ind_start again
-        ind_start = start_index(field1d, field1d[ind_max]*start_ratio)
+        z_array[0], ind_start = start_point(field1d, xaxis, field1d[ind_max]*start_ratio)
 
         # Looking for 1st minimum ind_min
-        ind_min = next_local_min(field1d, start_index=ind_max, local_range = wavelength_range)
-
-        # Looking for 2nd maximum ind_max2
-        ind_max2 = next_local_max(field1d, start_index=ind_min, local_range = wavelength_range//2)
+        try: ind_min = next_local_min(field1d, start_index=ind_max, local_range = wavelength_range)
+        except RuntimeError: return z_array
+        z_array[3] = xaxis[ind_min]
 
         # Looking for 1st zero point
-        x_zero = zero_point(field1d, ind_min, ind_max, xaxis)
+        z_array[2] = zero_point(field1d, ind_min, ind_max, xaxis)
+
+        # Looking for 2nd maximum ind_max2
+        try: ind_max2 = next_local_max(field1d, start_index=ind_min, local_range = int(wavelength_range*0.6))
+        except RuntimeError: return z_array
+        z_array[5] = xaxis[ind_max2]
 
         # Looking for 2nd zero point
-        x_zero2 = zero_point(field1d, ind_max2, ind_min, xaxis)
+        z_array[4] = zero_point(field1d, ind_max2, ind_min, xaxis)
         # Plot the field if required
-        if plot:
+        if plot1D:
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_fs = 1.e15 * self.t[ self._current_i ]
@@ -1015,22 +945,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.ylabel('$E_z$', fontsize=self.plotter.fontsize )
             plt.title("$E_z$ lineout at %.1f fs   (iteration %d)"
                 % (time_fs, iteration ), fontsize=self.plotter.fontsize)
-            plt.plot(1.e6*np.array([xaxis[ind_max2], x_zero2, xaxis[ind_min], x_zero, xaxis[ind_max], xaxis[ind_start]]),np.array([field1d[ind_max2], 0., field1d[ind_min], 0., field1d[ind_max], field1d[ind_start]]),'ro')
+            plt.plot(1.e6*z_array, np.array([0., field1d[ind_max], 0., field1d[ind_min], 0., field1d[ind_max2]]),'ro',fillstyle='none')
         plt.show()
-        return np.array([xaxis[ind_start], xaxis[ind_max], x_zero, xaxis[ind_min], x_zero2, xaxis[ind_max2]])
+        return z_array
+
 
 def w_ave( a, weights ):
     """
     Calculate the weighted average of array `a`
-
     Parameters
     ----------
     a : 1d array
         Calculate the weighted average for these a.
-
     weights : 1d array
         An array of weights for the values in a.
-
     Returns
     -------
     Float with the weighted average
@@ -1049,15 +977,12 @@ def w_ave( a, weights ):
 def w_std( a, weights ):
     """
     Calculate the weighted standard deviation.
-
     Parameters
     ----------
     a : array_like
         Calculate the weighted standard deviation for these a.
-
     weights : array_like
         An array of weights for the values in a.
-
     Returns
     -------
     Float with the weighted standard deviation.
@@ -1078,21 +1003,16 @@ def gaussian_profile( x, x0, E0, w0 ):
     """
     Returns a Gaussian profile with amplitude E0 and waist w0.
     (Used in order to fit the transverse laser profile and find the waist.)
-
     Parameters
     ----------
     x: 1darray of floats
         An array of transverse positions (in meters)
-
     x0: float
         Position of the peak of the profile
-
     E0: float
         The amplitude at the peak of the profile
-
     w0: float
         The waist of the profile
-
     Returns
     -------
     A 1darray of floats, of the same length as x
@@ -1103,7 +1023,6 @@ def gaussian_profile( x, x0, E0, w0 ):
 def emittance_from_coord(x, y, ux, uy, w):
     """
     Calculate emittance from arrays of particle coordinates.
-
     Parameters
     ----------
     x : arrays of floats
@@ -1116,7 +1035,6 @@ def emittance_from_coord(x, y, ux, uy, w):
         uy normalized momentum of particles
     w : arrays of floats
         Particle weights
-
     Returns
     -------
     emit_x : float
@@ -1138,13 +1056,30 @@ def emittance_from_coord(x, y, ux, uy, w):
     emit_y = ( abs(ysq * uysq - yuy ** 2) )**.5
     return emit_x, emit_y
 
-def start_index(F, threshold = 1.e-2):
-    '''Find the start index when F abslute value > threshold.'''
+def start_point(F, x, threshold = 1.e-2):
+    '''Find the start point based on the index when F abslute value > threshold.
+
+    Parameters
+    ----------
+    F : 1D array of floats
+        Field array. If F is not 1D, raise an exception.
+    x : 1D array of float
+        The axis of points
+    threshold : float
+
+    Return
+    ----------
+    pos_start : float
+                The position of start point.
+    ind_start: int
+               The right most index when F abslute value > threshold.'''
+
     if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
-    for i in range(len(F)-1, -1, -1):
+    for i in range(len(F)-1, 0, -1):
         if np.absolute(F[i])>threshold:
-            return i
-    raise RuntimeError('Cannot find start index! You can try to reduce threshold.')
+            #return  x[i]-F[i]*(x[i]-x[i-1])/(F[i]-F[i-1]), i
+            return  x[i], i
+    raise RuntimeError('Cannot find start point! You can try to reduce threshold.')
 
 def next_local_max(F, start_index=None, local_range = None):
     '''
@@ -1157,13 +1092,19 @@ def next_local_max(F, start_index=None, local_range = None):
     start_index : int
                   The upper index in F to search for. If start_index is None, start_index = len(F).
     local_range : int
-                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2'''
+                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2
+
+    Return
+    ----------
+    A integer, the index of local maximum
+    '''
     if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
     if start_index is None: start_index = len(F)
     if local_range is None: local_range = len(F)//2
     till_index = start_index - local_range
     if till_index<0: till_index = 0
     return_ind=np.argmax(F[till_index:start_index])+till_index
+    if return_ind<1: raise RuntimeError('Local maximum not found!')
     return return_ind
 
 def next_local_min(F, start_index=None, local_range = None):
@@ -1177,7 +1118,12 @@ def next_local_min(F, start_index=None, local_range = None):
     start_index : int
                   The upper index in F to search for. If start_index is None, start_index = len(F).
     local_range : int
-                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2'''
+                  The length to search for. This function will search the range from start_index-local_range to start_index. In general, local_range should be approximately plasma wavelength/dz. If local_range is None, local_range = len(F)//2
+
+    Return
+    ----------
+    A integer, the index of local minimum
+    '''
     return next_local_max(-F, start_index=start_index, local_range = local_range)
 
 def zero_point(F, start, stop, xaxis):
@@ -1195,11 +1141,12 @@ def zero_point(F, start, stop, xaxis):
 
     Return
     ----------
-    The axis of zero point
+    A float, the location of zero point
     '''
     if F.ndim!=1: raise RuntimeError('F shold be 1 dimensional!')
     if np.sign(F[start])*np.sign(F[stop])>0:
-        raise RuntimeError('F[start] and F[stop] have the same sign! There may be no zero point between them.')
+        #raise RuntimeError('F[start] and F[stop] have the same sign! There may be no zero point between them.')
+        return np.nan
     ind1 = start
     ind2 = stop
     while ind2-ind1 > 1:
