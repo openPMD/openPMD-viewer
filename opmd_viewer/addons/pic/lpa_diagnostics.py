@@ -901,7 +901,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get central field lineout
         field1d = field[ int( field.shape[0] / 2 ), :]
         xaxis = getattr( info, 'z' )
-        len_xaxis = len(xaxis)
 
         # Initialization
         z_array = np.full(6, np.nan)
