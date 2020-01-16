@@ -297,19 +297,25 @@ class OpenPMDTimeSeries(InteractiveViewer):
             hist_range = [[None, None], [None, None]]
             for i_data in range(len(data_list)):
                 data = data_list[i_data]
+
                 # Check if the user specified a value
                 if (plot_range[i_data][0] is not None) and \
                         (plot_range[i_data][1] is not None):
                     hist_range[i_data] = plot_range[i_data]
                 # Else use min and max of data
-                elif len(data) != 0 and not np.all(data == 0):
+                elif len(data) != 0:
                     hist_range[i_data] = [ data.min(), data.max() ]
-                    # Avoid error when the min and max are equal
-                    if hist_range[i_data][0] == hist_range[i_data][1]:
-                        hist_range[i_data][0] *= 0.99
-                        hist_range[i_data][1] *= 1.01
                 else:
                     hist_range[i_data] = [ -1., 1. ]
+
+                # Avoid error when the min and max are equal
+                if hist_range[i_data][0] == hist_range[i_data][1]:
+                    if hist_range[i_data][0] == 0:
+                        hist_range[i_data] = [ -1., 1. ]
+                    else:
+                        hist_range[i_data][0] *= 0.99
+                        hist_range[i_data][1] *= 1.01
+
             hist_bins = [ nbins for i_data in range(len(data_list)) ]
             # - Then, if required by the user, modify this values by
             #   fitting them to the spatial grid
