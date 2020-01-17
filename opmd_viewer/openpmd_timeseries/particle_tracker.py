@@ -47,7 +47,8 @@ class ParticleTracker( object ):
     """
 
     def __init__(self, ts, species=None, t=None,
-                iteration=None, select=None, preserve_particle_index=False):
+                iteration=None, select=None, preserve_particle_index=False,
+                trackers=[]):
         """
         Initialize an instance of `ParticleTracker`: select particles at
         a given iteration, so that they can be retrieved at a later iteration.
@@ -93,11 +94,20 @@ class ParticleTracker( object ):
             When `preserve_particle_index=False`, no NaN is returned (the
             returned array is simply smaller when particles are absent) but
             then it is not garanteed that a given particle keeps the same index
+
+        trackers: list of ParticleTracker instances
+            An optional list of trackers. The final result will be the
+            intersection of the selected particles and the specified
+            trackers.
         """
         # Extract the particle id and sort them
         self.selected_pid, = ts.get_particle(['id'], species=species,
                                 select=select, t=t, iteration=iteration)
         self.selected_pid.sort()
+
+        for tracker in trackers:
+            self.selected_pid = np.intersect1d(self.selected_pid,
+                                               tracker.selected_pid)
 
         # Register a few metadata
         self.N_selected = len( self.selected_pid )
