@@ -1,6 +1,6 @@
 # Change Log / Release Log for openPMD-viewer
 
-## 1.0
+## 1.0.0
 
 This version introduces major changes and breaks backward compatibility.
 
@@ -24,6 +24,10 @@ used to return the central slice along `y` while it now returns the full 3d fiel
 - A new function (`ts.iterate`) was introduced in order to quickly apply a
 given function to all iterations of a time series. See the docstring of
 `ts.iterate` for more information.
+- The function `get_laser_envelope` does not support the argument `index` anymore
+(which was effectively used in order to perform slicing). Instead, users should use
+the argument `slicing_dir`. In addition, `get_laser_envelope` now supports the
+argument `plot_range`.
 
 ## 0.9.0
 
