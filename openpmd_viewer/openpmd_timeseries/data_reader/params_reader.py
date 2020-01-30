@@ -45,8 +45,9 @@ def read_openPMD_params(filename, extract_parameters=True):
     bpath = f[get_bpath(f)]
     t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
 
-    # If the user did not request more parameters, exit now.
+    # If the user did not request more parameters, close file and exit
     if not extract_parameters:
+        f.close()
         return(t, None)
 
     # Otherwise, extract the rest of the parameters
@@ -123,7 +124,9 @@ def read_openPMD_params(filename, extract_parameters=True):
     if ('particlesPath' in f.attrs):        # Check for openPMD 1.1 files
         particle_path = f.attrs['particlesPath'].decode().strip('/')
         if particle_path in bpath.keys():   # Check for openPMD 1.0 files
-            particles_available = True
+            # Check that there is at least one species
+            if len(bpath[particle_path].keys()) > 0:
+                particles_available = True
     if particles_available:
         # Particles are present ; extract the species
         params['avail_species'] = []
