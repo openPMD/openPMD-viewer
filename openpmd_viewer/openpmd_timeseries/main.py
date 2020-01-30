@@ -12,7 +12,8 @@ import numpy as np
 import h5py as h5
 from tqdm import tqdm
 from .utilities import list_h5_files, apply_selection, fit_bins_to_grid, \
-                        combine_cylindrical_components, try_array
+                        combine_cylindrical_components, try_array, \
+                        sanitize_slicing
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
@@ -441,14 +442,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
         # Check slicing
+        slicing_dir, slicing = sanitize_slicing(slicing_dir, slicing)
         if slicing_dir is not None:
-            # Convert to lists
-            if not isinstance(slicing_dir, list):
-                slicing_dir = [slicing_dir]
-            if slicing is None:
-                slicing = [0]*len(slicing_dir)
-            if not isinstance(slicing, list):
-                slicing = [slicing]
             # Check that the elements are valid
             axis_labels = self.fields_metadata[field]['axis_labels']
             for axis in slicing_dir:
@@ -457,10 +452,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     raise OpenPMDException(
                     'The `slicing_dir` argument is erroneous: contains %s\n'
                     'The available axes are: \n - %s' % (axis, axes_list) )
-            if len(slicing_dir) != len(slicing):
-                raise OpenPMDException(
-                    'The `slicing_dir` argument is erroneous: \nIt should have'
-                    'the same number of elements as `slicing_dir`.')
+
         # Check the coordinate (for vector fields)
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
