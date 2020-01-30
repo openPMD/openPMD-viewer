@@ -516,8 +516,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
 
-        # Prevent slicing across z at this point
+        # Prevent slicing across z, when extracting the raw electric field
         # (z axis is needed for calculation of envelope)
+        # but record whether the user asked for slicing across z,
+        # and whether a corresponding `slicing` coordinate along z was given,
+        # so as to perform this slicing later in this function.
         slicing_coord_z = None
         if slicing_dir is not None:
             slicing_dir, slicing = sanitize_slicing(slicing_dir, slicing)
@@ -531,7 +534,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                               slicing=slicing, slicing_dir=slicing_dir )
         e_complx = hilbert(field, axis=-1)
         envelope = np.abs(e_complx)
-        # If the user asked for slicing along z, add it at this point
+        # If the user asked for slicing along z, do it now
         if slicing_coord_z is not None:
             inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
             slicing_index = inverted_axes_dict['z']
@@ -773,9 +776,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing=None, slicing_dir=None, method='fit' ):
+                         method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
+
+        In 3D, this function takes a slice across `y`, and thus computes the
+        waist in the `x-z` plane.
 
         Parameters
         ----------
@@ -814,9 +820,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                                pol=pol, index='all',
-                                                slicing_dir=slicing_dir,
-                                                theta=theta)
+                         pol=pol, slicing_dir=slicing_dir, theta=theta)
         assert field.ndim == 2
         # Find the indices of the maximum field, and
         # pick the corresponding transverse slice
@@ -891,7 +895,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Get the field envelope
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
                                     pol=pol, slicing_dir=slicing_dir)
-        print(env.shape)
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
                                     coord=pol, slicing_dir=slicing_dir)
@@ -945,7 +948,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def _get_slicing_for_longitudinal_lineout(self):
         """
-        TODO
+        Return the `slicing_dir` argument which results in a 1D slice
+        along `z`, for the current geometry.
         """
         geometry = self.fields_metadata['E']['geometry']
         if geometry == "2dcartesian":

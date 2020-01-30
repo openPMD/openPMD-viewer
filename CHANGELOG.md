@@ -21,6 +21,8 @@ x, y, z = ts.get_particle(['x', 'y', 'z'], iteration=1000)
 compatibility for 3d field:
 ```get_field(field=field, coord=coord, iteration=iteration)```
 used to return the central slice along `y` while it now returns the full 3d field.
+- `openPMD-viewer` does not rely on Cython anymore. Instead, it uses `numba`
+for functions that perform a substantial amount of computation.
 - A new function (`ts.iterate`) was introduced in order to quickly apply a
 given function to all iterations of a time series. See the docstring of
 `ts.iterate` for more information.
@@ -28,6 +30,7 @@ given function to all iterations of a time series. See the docstring of
 (which was effectively used in order to perform slicing). Instead, users should use
 the argument `slicing_dir`. In addition, `get_laser_envelope` now supports the
 argument `plot_range`.
+- The function `get_laser_waist` does not support the agument `slicing_dir` anymore.
 
 ## 0.9.0
 

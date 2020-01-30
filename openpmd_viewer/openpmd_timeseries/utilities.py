@@ -17,7 +17,17 @@ from .numba_wrapper import jit
 
 def sanitize_slicing(slicing_dir, slicing):
     """
-    TODO
+    Return standardized format for `slicing_dir` and `slicing`:
+    - either `slicing_dir` and `slicing` are both `None` (no slicing)
+    - or `slicing_dir` and `slicing` are both lists,
+    with the same number of elements
+
+    Parameters
+    ----------
+    slicing : float, or list of float, or None
+
+    slicing_dir : str, or list of str, or None
+       Direction(s) along which to slice the data
     """
     # Skip None and empty lists
     if slicing_dir is None or slicing_dir == []:
@@ -35,6 +45,12 @@ def sanitize_slicing(slicing_dir, slicing):
         raise ValueError(
             'The `slicing` argument is erroneous: \nIt should have'
             'the same number of elements as `slicing_dir`.')
+
+    # Return a copy. This is because the rest of the `openPMD-viewer` code
+    # sometimes modifies the objects returned by `sanitize_slicing`.
+    # Using a copy avoids directly modifying objects that the user may pass
+    # to this function (and live outside of openPMD-viewer, e.g. directly in
+    # a user's notebook)
     return slicing_dir.copy(), slicing.copy()
 
 
