@@ -33,9 +33,9 @@ def sanitize_slicing(slicing_dir, slicing):
     # Check that the length are matching
     if len(slicing_dir) != len(slicing):
         raise ValueError(
-            'The `slicing_dir` argument is erroneous: \nIt should have'
+            'The `slicing` argument is erroneous: \nIt should have'
             'the same number of elements as `slicing_dir`.')
-    return slicing_dir, slicing
+    return slicing_dir.copy(), slicing.copy()
 
 
 def list_h5_files(path_to_dir):

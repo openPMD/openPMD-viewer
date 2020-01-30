@@ -439,7 +439,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            theta=0, slicing=0, slicing_dir=None,
+                            theta=0, slicing=None, slicing_dir=None,
                             plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
         """
@@ -510,6 +510,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
+
         # Prevent slicing across z at this point
         # (z axis is needed for calculation of envelope)
         slicing_coord_z = None
