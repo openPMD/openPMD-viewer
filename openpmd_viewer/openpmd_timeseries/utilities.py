@@ -9,6 +9,7 @@ License: 3-Clause-BSD-LBNL
 """
 
 import os
+import copy
 import math
 import numpy as np
 import h5py
@@ -51,7 +52,7 @@ def sanitize_slicing(slicing_dir, slicing):
     # Using a copy avoids directly modifying objects that the user may pass
     # to this function (and live outside of openPMD-viewer, e.g. directly in
     # a user's notebook)
-    return slicing_dir.copy(), slicing.copy()
+    return copy.copy(slicing_dir), copy.copy(slicing)
 
 
 def list_h5_files(path_to_dir):
