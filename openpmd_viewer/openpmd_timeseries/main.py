@@ -355,8 +355,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
         return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=None, slicing_dir=None,
-                  plot=False,
+                  m='all', theta=0., slice_across=None,
+                  slice_relative_position=None, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
@@ -393,17 +393,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
            corresponding to the plane of observation given by `theta` ;
            otherwise it returns a full 3D Cartesian array
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           Default: None, which results in slicing at 0 in all direction
-           of `slicing_dir`.
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
+        slice_across : str or list of str, optional
+           Direction(s) across which the data should be sliced
            + In cartesian geometry, elements can be:
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
@@ -411,6 +402,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            If slicing is None, the full grid is returned.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default: None, which results in slicing at 0 in all direction
+           of `slice_across`.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -442,15 +442,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
         # Check slicing
-        slicing_dir, slicing = sanitize_slicing(slicing_dir, slicing)
-        if slicing_dir is not None:
+        slice_across, slice_relative_position = \
+            sanitize_slicing(slice_across, slice_relative_position)
+        if slice_across is not None:
             # Check that the elements are valid
             axis_labels = self.fields_metadata[field]['axis_labels']
-            for axis in slicing_dir:
+            for axis in slice_across:
                 if axis not in axis_labels:
                     axes_list = '\n - '.join(axis_labels)
                     raise OpenPMDException(
-                    'The `slicing_dir` argument is erroneous: contains %s\n'
+                    'The `slice_across` argument is erroneous: contains %s\n'
                     'The available axes are: \n - %s' % (axis, axes_list) )
 
         # Check the coordinate (for vector fields)
@@ -493,22 +494,22 @@ class OpenPMDTimeSeries(InteractiveViewer):
         axis_labels = self.fields_metadata[field]['axis_labels']
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
-            F, info = read_field_cartesian(
-                filename, field_path, axis_labels, slicing, slicing_dir)
+            F, info = read_field_cartesian( filename, field_path,
+                axis_labels, slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r', slicing,
-                                           slicing_dir, m, theta)
-                Ft, info = read_field_circ(filename, field + '/t', slicing,
-                                           slicing_dir, m, theta)
+                Fr, info = read_field_circ(filename, field + '/r',
+                    slice_relative_position, slice_across, m, theta)
+                Ft, info = read_field_circ(filename, field + '/t',
+                    slice_relative_position, slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path, slicing,
-                                          slicing_dir, m, theta)
+                F, info = read_field_circ(filename, field_path,
+                    slice_relative_position, slice_across, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
@@ -517,12 +518,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
             elif F.ndim == 2:
-                self.plotter.show_field_2d(F, info, slicing_dir, m,
+                self.plotter.show_field_2d(F, info, slice_across, m,
                     field_label, geometry, self._current_i,
                     plot_range=plot_range, **kw)
             else:
                 raise OpenPMDException('Cannot plot %d-dimensional data.\n'
-                    'Use slicing, or set `plot=False`' % F.ndim)
+                    'Use the argument `slice_across`, or set `plot=False`' % F.ndim)
 
         # Return the result
         return(F, info)

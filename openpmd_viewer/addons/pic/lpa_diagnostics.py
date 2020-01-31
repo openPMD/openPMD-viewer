@@ -444,8 +444,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            theta=0, slicing=None, slicing_dir=None,
-                            plot=False,
+                            theta=0, slice_across=None,
+                            slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
@@ -474,24 +474,24 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           Default is 0.
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
+        slice_across : str or list of str, optional
+           Direction(s) across which the data should be sliced
            + In cartesian geometry, elements can be:
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           If slicing_dir is None, the full grid is returned.
+           If slice_across is None, the full grid is returned.
            Default is None.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -519,19 +519,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Prevent slicing across z, when extracting the raw electric field
         # (z axis is needed for calculation of envelope)
         # but record whether the user asked for slicing across z,
-        # and whether a corresponding `slicing` coordinate along z was given,
-        # so as to perform this slicing later in this function.
+        # and whether a corresponding `slice_relative_position` coordinate
+        # along z was given, so as to perform this slicing later in this function.
         slicing_coord_z = None
-        if slicing_dir is not None:
-            slicing_dir, slicing = sanitize_slicing(slicing_dir, slicing)
-            if 'z' in slicing_dir:
-                index_slicing_z = slicing_dir.index('z')
-                slicing_dir.pop(index_slicing_z)
-                slicing_coord_z = slicing.pop(index_slicing_z)
+        if slice_across is not None:
+            slice_across, slice_relative_position = \
+                sanitize_slicing(slice_across, slice_relative_position)
+            if 'z' in slice_across:
+                index_slicing_z = slice_across.index('z')
+                slice_across.pop(index_slicing_z)
+                slicing_coord_z = slice_relative_position.pop(index_slicing_z)
         # Get field data, and perform Hilbert transform
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                               coord=pol, theta=theta, m=m,
-                              slicing=slicing, slicing_dir=slicing_dir )
+                              slice_across=slice_across,
+                              slice_relative_position=slice_relative_position )
         e_complx = hilbert(field, axis=-1)
         envelope = np.abs(e_complx)
         # If the user asked for slicing along z, do it now
@@ -558,7 +560,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 self.plotter.show_field_1d(envelope, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
             elif envelope.ndim == 2:
-                self.plotter.show_field_2d(envelope, info, slicing_dir, m,
+                self.plotter.show_field_2d(envelope, info, slice_across, m,
                     field_label, geometry, self._current_i,
                     plot_range=plot_range, **kw)
         # Return the result
@@ -659,11 +661,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
         # Get a lineout along the 'z' axis,
-        slicing_dir = self._get_slicing_for_longitudinal_lineout()
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get field data
         field1d, info = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=pol, m=m, slicing_dir=slicing_dir )
+                                coord=pol, m=m, slice_across=slice_across )
         # FFT of 1d data
         dt = (info.z[1] - info.z[0]) / const.c  # Integration step for the FFT
         fft_field = np.fft.fft(field1d) * dt
@@ -711,11 +713,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with normalized vector potential a0
         """
         # Get a lineout along the 'z' axis,
-        slicing_dir = self._get_slicing_for_longitudinal_lineout()
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
-                                       pol=pol, slicing_dir=slicing_dir)[0])
+                                       pol=pol, slice_across=slice_across)[0])
         # Get mean frequency
         omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
@@ -752,11 +754,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with ctau in meters
         """
         # Get a lineout along the 'z' axis,
-        slicing_dir = self._get_slicing_for_longitudinal_lineout()
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                            pol=pol, slicing_dir=slicing_dir)
+                                            pol=pol, slice_across=slice_across)
         # Calculate ctau with RMS value
         ctau = np.sqrt(2) * w_std(info.z, E)
         if method == 'rms':
@@ -814,13 +816,13 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # In 3D, slice across 'y' by default
         geometry = self.fields_metadata['E']['geometry']
         if geometry == '3dcartesian':
-            slicing_dir = 'y'
+            slice_across = 'y'
         else:
-            slicing_dir = None
+            slice_across = None
 
         # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
-                         pol=pol, slicing_dir=slicing_dir, theta=theta)
+                         pol=pol, slice_across=slice_across, theta=theta)
         assert field.ndim == 2
         # Find the indices of the maximum field, and
         # pick the corresponding transverse slice
@@ -890,14 +892,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            (see the corresponding docstring)
         """
         # Get a lineout along the 'z' axis
-        slicing_dir = self._get_slicing_for_longitudinal_lineout()
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get the field envelope
         env, _ = self.get_laser_envelope(t=t, iteration=iteration,
-                                    pol=pol, slicing_dir=slicing_dir)
+                                    pol=pol, slice_across=slice_across)
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
-                                    coord=pol, slicing_dir=slicing_dir)
+                                    coord=pol, slice_across=slice_across)
         Nz = len(E)
         # Get time domain of the data
         tmin = info.zmin / const.c
@@ -948,7 +950,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def _get_slicing_for_longitudinal_lineout(self):
         """
-        Return the `slicing_dir` argument which results in a 1D slice
+        Return the `slice_across` argument which results in a 1D slice
         along `z`, for the current geometry.
         """
         geometry = self.fields_metadata['E']['geometry']

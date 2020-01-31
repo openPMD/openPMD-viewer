@@ -15,7 +15,7 @@ from .field_metainfo import FieldMetaInformation
 from ..utilities import construct_3d_from_circ
 
 def read_field_cartesian( filename, field_path, axis_labels,
-                          slicing, slicing_dir ):
+                          slice_relative_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
@@ -32,20 +32,20 @@ def read_field_cartesian( filename, field_path, axis_labels,
     axis_labels: list of strings
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
-    slicing : list of float or None
-       Number(s) between -1 and 1 that indicate where to slice the data,
-       along the directions in `slicing_dir`
-       -1 : lower edge of the simulation box
-       0 : middle of the simulation box
-       1 : upper edge of the simulation box
-
-    slicing_dir : list of str or None
-       Direction(s) along which to slice the data
+    slice_across : list of str or None
+       Direction(s) across which the data should be sliced
        Elements can be:
          - 1d: 'z'
          - 2d: 'x' and/or 'z'
          - 3d: 'x' and/or 'y' and/or 'z'
        Returned array is reduced by 1 dimension per slicing.
+
+    slice_relative_position : list of float or None
+       Number(s) between -1 and 1 that indicate where to slice the data,
+       along the directions in `slice_across`
+       -1 : lower edge of the simulation box
+       0 : middle of the simulation box
+       1 : upper edge of the simulation box
 
     Returns
     -------
@@ -65,17 +65,17 @@ def read_field_cartesian( filename, field_path, axis_labels,
     global_offset = list( group.attrs['gridGlobalOffset'] )
 
     # Slice selection
-    if slicing_dir is not None:
+    if slice_across is not None:
         # Get the integer that correspond to the slicing direction
         list_slicing_index = []
         list_i_cell = []
-        for count, slicing_dir_item in enumerate(slicing_dir):
-            slicing_index = axis_labels.index(slicing_dir_item)
+        for count, slice_across_item in enumerate(slice_across):
+            slicing_index = axis_labels.index(slice_across_item)
             list_slicing_index.append(slicing_index)
             # Number of cells along the slicing direction
             n_cells = shape[ slicing_index ]
             # Index of the slice (prevent stepping out of the array)
-            i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
+            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             list_i_cell.append(i_cell)
@@ -108,8 +108,8 @@ def read_field_cartesian( filename, field_path, axis_labels,
     return( F, info )
 
 
-def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
-                     theta=0. ):
+def read_field_circ( filename, field_path, slice_relative_position,
+                    slice_across, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -132,17 +132,17 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
        corresponding to the plane of observation given by `theta` ;
        otherwise it returns a full 3D Cartesian array
 
-    slicing : list of float or None
+    slice_across : list of str or None
+       Direction(s) across which the data should be sliced
+       Elements can be 'r' and/or 'z'
+       Returned array is reduced by 1 dimension per slicing.
+
+    slice_relative_position : list of float or None
        Number(s) between -1 and 1 that indicate where to slice the data,
-       along the directions in `slicing_dir`
+       along the directions in `slice_across`
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
-
-    slicing_dir : list of str or None
-       Direction(s) along which to slice the data
-       Elements can be 'r' and/or 'z'
-       Returned array is reduced by 1 dimension per slicing.
 
     Returns
     -------
@@ -223,23 +223,23 @@ def read_field_circ( filename, field_path, slicing, slicing_dir, m=0,
             F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
     # Perform slicing if needed
-    if slicing_dir is not None:
+    if slice_across is not None:
         # Slice field and clear metadata
         inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
-        for count, slicing_dir_item in enumerate(slicing_dir):
-            slicing_index = inverted_axes_dict[slicing_dir_item]
-            coord_array = getattr( info, slicing_dir_item )
+        for count, slice_across_item in enumerate(slice_across):
+            slicing_index = inverted_axes_dict[slice_across_item]
+            coord_array = getattr( info, slice_across_item )
             # Number of cells along the slicing direction
             n_cells = len(coord_array)
             # Index of the slice (prevent stepping out of the array)
-            i_cell = int( 0.5 * (slicing[count] + 1.) * n_cells )
+            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             F_total = np.take( F_total, [i_cell], axis=slicing_index )
         F_total = np.squeeze(F_total)
         # Remove the sliced labels from the FieldMetaInformation
-        for slicing_dir_item in slicing_dir:
-            info._remove_axis(slicing_dir_item)
+        for slice_across_item in slice_across:
+            info._remove_axis(slice_across_item)
 
     # Close the file
     dfile.close()

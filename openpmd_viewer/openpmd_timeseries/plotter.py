@@ -318,7 +318,7 @@ class Plotter(object):
         ax.get_xaxis().set_major_formatter( tick_formatter )
         ax.get_yaxis().set_major_formatter( tick_formatter )
 
-    def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
+    def show_field_2d(self, F, info, slice_across, m, field_label, geometry,
                         current_i, plot_range, **kw):
         """
         Plot the given field in 2D
@@ -331,9 +331,9 @@ class Plotter(object):
         info: a FieldMetaInformation object
             Contains the information about the plotted field
 
-        slicing_dir : str, optional
+        slice_across : str, optional
            Only used for 3dcartesian geometry
-           The direction along which the data is sliced
+           The direction across which the data is sliced
 
         m: int
            Only used for thetaMode geometry

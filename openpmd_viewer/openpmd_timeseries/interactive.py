@@ -112,17 +112,18 @@ class InteractiveViewer(object):
                                 fld_vrange_button.get_range() ]
 
                 # Handle slicing direction
-                if slicing_dir_button.value == 'None':
-                    slicing_dir = None
+                if slice_across_button.value == 'None':
+                    slice_across = None
                 else:
-                    slicing_dir = slicing_dir_button.value
+                    slice_across = slice_across_button.value
 
                 # Call the method get_field
                 self.get_field( iteration=self.current_iteration, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
-                    slicing=slicing_button.value, theta=theta_button.value,
-                    slicing_dir=slicing_dir,
+                    slice_relative_position=slicing_button.value,
+                    theta=theta_button.value,
+                    slice_across=slice_across,
                     plot_range=plot_range, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
@@ -218,13 +219,13 @@ class InteractiveViewer(object):
                 theta_button.disabled = True
             # Activate the right slicing options
             if self.fields_metadata[new_field]['geometry'] == '3dcartesian':
-                slicing_dir_button.options = \
+                slice_across_button.options = \
                     self.fields_metadata[new_field]['axis_labels']
-                slicing_dir_button.value = 'y'
+                slice_across_button.value = 'y'
             else:
-                slicing_dir_button.options = ['None'] + \
+                slice_across_button.options = ['None'] + \
                     self.fields_metadata[new_field]['axis_labels']
-                slicing_dir_button.value = 'None'
+                slice_across_button.value = 'None'
 
             # Put back the previous value of the refreshing button
             fld_refresh_toggle.value = saved_refresh_value
@@ -356,12 +357,12 @@ class InteractiveViewer(object):
             # Slicing buttons
             axis_labels = self.fields_metadata[field]['axis_labels']
             if self.fields_metadata[field]['geometry'] == '3dcartesian':
-                slicing_dir_button = create_toggle_buttons( value='y',
+                slice_across_button = create_toggle_buttons( value='y',
                     options=axis_labels )
             else:
-                slicing_dir_button = create_toggle_buttons( value='None',
+                slice_across_button = create_toggle_buttons( value='None',
                     options=['None'] + axis_labels )
-            slicing_dir_button.observe( refresh_field, 'value', 'change' )
+            slice_across_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
             set_widget_dimensions( slicing_button, width=180 )
             slicing_button.observe( refresh_field, 'value', 'change')
@@ -397,8 +398,8 @@ class InteractiveViewer(object):
             # Slicing container
             slices_widget_list = [
                 add_description("Slice normal:",
-                    slicing_dir_button, width=100),
-                add_description("Slicing:", slicing_button) ]
+                    slice_across_button, width=100),
+                add_description("Slicing position:", slicing_button) ]
             if "thetaMode" in self.avail_geom:
                 # Add widgets specific to azimuthal modes
                 slices_widget_list += [ mode_button,
