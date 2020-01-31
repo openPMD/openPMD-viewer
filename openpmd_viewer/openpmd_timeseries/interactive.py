@@ -121,7 +121,8 @@ class InteractiveViewer(object):
                 self.get_field( iteration=self.current_iteration, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
-                    slicing=slicing_button.value, theta=theta_button.value,
+                    slice_relative_position=slicing_button.value,
+                    theta=theta_button.value,
                     slice_across=slice_across,
                     plot_range=plot_range, **kw_fld )
 

@@ -16,16 +16,16 @@ import h5py
 from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
 
-def sanitize_slicing(slice_across, slicing):
+def sanitize_slicing(slice_across, slice_relative_position):
     """
-    Return standardized format for `slice_across` and `slicing`:
-    - either `slice_across` and `slicing` are both `None` (no slicing)
-    - or `slice_across` and `slicing` are both lists,
+    Return standardized format for `slice_across` and `slice_relative_position`:
+    - either `slice_across` and `slice_relative_position` are both `None` (no slicing)
+    - or `slice_across` and `slice_relative_position` are both lists,
     with the same number of elements
 
     Parameters
     ----------
-    slicing : float, or list of float, or None
+    slice_relative_position : float, or list of float, or None
 
     slice_across : str, or list of str, or None
        Direction(s) along which to slice the data
@@ -37,14 +37,14 @@ def sanitize_slicing(slice_across, slicing):
     # Convert to lists
     if not isinstance(slice_across, list):
         slice_across = [slice_across]
-    if slicing is None:
-        slicing = [0]*len(slice_across)
-    if not isinstance(slicing, list):
-        slicing = [slicing]
+    if slice_relative_position is None:
+        slice_relative_position = [0]*len(slice_across)
+    if not isinstance(slice_relative_position, list):
+        slice_relative_position = [slice_relative_position]
     # Check that the length are matching
-    if len(slice_across) != len(slicing):
+    if len(slice_across) != len(slice_relative_position):
         raise ValueError(
-            'The `slicing` argument is erroneous: \nIt should have'
+            'The argument `slice_relative_position` is erroneous: \nIt should have'
             'the same number of elements as `slice_across`.')
 
     # Return a copy. This is because the rest of the `openPMD-viewer` code
@@ -52,7 +52,7 @@ def sanitize_slicing(slice_across, slicing):
     # Using a copy avoids directly modifying objects that the user may pass
     # to this function (and live outside of openPMD-viewer, e.g. directly in
     # a user's notebook)
-    return copy.copy(slice_across), copy.copy(slicing)
+    return copy.copy(slice_across), copy.copy(slice_relative_position)
 
 
 def list_h5_files(path_to_dir):

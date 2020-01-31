@@ -444,8 +444,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         return(current, info)
 
     def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            theta=0, slicing=None, slice_across=None,
-                            plot=False,
+                            theta=0, slice_across=None,
+                            slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
@@ -474,14 +474,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slice_across`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           Default is 0.
-
         slice_across : str or list of str, optional
            Direction(s) along which to slice the data
            + In cartesian geometry, elements can be:
@@ -492,6 +484,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Returned array is reduced by 1 dimension per slicing.
            If slice_across is None, the full grid is returned.
            Default is None.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -519,19 +519,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Prevent slicing across z, when extracting the raw electric field
         # (z axis is needed for calculation of envelope)
         # but record whether the user asked for slicing across z,
-        # and whether a corresponding `slicing` coordinate along z was given,
-        # so as to perform this slicing later in this function.
+        # and whether a corresponding `slice_relative_position` coordinate
+        # along z was given, so as to perform this slicing later in this function.
         slicing_coord_z = None
         if slice_across is not None:
-            slice_across, slicing = sanitize_slicing(slice_across, slicing)
+            slice_across, slice_relative_position = \
+                sanitize_slicing(slice_across, slice_relative_position)
             if 'z' in slice_across:
                 index_slicing_z = slice_across.index('z')
                 slice_across.pop(index_slicing_z)
-                slicing_coord_z = slicing.pop(index_slicing_z)
+                slicing_coord_z = slice_relative_position.pop(index_slicing_z)
         # Get field data, and perform Hilbert transform
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                               coord=pol, theta=theta, m=m,
-                              slicing=slicing, slice_across=slice_across )
+                              slice_across=slice_across,
+                              slice_relative_position=slice_relative_position )
         e_complx = hilbert(field, axis=-1)
         envelope = np.abs(e_complx)
         # If the user asked for slicing along z, do it now
