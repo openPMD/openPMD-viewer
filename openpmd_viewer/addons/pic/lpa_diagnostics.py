@@ -475,7 +475,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            The angle of the plane of observation, with respect to the x axis
 
         slice_across : str or list of str, optional
-           Direction(s) along which to slice the data
+           Direction(s) across which the data should be sliced
            + In cartesian geometry, elements can be:
                - 1d: 'z'
                - 2d: 'x' and/or 'z'

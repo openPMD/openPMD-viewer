@@ -28,7 +28,7 @@ def sanitize_slicing(slice_across, slice_relative_position):
     slice_relative_position : float, or list of float, or None
 
     slice_across : str, or list of str, or None
-       Direction(s) along which to slice the data
+       Direction(s) across which the data should be sliced
     """
     # Skip None and empty lists
     if slice_across is None or slice_across == []:

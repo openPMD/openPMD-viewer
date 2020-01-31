@@ -33,7 +33,7 @@ def read_field_cartesian( filename, field_path, axis_labels,
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
     slice_across : list of str or None
-       Direction(s) along which to slice the data
+       Direction(s) across which the data should be sliced
        Elements can be:
          - 1d: 'z'
          - 2d: 'x' and/or 'z'
@@ -133,7 +133,7 @@ def read_field_circ( filename, field_path, slice_relative_position,
        otherwise it returns a full 3D Cartesian array
 
     slice_across : list of str or None
-       Direction(s) along which to slice the data
+       Direction(s) across which the data should be sliced
        Elements can be 'r' and/or 'z'
        Returned array is reduced by 1 dimension per slicing.
 

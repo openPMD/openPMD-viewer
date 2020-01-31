@@ -15,12 +15,14 @@ meters
 ```
 x, y, z = ts.get_particle(['x', 'y', 'z'], iteration=1000)
 ```
-- In `ts.get_field`, slicing can now be done in several directions
-(by passing a list as the argument `slicing_dir`), and for
+- In `ts.get_field`, slicing can now be done in several directions, and for
 1d, 2d, 3d, and circ geometries. As a consequence, this breaks backward
 compatibility for 3d field:
 ```get_field(field=field, coord=coord, iteration=iteration)```
 used to return the central slice along `y` while it now returns the full 3d field.
+In addition, the name of the argument of `get_field` that triggers slicing
+has been changed from `slicing_dir` to `slice_across` (and `slicing` has been
+changed to `slice_relative_position`).
 - `openPMD-viewer` does not rely on Cython anymore. Instead, it uses `numba`
 for functions that perform a substantial amount of computation.
 - A new function (`ts.iterate`) was introduced in order to quickly apply a
