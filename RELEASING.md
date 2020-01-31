@@ -32,7 +32,7 @@ username = <yourPypiUsername>
 
 ## Creating a release on Github
 
-- Make sure that the version number in `opmd_viewer/__version__.py` **and**
+- Make sure that the version number in `openpmd_viewer/__version__.py` **and**
   in `conda_recipe/meta.yaml` correspond to the new release, and that
   the corresponding changes have been documented in `CHANGELOG.md`.
 
