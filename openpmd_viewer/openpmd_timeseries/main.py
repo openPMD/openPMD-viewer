@@ -10,14 +10,16 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 import h5py as h5
+from tqdm import tqdm
 from .utilities import list_h5_files, apply_selection, fit_bins_to_grid, \
-                        combine_cylindrical_components
+                        combine_cylindrical_components, try_array, \
+                        sanitize_slicing
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader.params_reader import read_openPMD_params
 from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_1d, read_field_2d, \
-    read_field_circ, read_field_3d, get_grid_parameters
+from .data_reader.field_reader import read_field_cartesian, \
+    read_field_circ, get_grid_parameters
 from .data_reader.utilities import join_infile_path
 from .interactive import InteractiveViewer
 
@@ -112,7 +114,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.plotter = Plotter(self.t, self.iterations)
 
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
-            select=None, output=True, plot=False, nbins=150,
+            select=None, plot=False, nbins=150,
             plot_range=[[None, None], [None, None]],
             use_field_mesh=True, histogram_deposition='cic', **kw):
         """
@@ -123,7 +125,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
         If two quantities are requested by the user, this plots
         a 2d histogram of these quantities.
 
-        In the case of positions, the result is returned in microns
         In the case of momenta, the result is returned as:
         - unitless momentum (i.e. gamma*beta) for particles with non-zero mass
         - in kg.m.s^-1 for particles with zero mass
@@ -147,13 +148,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
 
-        output : bool, optional
-           Whether to return the requested quantity
-
         select: dict or ParticleTracker object, optional
             - If `select` is a dictionary:
             then it lists a set of rules to select the particles, of the form
-            'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 meters)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
             - If `select` is a ParticleTracker object:
@@ -353,13 +351,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Close the file
         file_handle.close()
 
-        # Output
-        if output:
-            return(data_list)
+        # Output the data
+        return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=0., slicing_dir='y',
-                  output=True, plot=False,
+                  m='all', theta=0., slice_across=None,
+                  slice_relative_position=None, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from an HDF5 file in the openPMD format.
@@ -396,22 +393,24 @@ class OpenPMDTimeSeries(InteractiveViewer):
            corresponding to the plane of observation given by `theta` ;
            otherwise it returns a full 3D Cartesian array
 
-        slicing : float, optional
-           Only used for 3dcartesian geometry
-           A number between -1 and 1 that indicates where to slice the data,
-           along the direction `slicing_dir`
+        slice_across : str or list of str, optional
+           Direction(s) across which the data should be sliced
+           + In cartesian geometry, elements can be:
+               - 1d: 'z'
+               - 2d: 'x' and/or 'z'
+               - 3d: 'x' and/or 'y' and/or 'z'
+           + In cylindrical geometry, elements can be 'r' and/or 'z'
+           Returned array is reduced by 1 dimension per slicing.
+           If slicing is None, the full grid is returned.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           If slicing is None, the full 3D grid is returned.
-
-        slicing_dir : str, optional
-           Only used for 3dcartesian geometry
-           The direction along which to slice the data
-           Either 'x', 'y' or 'z'
-
-        output : bool, optional
-           Whether to return the requested quantity
+           Default: None, which results in slicing at 0 in all direction
+           of `slice_across`.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -442,6 +441,19 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The `field` argument is missing or erroneous.\n"
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
+        # Check slicing
+        slice_across, slice_relative_position = \
+            sanitize_slicing(slice_across, slice_relative_position)
+        if slice_across is not None:
+            # Check that the elements are valid
+            axis_labels = self.fields_metadata[field]['axis_labels']
+            for axis in slice_across:
+                if axis not in axis_labels:
+                    axes_list = '\n - '.join(axis_labels)
+                    raise OpenPMDException(
+                    'The `slice_across` argument is erroneous: contains %s\n'
+                    'The available axes are: \n - %s' % (axis, axes_list) )
+
         # Check the coordinate (for vector fields)
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
@@ -480,43 +492,94 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Get the field data
         geometry = self.fields_metadata[field]['geometry']
         axis_labels = self.fields_metadata[field]['axis_labels']
-        # - For 1D
-        if geometry == "1dcartesian":
-            F, info = read_field_1d(filename, field_path, axis_labels)
-        # - For 2D
-        elif geometry == "2dcartesian":
-            F, info = read_field_2d(filename, field_path, axis_labels)
-        # - For 3D
-        elif geometry == "3dcartesian":
-            F, info = read_field_3d(
-                filename, field_path, axis_labels, slicing, slicing_dir)
+        # - For cartesian
+        if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
+            F, info = read_field_cartesian( filename, field_path,
+                axis_labels, slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r', m, theta)
-                Ft, info = read_field_circ(filename, field + '/t', m, theta)
+                Fr, info = read_field_circ(filename, field + '/r',
+                    slice_relative_position, slice_across, m, theta)
+                Ft, info = read_field_circ(filename, field + '/t',
+                    slice_relative_position, slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path, m, theta)
+                F, info = read_field_circ(filename, field_path,
+                    slice_relative_position, slice_across, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
-        if (geometry == "3dcartesian") and (slicing is None):
-            plot = False
         if plot:
-            if geometry == "1dcartesian":
+            if F.ndim == 1:
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
+            elif F.ndim == 2:
+                self.plotter.show_field_2d(F, info, slice_across, m,
+                    field_label, geometry, self._current_i,
+                    plot_range=plot_range, **kw)
             else:
-                self.plotter.show_field_2d(F, info, slicing_dir, m,
-                        field_label, geometry, self._current_i,
-                        plot_range=plot_range, **kw)
+                raise OpenPMDException('Cannot plot %d-dimensional data.\n'
+                    'Use the argument `slice_across`, or set `plot=False`' % F.ndim)
 
         # Return the result
         return(F, info)
+
+    def iterate( self, called_method, *args, **kwargs ):
+        """
+        Repeated calls the method `called_method` for every iteration of this
+        timeseries, with the arguments `*args` and `*kwargs`.
+
+        The result of these calls is returned as a list, or, whenever possible
+        as an array, where the first axis corresponds to the iterations.
+
+        If `called_method` returns a tuple/list, then `iterate` returns a
+        tuple/list of lists (or arrays).
+
+        Parameters
+        ----------
+        *args, **kwargs: arguments and keyword arguments
+            Arguments that would normally be passed to `called_method` for
+            a single iteration. Do not pass the argument `t` or `iteration`.
+        """
+        # Add the iteration key in the keyword aguments
+        kwargs['iteration'] = self.iterations[0]
+
+        # Check the shape of results
+        result = called_method(*args, **kwargs)
+        result_type = type( result )
+        if result_type in [tuple, list]:
+            returns_iterable = True
+            iterable_length = len(result)
+            accumulated_result = [ [element] for element in result ]
+        else:
+            returns_iterable = False
+            accumulated_result = [ result ]
+
+        # Call the method for all iterations
+        for iteration in tqdm(self.iterations[1:]):
+            kwargs['iteration'] = iteration
+            result = called_method( *args, **kwargs )
+            if returns_iterable:
+                for i in range(iterable_length):
+                    accumulated_result[i].append( result[i] )
+            else:
+                accumulated_result.append( result )
+
+        # Try to stack the arrays
+        if returns_iterable:
+            for i in range(iterable_length):
+                accumulated_result[i] = try_array( accumulated_result[i] )
+            if result_type == tuple:
+                return tuple(accumulated_result)
+            elif result_type == list:
+                return accumulated_result
+        else:
+            accumulated_result = try_array( accumulated_result )
+            return accumulated_result
 
     def _find_output(self, t, iteration):
         """

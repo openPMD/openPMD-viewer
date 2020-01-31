@@ -46,6 +46,7 @@ class FieldMetaInformation(object):
         then these variables will be called x, y.
 
     - imshow_extent: 1darray
+        (Only for 2D data)
         An array of 4 elements that can be passed as the `extent` in
         matplotlib's imshow function.
         Because of the API of the imshow function, the coordinates are
@@ -67,7 +68,6 @@ class FieldMetaInformation(object):
         """
         # Register important initial information
         self.axes = axes
-        self.imshow_extent = []
 
         # Create the elements
         for axis in sorted(axes.keys()):
@@ -77,27 +77,19 @@ class FieldMetaInformation(object):
             start = global_offset[axis] * grid_unitSI + position[axis] * step
             end = start + (n_points - 1) * step
             axis_points = np.linspace(start, end, n_points, endpoint=True)
+            # Create the points below the axis if thetaMode is true
+            if axes[axis] == 'r' and thetaMode:
+                axis_points = np.concatenate((-axis_points[::-1], axis_points))
+                start = -end
             # Register the results in the object
             axis_name = axes[axis]
             setattr(self, axis_name, axis_points)
             setattr(self, 'd' + axis_name, step)
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
-            # Fill the imshow_extent in reverse order, so as to match
-            # the syntax of imshow ; add a half step on each side since
-            # imshow plots a square of finite width for each field value
-            self.imshow_extent = \
-                [start - 0.5 * step, end + 0.5 * step] + self.imshow_extent
 
-        # Create the points below the axis if thetaMode is true
-        if thetaMode:
-            self.r = np.concatenate((-self.r[::-1], self.r))
-            # The axis now extends from -rmax to rmax
-            self.rmin = -self.rmax
-            self.imshow_extent[2] = -self.imshow_extent[3]
+        self._generate_imshow_extent()
 
-        # Finalize imshow_extent by converting it from list to array
-        self.imshow_extent = np.array(self.imshow_extent)
 
     def restrict_to_1Daxis(self, axis):
         """
@@ -115,15 +107,46 @@ class FieldMetaInformation(object):
                              'that are present in this object.')
 
         # Loop through the coordinates and suppress them
-        for obsolete_axis in self.axes.values():
+        for obsolete_axis in list(self.axes.values()):
             if obsolete_axis != axis:
-                delattr(self, obsolete_axis)
-                delattr(self, obsolete_axis + 'min')
-                delattr(self, obsolete_axis + 'max')
+                self._remove_axis(obsolete_axis)
 
-        # Suppress imshow_extent and replace the dictionary
-        delattr(self, 'imshow_extent')
-        self.axes = {0: axis}
+
+    def _generate_imshow_extent(self):
+        """
+        Generate the list `imshow_extent`, which can be used directly
+        as the argument `extent` of matplotlib's `imshow` command
+        """
+        if len(self.axes) == 2:
+            self.imshow_extent = []
+            for label in [self.axes[1], self.axes[0]]:
+                coord_min = getattr( self, label+'min' )
+                coord_max = getattr( self, label+'max' )
+                coord_step = getattr( self, 'd'+label )
+                self.imshow_extent += [ coord_min - 0.5*coord_step,
+                                   coord_max + 0.5*coord_step ]
+            self.imshow_extent = np.array(self.imshow_extent)
+        else:
+            if hasattr(self, 'imshow_extent'):
+                delattr(self, 'imshow_extent')
+
+
+    def _remove_axis(self, obsolete_axis):
+        """
+        Remove the axis `obsolete_axis` from the MetaInformation object
+        """
+        delattr(self, obsolete_axis)
+        delattr(self, obsolete_axis + 'min')
+        delattr(self, obsolete_axis + 'max')
+        # Rebuild the dictionary `axes`, by including the axis
+        # label in the same order, but omitting obsolete_axis
+        ndim = len(self.axes)
+        self.axes = dict( enumerate([
+            self.axes[i] for i in range(ndim) \
+            if self.axes[i] != obsolete_axis ]))
+
+        self._generate_imshow_extent()
+
 
     def _convert_cylindrical_to_3Dcartesian(self):
         """

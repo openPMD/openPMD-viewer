@@ -1,4 +1,5 @@
-{% set version = "0.9.1" %}
+
+{% set version = "1.0.0" %}
 
 package:
   name: openpmd_viewer
@@ -15,23 +16,25 @@ requirements:
   build:
     - python
     - setuptools
-    - cython
     - numpy
     - scipy
     - matplotlib
+    - numba
     - h5py
+    - tqdm
   run:
     - python
-    - cython
     - numpy
     - scipy
     - matplotlib
+    - numba
     - h5py
     - jupyter
+    - tqdm
 
 test:
   imports:
-    - opmd_viewer
+    - openpmd_viewer
 
 about:
   home: https://github.com/openPMD/openPMD-viewer

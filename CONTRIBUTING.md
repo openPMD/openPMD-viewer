@@ -49,7 +49,7 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
   - Use [pyflakes](https://pypi.python.org/pypi/pyflakes) to detect any potential bug.
   ```
   cd openPMD-viewer/
-  pyflakes opmd_viewer
+  pyflakes openpmd_viewer
   ```
   - Make sure that the tests pass (please install `wget` and `jupyter` before running the tests: `pip install wget jupyter`)
   ```
@@ -76,10 +76,10 @@ git push -u origin <NewBranchName>
 
 - Features that **modify** or **improve** the `OpenPMDTimeSeries` object
 should be implemented in the
-`opmd_viewer/opempmd_timeseries` folder. Features that **build upon** the
+`openpmd_viewer/opempmd_timeseries` folder. Features that **build upon** the
 `OpenPMDTimeSeries` object to create domain-specific analysis tools
 (e.g. laser diagnostics for PIC simulations) should be implemented in
-the `opmd_viewer/addons` folder.
+the `openpmd_viewer/addons` folder.
 
 - Document the functions and classes that you write, by using a
   [docstring](https://www.python.org/dev/peps/pep-0257/). List the
