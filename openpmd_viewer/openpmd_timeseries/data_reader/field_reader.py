@@ -14,10 +14,11 @@ from .utilities import get_shape, get_data, get_bpath, join_infile_path
 from .field_metainfo import FieldMetaInformation
 from ..utilities import construct_3d_from_circ
 
-def read_field_1d( filename, field_path, axis_labels ):
+def read_field_cartesian( filename, field_path, axis_labels,
+                          slice_relative_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is 1d cartesian.
+    when the geometry is cartesian (1d, 2d or 3d).
 
     Parameters
     ----------
@@ -26,15 +27,30 @@ def read_field_1d( filename, field_path, axis_labels ):
 
     field_path : string
        The relative path to the requested field, from the openPMD meshes path
-       (e.g. 'rho', 'E/r', 'B/x')
+       (e.g. 'rho', 'E/z', 'B/x')
 
     axis_labels: list of strings
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
 
+    slice_across : list of str or None
+       Direction(s) across which the data should be sliced
+       Elements can be:
+         - 1d: 'z'
+         - 2d: 'x' and/or 'z'
+         - 3d: 'x' and/or 'y' and/or 'z'
+       Returned array is reduced by 1 dimension per slicing.
+
+    slice_relative_position : list of float or None
+       Number(s) between -1 and 1 that indicate where to slice the data,
+       along the directions in `slice_across`
+       -1 : lower edge of the simulation box
+       0 : middle of the simulation box
+       1 : upper edge of the simulation box
+
     Returns
     -------
     A tuple with
-       F : a 1darray containing the required field
+       F : a ndarray containing the required field
        info : a FieldMetaInformation object
        (contains information about the grid; see the corresponding docstring)
     """
@@ -43,64 +59,57 @@ def read_field_1d( filename, field_path, axis_labels ):
     # Extract the dataset and and corresponding group
     group, dset = find_dataset( dfile, field_path )
 
-    # Extract the data in 1D Cartesian
-    F = get_data( dset )
+    # Dimensions of the grid
+    shape = list( get_shape( dset ) )
+    grid_spacing = list( group.attrs['gridSpacing'] )
+    global_offset = list( group.attrs['gridGlobalOffset'] )
 
-    # Extract the metainformation
-    axes = { 0: axis_labels[0]}
-    info = FieldMetaInformation( axes, F.shape,
-        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-        group.attrs['gridUnitSI'], dset.attrs['position'] )
+    # Slice selection
+    if slice_across is not None:
+        # Get the integer that correspond to the slicing direction
+        list_slicing_index = []
+        list_i_cell = []
+        for count, slice_across_item in enumerate(slice_across):
+            slicing_index = axis_labels.index(slice_across_item)
+            list_slicing_index.append(slicing_index)
+            # Number of cells along the slicing direction
+            n_cells = shape[ slicing_index ]
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            list_i_cell.append(i_cell)
 
-    # Close the file
-    dfile.close()
-    return( F, info )
+        # Remove metainformation relative to the slicing index
+        # Successive pops starting from last coordinate to slice
+        shape = [ x for index, x in enumerate(shape)
+                  if index not in list_slicing_index ]
+        grid_spacing = [ x for index, x in enumerate(grid_spacing)
+                         if index not in list_slicing_index ]
+        global_offset = [ x for index, x in enumerate(global_offset)
+                          if index not in list_slicing_index ]
+        axis_labels = [ x for index, x in enumerate(axis_labels)
+                         if index not in list_slicing_index ]
 
-
-def read_field_2d( filename, field_path, axis_labels ):
-    """
-    Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is 2d cartesian.
-
-    Parameters
-    ----------
-    filename : string
-       The absolute path to the HDF5 file
-
-    field_path : string
-       The relative path to the requested field, from the openPMD meshes path
-       (e.g. 'rho', 'E/r', 'B/x')
-
-    axis_labels: list of strings
-       The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
-
-    Returns
-    -------
-    A tuple with
-       F : a 2darray containing the required field
-       info : a FieldMetaInformation object
-       (contains information about the grid; see the corresponding docstring)
-    """
-    # Open the HDF5 file
-    dfile = h5py.File( filename, 'r' )
-    # Extract the dataset and and corresponding group
-    group, dset = find_dataset( dfile, field_path )
-
-    # Extract the data in 2D Cartesian
-    F = get_data( dset )
-
-    # Extract the metainformation
-    axes = { 0: axis_labels[0], 1: axis_labels[1] }
-    info = FieldMetaInformation( axes, F.shape,
-        group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-        group.attrs['gridUnitSI'], dset.attrs['position'] )
+        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+        # Extract data
+        F = get_data( dset, list_i_cell, list_slicing_index )
+        info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
+                group.attrs['gridUnitSI'], dset.attrs['position'] )
+    else:
+        F = get_data( dset )
+        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
+        info = FieldMetaInformation( axes, F.shape,
+            group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
+            group.attrs['gridUnitSI'], dset.attrs['position'] )
 
     # Close the file
     dfile.close()
     return( F, info )
 
 
-def read_field_circ( filename, field_path, m=0, theta=0. ):
+def read_field_circ( filename, field_path, slice_relative_position,
+                    slice_across, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -122,6 +131,18 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
        If `theta` is not None, then this function returns a 2D array
        corresponding to the plane of observation given by `theta` ;
        otherwise it returns a full 3D Cartesian array
+
+    slice_across : list of str or None
+       Direction(s) across which the data should be sliced
+       Elements can be 'r' and/or 'z'
+       Returned array is reduced by 1 dimension per slicing.
+
+    slice_relative_position : list of float or None
+       Number(s) between -1 and 1 that indicate where to slice the data,
+       along the directions in `slice_across`
+       -1 : lower edge of the simulation box
+       0 : middle of the simulation box
+       1 : upper edge of the simulation box
 
     Returns
     -------
@@ -201,91 +222,29 @@ def read_field_circ( filename, field_path, m=0, theta=0. ):
             F_total[Nr:, :] = F[:, :]
             F_total[:Nr, :] = (-1) ** m * F[::-1, :]
 
+    # Perform slicing if needed
+    if slice_across is not None:
+        # Slice field and clear metadata
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        for count, slice_across_item in enumerate(slice_across):
+            slicing_index = inverted_axes_dict[slice_across_item]
+            coord_array = getattr( info, slice_across_item )
+            # Number of cells along the slicing direction
+            n_cells = len(coord_array)
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            F_total = np.take( F_total, [i_cell], axis=slicing_index )
+        F_total = np.squeeze(F_total)
+        # Remove the sliced labels from the FieldMetaInformation
+        for slice_across_item in slice_across:
+            info._remove_axis(slice_across_item)
+
     # Close the file
     dfile.close()
+
     return( F_total, info )
-
-
-def read_field_3d( filename, field_path, axis_labels,
-                   slicing=0., slicing_dir='y'):
-    """
-    Extract a given field from an HDF5 file in the openPMD format,
-    when the geometry is 3d cartesian.
-
-    Parameters
-    ----------
-    filename : string
-       The absolute path to the HDF5 file
-
-    field_path : string
-       The relative path to the requested field, from the openPMD meshes path
-       (e.g. 'rho', 'E/r', 'B/x')
-
-    axis_labels: list of strings
-       The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
-
-    slicing : float, optional
-        Only used for 3dcartesian geometry
-        A number between -1 and 1 that indicates where to slice the data,
-        along the direction `slicing_dir`
-        -1 : lower edge of the simulation box
-        0 : middle of the simulation box
-        1 : upper edge of the simulation box
-        If slicing is None, the full 3D grid is returned.
-
-    slicing_dir : str, optional
-        Only used for 3dcartesian geometry
-        The direction along which to slice the data
-        Either 'x', 'y' or 'z'
-
-    Returns
-    -------
-    A tuple with
-       F : a 3darray or 2darray containing the required field,
-           depending on whether `slicing` is None or not
-       info : a FieldMetaInformation object
-       (contains information about the grid; see the corresponding docstring)
-    """
-    # Open the HDF5 file
-    dfile = h5py.File( filename, 'r' )
-    # Extract the dataset and and corresponding group
-    group, dset = find_dataset( dfile, field_path )
-
-    # Dimensions of the grid
-    shape = list( get_shape( dset ) )
-    grid_spacing = list( group.attrs['gridSpacing'] )
-    global_offset = list( group.attrs['gridGlobalOffset'] )
-    # Slice selection
-    if slicing is not None:
-        # Get the integer that correspond to the slicing direction
-        slicing_index = axis_labels.index(slicing_dir)
-        # Number of cells along the slicing direction
-        n_cells = shape[ slicing_index ]
-        # Index of the slice (prevent stepping out of the array)
-        i_cell = int( 0.5 * (slicing + 1.) * n_cells )
-        i_cell = max( i_cell, 0 )
-        i_cell = min( i_cell, n_cells - 1)
-        # Remove metainformation relative to the slicing index
-        shape.pop( slicing_index )
-        grid_spacing.pop( slicing_index )
-        global_offset.pop( slicing_index )
-        new_labels = axis_labels[:slicing_index] + \
-            axis_labels[slicing_index + 1:]
-        axes = { i: new_labels[i] for i in range(len(new_labels)) }
-        # Extraction of the data
-        F = get_data( dset, i_cell, slicing_index )
-        info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
-                group.attrs['gridUnitSI'], dset.attrs['position'] )
-    else:
-        F = get_data( dset )
-        axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
-        info = FieldMetaInformation( axes, F.shape,
-            group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-            group.attrs['gridUnitSI'], dset.attrs['position'] )
-
-    # Close the file
-    dfile.close()
-    return( F, info )
 
 
 def find_dataset( dfile, field_path ):

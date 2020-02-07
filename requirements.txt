@@ -1,3 +1,5 @@
 numpy
 scipy
 h5py
+tqdm
+
