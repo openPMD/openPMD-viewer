@@ -60,7 +60,7 @@ if matplotlib_installed:
             # Calculate the exponent (power of 3)
             xp = (x - self.offset)
             if xp != 0:
-                exponent = 3 * math.floor( math.log10(abs(xp)) / 3 )
+                exponent = int(3 * math.floor( math.log10(abs(xp)) / 3 ))
             else:
                 exponent = 0
             # Show 3 digits at most after decimal point
