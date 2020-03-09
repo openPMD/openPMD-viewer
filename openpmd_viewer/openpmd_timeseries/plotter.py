@@ -9,6 +9,7 @@ Author: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 import numpy as np
+import math
 try:
     import warnings
     import matplotlib
@@ -16,11 +17,68 @@ try:
     matplotlib_installed = True
 except ImportError:
     matplotlib_installed = False
-try:
-    from .cython_function import histogram_cic_1d, histogram_cic_2d
-    cython_function_available = True
-except ImportError:
-    cython_function_available = False
+
+from .numba_wrapper import numba_installed
+if numba_installed:
+    from .utilities import histogram_cic_1d, histogram_cic_2d
+
+# Redefine the default matplotlib formatter for ticks
+if matplotlib_installed:
+    from matplotlib.ticker import ScalarFormatter
+
+    class PowerOfThreeFormatter( ScalarFormatter ):
+        """
+        Formatter for matplotlib's axes ticks,
+        that prints numbers as e.g. 1.5e3, 3.2e6, 0.2e-9,
+        where the exponent is always a multiple of 3.
+
+        This helps a human reader to quickly identify the closest units
+        (e.g. nanometer) of the plotted quantity.
+
+        This class derives from `ScalarFormatter`, which
+        provides a nice `offset` feature.
+        """
+        def __init__( self, *args, **kwargs ):
+            ScalarFormatter.__init__( self, *args, **kwargs )
+            # Do not print the order of magnitude on the side of the axis
+            self.set_scientific(False)
+            # Reduce the threshold for printing an offset on side of the axis
+            self._offset_threshold = 2
+
+        def __call__(self, x, pos=None):
+            """
+            Function called for each tick of an axis (for matplotlib>=3.1)
+            Returns the string that appears in the plot.
+            """
+            return self.pprint_val( x, pos )
+
+        def pprint_val( self, x, pos=None):
+            """
+            Function called for each tick of an axis (for matplotlib<3.1)
+            Returns the string that appears in the plot.
+            """
+            # Calculate the exponent (power of 3)
+            xp = (x - self.offset)
+            if xp != 0:
+                exponent = 3 * math.floor( math.log10(abs(xp)) / 3 )
+            else:
+                exponent = 0
+            # Show 3 digits at most after decimal point
+            mantissa = round( xp * 10**(-exponent), 3)
+            # After rounding the exponent might change (e.g. 0.999 -> 1.)
+            if mantissa != 0 and math.log10(abs(mantissa)) == 3:
+                exponent += 3
+                mantissa /= 1000
+            string = "{:.3f}".format( mantissa )
+            if '.' in string:
+                # Remove trailing zeros and ., for integer mantissa
+                string = string.rstrip('0')
+                string = string.rstrip('.')
+            if exponent != 0:
+                string += "e{:d}".format( exponent )
+            return string
+
+    tick_formatter = PowerOfThreeFormatter()
 
 
 class Plotter(object):
@@ -95,10 +153,10 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Check deposition method
-        if deposition == 'cic' and not cython_function_available:
+        if deposition == 'cic' and not numba_installed:
             print_cic_unavailable()
             deposition = 'ngp'
 
@@ -119,8 +177,12 @@ class Plotter(object):
         plt.xlim( hist_range[0] )
         plt.ylim( hist_range[1] )
         plt.xlabel(quantity1, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.0f fs    (iteration %d)"
-                  % (species, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s:   t =  %.2e s    (iteration %d)"
+                  % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
     def hist2d(self, q1, q2, w, quantity1, quantity2, species, current_i,
                 nbins, hist_range, cmap='Blues', vmin=None, vmax=None,
@@ -168,10 +230,10 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Check deposition method
-        if deposition == 'cic' and not cython_function_available:
+        if deposition == 'cic' and not numba_installed:
             print_cic_unavailable()
             deposition = 'ngp'
 
@@ -195,8 +257,12 @@ class Plotter(object):
         plt.colorbar()
         plt.xlabel(quantity1, fontsize=self.fontsize)
         plt.ylabel(quantity2, fontsize=self.fontsize)
-        plt.title("%s:   t =  %.1f fs   (iteration %d)"
-                  % (species, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s:   t =  %.2e s   (iteration %d)"
+                  % (species, time, iteration), fontsize=self.fontsize)
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
     def show_field_1d( self, F, info, field_label, current_i, plot_range,
                             vmin=None, vmax=None, **kw ):
@@ -226,16 +292,16 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Get the title and labels
-        plt.title("%s at %.1f fs   (iteration %d)"
-                % (field_label, time_fs, iteration), fontsize=self.fontsize)
+        plt.title("%s at %.2e s   (iteration %d)" % (field_label,
+                    time, iteration), fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
-        # Get the x axis in microns
-        xaxis = 1.e6 * getattr( info, info.axes[0] )
+        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
+        # Get the x axis
+        xaxis = getattr( info, info.axes[0] )
         # Plot the data
         plt.plot( xaxis, F )
         # Get the limits of the plot
@@ -247,8 +313,12 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
-    def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
+    def show_field_2d(self, F, info, slice_across, m, field_label, geometry,
                         current_i, plot_range, **kw):
         """
         Plot the given field in 2D
@@ -261,9 +331,9 @@ class Plotter(object):
         info: a FieldMetaInformation object
             Contains the information about the plotted field
 
-        slicing_dir : str, optional
+        slice_across : str, optional
            Only used for 3dcartesian geometry
-           The direction along which the data is sliced
+           The direction across which the data is sliced
 
         m: int
            Only used for thetaMode geometry
@@ -284,33 +354,27 @@ class Plotter(object):
 
         # Find the iteration and time
         iteration = self.iterations[current_i]
-        time_fs = 1.e15 * self.t[current_i]
+        time = self.t[current_i]
 
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.1f fs   (iteration %d)"
-                      % (field_label, mode, time_fs, iteration),
+            plt.title("%s in the mode %s at %.2e s   (iteration %d)"
+                      % (field_label, mode, time, iteration),
                       fontsize=self.fontsize)
         # 2D Cartesian geometry
-        elif geometry == "2dcartesian":
-            plt.title("%s at %.1f fs   (iteration %d)"
-                      % (field_label, time_fs, iteration),
-                      fontsize=self.fontsize)
-        # 3D Cartesian geometry
-        elif geometry == "3dcartesian":
-            slice_plane = info.axes[0] + '-' + info.axes[1]
-            plt.title("%s sliced in %s at %.1f fs  (iteration %d)"
-                      % (field_label, slice_plane, time_fs, iteration),
+        else:
+            plt.title("%s at %.2e s   (iteration %d)"
+                      % (field_label, time, iteration),
                       fontsize=self.fontsize)
 
         # Add the name of the axes
-        plt.xlabel('$%s \;(\mu m)$' % info.axes[1], fontsize=self.fontsize)
-        plt.ylabel('$%s \;(\mu m)$' % info.axes[0], fontsize=self.fontsize)
+        plt.xlabel('$%s \;(m)$' % info.axes[1], fontsize=self.fontsize)
+        plt.ylabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow(F, extent=1.e6 * info.imshow_extent, origin='lower',
+        plt.imshow(F, extent=info.imshow_extent, origin='lower',
                    interpolation='nearest', aspect='auto', **kw)
         plt.colorbar()
 
@@ -321,15 +385,17 @@ class Plotter(object):
         # - Along the second dimension
         if (plot_range[1][0] is not None) and (plot_range[1][1] is not None):
             plt.ylim( plot_range[1][0], plot_range[1][1] )
+        # Format the ticks
+        ax = plt.gca()
+        ax.get_xaxis().set_major_formatter( tick_formatter )
+        ax.get_yaxis().set_major_formatter( tick_formatter )
 
 
 def print_cic_unavailable():
     warnings.warn(
         "\nCIC particle histogramming is unavailable because \n"
-        "Cython is not installed. NGP histogramming is used instead.\n"
-        "For CIC histogramming: \n"
-        " - make sure that Cython is installed \n"
-        " - then reinstall openPMD-viewer")
+        "Numba is not installed. NGP histogramming is used instead.\n"
+        "Please considering installing numba (e.g. `pip install numba`)")
 
 
 def check_matplotlib():

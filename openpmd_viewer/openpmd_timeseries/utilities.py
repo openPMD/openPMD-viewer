@@ -9,9 +9,50 @@ License: 3-Clause-BSD-LBNL
 """
 
 import os
+import copy
+import math
 import numpy as np
 import h5py
 from .data_reader.particle_reader import read_species_data
+from .numba_wrapper import jit
+
+def sanitize_slicing(slice_across, slice_relative_position):
+    """
+    Return standardized format for `slice_across` and `slice_relative_position`:
+    - either `slice_across` and `slice_relative_position` are both `None` (no slicing)
+    - or `slice_across` and `slice_relative_position` are both lists,
+    with the same number of elements
+
+    Parameters
+    ----------
+    slice_relative_position : float, or list of float, or None
+
+    slice_across : str, or list of str, or None
+       Direction(s) across which the data should be sliced
+    """
+    # Skip None and empty lists
+    if slice_across is None or slice_across == []:
+        return None, None
+
+    # Convert to lists
+    if not isinstance(slice_across, list):
+        slice_across = [slice_across]
+    if slice_relative_position is None:
+        slice_relative_position = [0]*len(slice_across)
+    if not isinstance(slice_relative_position, list):
+        slice_relative_position = [slice_relative_position]
+    # Check that the length are matching
+    if len(slice_across) != len(slice_relative_position):
+        raise ValueError(
+            'The argument `slice_relative_position` is erroneous: \nIt should have'
+            'the same number of elements as `slice_across`.')
+
+    # Return a copy. This is because the rest of the `openPMD-viewer` code
+    # sometimes modifies the objects returned by `sanitize_slicing`.
+    # Using a copy avoids directly modifying objects that the user may pass
+    # to this function (and live outside of openPMD-viewer, e.g. directly in
+    # a user's notebook)
+    return copy.copy(slice_across), copy.copy(slice_relative_position)
 
 
 def list_h5_files(path_to_dir):
@@ -77,7 +118,7 @@ def apply_selection(file_handle, data_list, select, species, extensions):
 
     select: dict
         A dictionary of rules to select the particles
-        'x' : [-4., 10.]   (Particles having x between -4 and 10 microns)
+        'x' : [-4., 10.]   (Particles having x between -4 and 10)
         'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
         'uz' : [5., None]  (Particles with uz above 5 mc)
 
@@ -119,6 +160,18 @@ def apply_selection(file_handle, data_list, select, species, extensions):
     return(data_list)
 
 
+def try_array( L ):
+    """
+    Attempt to convert L to a single array.
+    """
+    try:
+        # Stack the arrays
+        return np.stack( L, axis=0 )
+    except ValueError:
+        # Do not stack
+        return L
+
+
 def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     """
     Given a tentative number of bins `hist_size` for a histogram over
@@ -134,7 +187,7 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     grid_size: integer
         The number of cells in the grid
 
-    grid_range: list of floats (in meters)
+    grid_range: list of floats (in)
         The extent of the grid
 
     Returns:
@@ -142,7 +195,7 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     hist_size: integer
         The new number of bins
 
-    hist_range: list of floats (in microns)
+    hist_range: list of floats
         The new range of the histogram
     """
     # The new histogram range is the same as the grid range
@@ -164,10 +217,6 @@ def fit_bins_to_grid( hist_size, grid_size, grid_range ):
     hist_size = int( ( hist_range[1] - hist_range[0] ) / hist_spacing )
     hist_range[1] = hist_range[0] + hist_size * hist_spacing
 
-    # Convert the range to microns (since this is how particle positions
-    # are returned in the openPMD-viewer)
-    hist_range = [ 1.e6 * hist_range[0], 1.e6 * hist_range[1] ]
-
     return( hist_size, hist_range )
 
 
@@ -188,16 +237,15 @@ def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
         Contains info on the coordinate system
     """
     if theta is not None:
-        # Fr and Fr are 2Darrays
-        assert (Fr.ndim == 2) and (Ft.ndim == 2)
-
         if coord == 'x':
             F = np.cos(theta) * Fr - np.sin(theta) * Ft
         elif coord == 'y':
             F = np.sin(theta) * Fr + np.cos(theta) * Ft
         # Revert the sign below the axis
-        F[: int(F.shape[0] / 2)] *= -1
-
+        if info.axes[0] == 'r':
+            F[ : int(F.shape[0]/2) ] *= -1
+        elif (F.ndim == 2) and (info.axes[1] == 'r'):
+            F[ : , : int(F.shape[1]/2) ] *= -1
     else:
         # Fr, Ft are 3Darrays, info corresponds to Cartesian data
         assert (Fr.ndim == 3) and (Ft.ndim == 3)
@@ -217,7 +265,85 @@ def combine_cylindrical_components( Fr, Ft, theta, coord, info ):
 
     return F
 
+@jit
+def histogram_cic_1d( q1, w, nbins, bins_start, bins_end ):
+    """
+    Return an 1D histogram of the values in `q1` weighted by `w`,
+    consisting of `nbins` evenly-spaced bins between `bins_start`
+    and `bins_end`. Contribution to each bins is determined by the
+    CIC weighting scheme (i.e. linear weights).
+    """
+    # Define various scalars
+    bin_spacing = (bins_end-bins_start)/nbins
+    inv_spacing = 1./bin_spacing
+    n_ptcl = len(w)
 
+    # Allocate array for histogrammed data
+    hist_data = np.zeros( nbins, dtype=np.float64 )
+
+    # Go through particle array and bin the data
+    for i in range(n_ptcl):
+        # Calculate the index of lower bin to which this particle contributes
+        q1_cell = (q1[i] - bins_start) * inv_spacing
+        i_low_bin = int( math.floor( q1_cell ) )
+        # Calculate corresponding CIC shape and deposit the weight
+        S_low = 1. - (q1_cell - i_low_bin)
+        if (i_low_bin >= 0) and (i_low_bin < nbins):
+            hist_data[ i_low_bin ] += w[i] * S_low
+        if (i_low_bin + 1 >= 0) and (i_low_bin + 1 < nbins):
+            hist_data[ i_low_bin + 1 ] += w[i] * (1. - S_low)
+
+    return( hist_data )
+
+
+@jit
+def histogram_cic_2d( q1, q2, w,
+    nbins_1, bins_start_1, bins_end_1,
+    nbins_2, bins_start_2, bins_end_2 ):
+    """
+    Return an 2D histogram of the values in `q1` and `q2` weighted by `w`,
+    consisting of `nbins_1` bins in the first dimension and `nbins_2` bins
+    in the second dimension.
+    Contribution to each bins is determined by the
+    CIC weighting scheme (i.e. linear weights).
+    """
+    # Define various scalars
+    bin_spacing_1 = (bins_end_1-bins_start_1)/nbins_1
+    inv_spacing_1 = 1./bin_spacing_1
+    bin_spacing_2 = (bins_end_2-bins_start_2)/nbins_2
+    inv_spacing_2 = 1./bin_spacing_2
+    n_ptcl = len(w)
+
+    # Allocate array for histogrammed data
+    hist_data = np.zeros( (nbins_1, nbins_2), dtype=np.float64 )
+
+    # Go through particle array and bin the data
+    for i in range(n_ptcl):
+
+        # Calculate the index of lower bin to which this particle contributes
+        q1_cell = (q1[i] - bins_start_1) * inv_spacing_1
+        q2_cell = (q2[i] - bins_start_2) * inv_spacing_2
+        i1_low_bin = int( math.floor( q1_cell ) )
+        i2_low_bin = int( math.floor( q2_cell ) )
+
+        # Calculate corresponding CIC shape and deposit the weight
+        S1_low = 1. - (q1_cell - i1_low_bin)
+        S2_low = 1. - (q2_cell - i2_low_bin)
+        if (i1_low_bin >= 0) and (i1_low_bin < nbins_1):
+            if (i2_low_bin >= 0) and (i2_low_bin < nbins_2):
+                hist_data[ i1_low_bin, i2_low_bin ] += w[i]*S1_low*S2_low
+            if (i2_low_bin+1 >= 0) and (i2_low_bin+1 < nbins_2):
+                hist_data[ i1_low_bin, i2_low_bin+1 ] += w[i]*S1_low*(1.-S2_low)
+        if (i1_low_bin+1 >= 0) and (i1_low_bin+1 < nbins_1):
+            if (i2_low_bin >= 0) and (i2_low_bin < nbins_2):
+                hist_data[ i1_low_bin+1, i2_low_bin ] += w[i]*(1.-S1_low)*S2_low
+            if (i2_low_bin+1 >= 0) and (i2_low_bin+1 < nbins_2):
+                hist_data[ i1_low_bin+1, i2_low_bin+1 ] += w[i]*(1.-S1_low)*(1.-S2_low)
+
+    return( hist_data )
+
+
+@jit
 def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
     nx, ny, nz, nr, nmodes, inv_dr, rmax ):
     """

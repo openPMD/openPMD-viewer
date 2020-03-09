@@ -52,12 +52,12 @@ browser**. To use this executable, simply type in a regular terminal:
 
 ### Installation on a local computer
 
-#### Installation with conda (recommended)
+#### Installation with conda
 
 In order to install `openPMD-viewer` with `conda`, please install the [Anaconda
 distribution](https://docs.anaconda.com/anaconda/install/), and then type
 ```
-conda install -c rlehe openpmd_viewer
+conda install -c conda-forge openpmd-viewer
 ```
 If you are using JupyterLab, please also install the `jupyter-matplotlib`
 extension (See installation instructions
@@ -65,14 +65,9 @@ extension (See installation instructions
 
 #### Installation with pip
 
-If you cannot install `openPMD-viewer` with `conda`, the alternative
-is to use `pip`. However, you need to first make sure that `h5py` is
-installed on your local computer. This can be done for instance by
-typing `pip install h5py`, though this may require you to install `hdf5` separately.
-
-Once `h5py` is installed, simply type
+You can also install `openPMD-viewer` using `pip`
 ```
-pip install openPMD-viewer
+pip install openpmd-viewer
 ```
 In addition, if you wish to use the interactive GUI, please type
 ```

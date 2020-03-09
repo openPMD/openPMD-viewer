@@ -7,15 +7,9 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
-import warnings
 import numpy as np
 from .data_reader.particle_reader import read_species_data
-try:
-    from .cython_function import extract_indices_cython
-    cython_function_available = True
-except ImportError:
-    cython_function_available = False
-
+from .numba_wrapper import jit
 
 class ParticleTracker( object ):
     """
@@ -73,7 +67,7 @@ class ParticleTracker( object ):
         select: dict, optional
             Either None or a dictionary of rules
             to select the particles, of the form
-            'x' : [-4., 10.]  (Particles having x between -4 and 10 microns)
+            'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc)
 
@@ -104,14 +98,6 @@ class ParticleTracker( object ):
         self.species = species
         self.preserve_particle_index = preserve_particle_index
 
-        # Print a warning if the Cython function is unavailable
-        if not cython_function_available:
-            warnings.warn(
-            "\nUnable to compile particle tracking with Cython. \n"
-            "The ParticleTracker will still work, but will be slow. \n"
-            "For faster particle tracking: \n"
-            " - make sure that Cython is installed \n"
-            " - then reinstall openPMD-viewer")
 
     def extract_tracked_particles( self, file_handle, data_list,
                                     species, extensions ):
@@ -245,8 +231,8 @@ class ParticleTracker( object ):
 
         return( selected_indices )
 
-
-def extract_indices_python( original_indices, selected_indices,
+@jit
+def extract_indices( original_indices, selected_indices,
                         pid, selected_pid, preserve_particle_index ):
     """
     Go through the sorted arrays `pid` and `selected_pid`, and record
@@ -280,12 +266,3 @@ def extract_indices_python( original_indices, selected_indices,
                 i_fill += 1
 
     return( i_fill )
-
-
-# The functions `extract_indices_python` and `extract_indices_cython`
-# perform the same operations, but the cython version is much faster
-# since it is compiled
-if cython_function_available:
-    extract_indices = extract_indices_cython
-else:
-    extract_indices = extract_indices_python

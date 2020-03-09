@@ -111,13 +111,19 @@ class InteractiveViewer(object):
                 plot_range = [ fld_hrange_button.get_range(),
                                 fld_vrange_button.get_range() ]
 
+                # Handle slicing direction
+                if slice_across_button.value == 'None':
+                    slice_across = None
+                else:
+                    slice_across = slice_across_button.value
+
                 # Call the method get_field
-                self.get_field( iteration=self.current_iteration,
-                    output=False, plot=True,
+                self.get_field( iteration=self.current_iteration, plot=True,
                     field=fieldtype_button.value, coord=coord_button.value,
                     m=convert_to_int(mode_button.value),
-                    slicing=slicing_button.value, theta=theta_button.value,
-                    slicing_dir=slicing_dir_button.value,
+                    slice_relative_position=slicing_button.value,
+                    theta=theta_button.value,
+                    slice_across=slice_across,
                     plot_range=plot_range, **kw_fld )
 
         def refresh_ptcl(change=None, force=False):
@@ -164,7 +170,7 @@ class InteractiveViewer(object):
                 if ptcl_yaxis_button.value == 'None':
                     # 1D histogram
                     self.get_particle( iteration=self.current_iteration,
-                        output=False, var_list=[ptcl_xaxis_button.value],
+                        var_list=[ptcl_xaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
@@ -173,8 +179,8 @@ class InteractiveViewer(object):
                 else:
                     # 2D histogram
                     self.get_particle( iteration=self.current_iteration,
-                        output=False, var_list=[ptcl_xaxis_button.value,
-                                                ptcl_yaxis_button.value],
+                        var_list=[ptcl_xaxis_button.value,
+                            ptcl_yaxis_button.value],
                         select=ptcl_select_widget.to_dict(),
                         species=ptcl_species_button.value, plot=True,
                         nbins=ptcl_bins_button.value,
@@ -193,6 +199,11 @@ class InteractiveViewer(object):
                 whenever a change of a widget happens
                 (see docstring of ipywidgets.Widget.observe)
             """
+            # Deactivate the field refreshing to avoid callback
+            # while modifying the widgets
+            saved_refresh_value = fld_refresh_toggle.value
+            fld_refresh_toggle.value = False
+
             new_field = change['new']
             # Activate/deactivate vector fields
             if self.fields_metadata[new_field]['type'] == 'vector':
@@ -206,13 +217,19 @@ class InteractiveViewer(object):
             else:
                 mode_button.disabled = True
                 theta_button.disabled = True
-            # Activate/deactivate 3d-specific widgets
+            # Activate the right slicing options
             if self.fields_metadata[new_field]['geometry'] == '3dcartesian':
-                slicing_dir_button.disabled = False
-                slicing_button.disabled = False
+                slice_across_button.options = \
+                    self.fields_metadata[new_field]['axis_labels']
+                slice_across_button.value = 'y'
             else:
-                slicing_dir_button.disabled = True
-                slicing_button.disabled = True
+                slice_across_button.options = ['None'] + \
+                    self.fields_metadata[new_field]['axis_labels']
+                slice_across_button.value = 'None'
+
+            # Put back the previous value of the refreshing button
+            fld_refresh_toggle.value = saved_refresh_value
+
             # Show the fields
             refresh_field()
 
@@ -337,10 +354,15 @@ class InteractiveViewer(object):
                     min=-math.pi / 2, max=math.pi / 2)
             set_widget_dimensions( theta_button, width=190 )
             theta_button.observe( refresh_field, 'value', 'change')
-            # Slicing buttons (for 3D)
-            slicing_dir_button = create_toggle_buttons( value='y',
-                options=['x', 'y', 'z'], description='Slice normal:')
-            slicing_dir_button.observe( refresh_field, 'value', 'change' )
+            # Slicing buttons
+            axis_labels = self.fields_metadata[field]['axis_labels']
+            if self.fields_metadata[field]['geometry'] == '3dcartesian':
+                slice_across_button = create_toggle_buttons( value='y',
+                    options=axis_labels )
+            else:
+                slice_across_button = create_toggle_buttons( value='None',
+                    options=['None'] + axis_labels )
+            slice_across_button.observe( refresh_field, 'value', 'change' )
             slicing_button = widgets.FloatSlider( min=-1., max=1., value=0.)
             set_widget_dimensions( slicing_button, width=180 )
             slicing_button.observe( refresh_field, 'value', 'change')
@@ -371,16 +393,19 @@ class InteractiveViewer(object):
             # ----------
             # Field type container
             field_widget_list = [fieldtype_button, coord_button]
-            if "thetaMode" in self.avail_geom:
-                # Add widgets specific to azimuthal modes
-                field_widget_list += [ mode_button,
-                                add_description('Theta:', theta_button)]
-            elif "3dcartesian" in self.avail_geom:
-                # Add widgets specific to cartesian 3d
-                field_widget_list += [ slicing_dir_button,
-                    add_description("Slicing:", slicing_button) ]
             container_fields = widgets.VBox( children=field_widget_list )
             set_widget_dimensions( container_fields, width=330 )
+            # Slicing container
+            slices_widget_list = [
+                add_description("Slice normal:",
+                    slice_across_button, width=100),
+                add_description("Slicing position:", slicing_button) ]
+            if "thetaMode" in self.avail_geom:
+                # Add widgets specific to azimuthal modes
+                slices_widget_list += [ mode_button,
+                                add_description('Theta:', theta_button)]
+            container_slicing = widgets.VBox( children=slices_widget_list )
+            set_widget_dimensions( container_slicing, width=330 )
             # Plotting options container
             container_fld_cbar = fld_color_button.to_container()
             container_fld_hrange = fld_hrange_button.to_container()
@@ -391,10 +416,11 @@ class InteractiveViewer(object):
                 container_fld_hrange ])
             set_widget_dimensions( container_fld_plots, width=330 )
             # Accordion for the field widgets
-            accord1 = widgets.Accordion(
-                children=[container_fields, container_fld_plots])
+            accord1 = widgets.Accordion( children=[container_fields,
+                container_slicing, container_fld_plots])
             accord1.set_title(0, 'Field type')
-            accord1.set_title(1, 'Plotting options')
+            accord1.set_title(1, 'Slice selection')
+            accord1.set_title(2, 'Plotting options')
             # Complete field container
             container_fld = widgets.VBox( children=[accord1, widgets.HBox(
                 children=[fld_refresh_toggle, fld_refresh_button])])
