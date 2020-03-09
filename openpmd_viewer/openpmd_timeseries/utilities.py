@@ -82,13 +82,16 @@ def list_h5_files(path_to_dir):
             full_name = os.path.join(
                 os.path.abspath(path_to_dir), filename)
             # extract all iterations from hdf5 file
-            f = h5py.File(full_name, 'r')
-            iterations = list(f['/data'].keys())
-            f.close()
-            # for each found iteration create list of tuples
-            # (which can be sorted together)
-            for key_iteration in iterations:
-                iters_and_names.append((int(key_iteration), full_name))
+            try:
+                f = h5py.File(full_name, 'r')
+                iterations = list(f['/data'].keys())
+                f.close()
+                # for each found iteration create list of tuples
+                # (which can be sorted together)
+                for key_iteration in iterations:
+                    iters_and_names.append((int(key_iteration), full_name))
+            except OSError as ioerr:
+                print('Skipping file "{0}": {1}'.format(full_name, ioerr))
 
     # Sort the list of tuples according to the iteration
     iters_and_names.sort()
