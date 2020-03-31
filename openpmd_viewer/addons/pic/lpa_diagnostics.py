@@ -320,8 +320,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
             iteration=iteration, species=species, select=select )
-        x *= 1.e-6
-        y *= 1.e-6
         # Normalized or trace-space emittance
         if kind == 'normalized':
             ux = ux
@@ -425,7 +423,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             len_z = np.max(z) - np.min(z)
             vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
             # Calculate the current in each bin
-            current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+            current = np.abs(vzq_sum * bins / (len_z))
         else:
             current = np.zeros(bins)
             len_z = 0
