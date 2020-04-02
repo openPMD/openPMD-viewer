@@ -32,8 +32,8 @@ username = <yourPypiUsername>
 
 ## Creating a release on Github
 
-- Make sure that the version number in `openpmd_viewer/__version__.py` **and**
-  in `conda_recipe/meta.yaml` correspond to the new release, and that
+- Make sure that the version number in `openpmd_viewer/__version__.py`
+  correspond to the new release, and that
   the corresponding changes have been documented in `CHANGELOG.md`.
 
 - If everything works fine, then merge the `dev` version into `master`

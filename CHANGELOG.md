@@ -1,5 +1,18 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.0.1
+
+This is a bug-fix release.
+
+- Unreadable files are now skipped (instead of crashing the whole timeseries) ; see [#262](https://github.com/openPMD/openPMD-viewer/pull/262).
+
+- A bug related to units (microns vs meters) was fixed in `get_emittance` and `get_current` (see [#276](https://github.com/openPMD/openPMD-viewer/pull/276))
+
+- The quick-start notebook (`openPMD-visualization`) raised a warning saying
+`Notebook validation failed` in some cases. This was fixed (see [#274](https://github.com/openPMD/openPMD-viewer/pull/274))
+
+- When using the option `plot=True` with Python 2, openPMD-viewer crashed. This is now fixed (see [#271](https://github.com/openPMD/openPMD-viewer/pull/271)).
+
 ## 1.0.0
 
 This version introduces major changes and breaks backward compatibility.
