@@ -1,7 +1,7 @@
 # openPMD-viewer
 
-[![Build Status master](https://img.shields.io/travis/openPMD/openPMD-viewer/master.svg?label=master)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
-[![Build Status dev](https://img.shields.io/travis/openPMD/openPMD-viewer/dev.svg?label=dev)](https://travis-ci.org/openPMD/openPMD-viewer/branches)
+[![Build Status master](https://img.shields.io/travis/openPMD/openPMD-viewer/master.svg?label=master)](https://travis-ci.com/openPMD/openPMD-viewer/branches)
+[![Build Status dev](https://img.shields.io/travis/openPMD/openPMD-viewer/dev.svg?label=dev)](https://travis-ci.com/openPMD/openPMD-viewer/branches)
 [![pypi version](https://img.shields.io/pypi/v/openPMD-viewer.svg)](https://pypi.python.org/pypi/openPMD-viewer)
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/master?filepath=tutorials%2F)
 [![License](https://img.shields.io/pypi/l/openPMD-viewer.svg)](LICENSE.txt)
