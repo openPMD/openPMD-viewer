@@ -16,7 +16,8 @@ import h5py
 from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
 
-def sanitize_slicing(slice_across, slice_relative_position):
+def sanitize_slicing(slice_across, slice_relative_position,
+    slice_absolute_position):
     """
     Return standardized format for `slice_across` and `slice_relative_position`:
     - either `slice_across` and `slice_relative_position` are both `None` (no slicing)
@@ -27,12 +28,22 @@ def sanitize_slicing(slice_across, slice_relative_position):
     ----------
     slice_relative_position : float, or list of float, or None
 
+    slice_absolute_position : float, or list of float, or None
+
     slice_across : str, or list of str, or None
        Direction(s) across which the data should be sliced
     """
     # Skip None and empty lists
     if slice_across is None or slice_across == []:
         return None, None
+
+    # Check that `slice_relative_position` and `slice_absolute_position`
+    # are not simultaneously provided:
+    if (slice_relative_position is not None) and \
+        (slice_absolute_position is not None):
+        raise ValueError(
+            'The arguments `slice_relative_position` and `slice_absolute_position` '
+            'cannot be used simultaneously.')
 
     # Convert to lists
     if not isinstance(slice_across, list):

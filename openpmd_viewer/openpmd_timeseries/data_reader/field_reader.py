@@ -15,7 +15,7 @@ from .field_metainfo import FieldMetaInformation
 from ..utilities import construct_3d_from_circ
 
 def read_field_cartesian( filename, field_path, axis_labels,
-                          slice_relative_position, slice_across ):
+    slice_relative_position, slice_absolute_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
@@ -47,6 +47,10 @@ def read_field_cartesian( filename, field_path, axis_labels,
        0 : middle of the simulation box
        1 : upper edge of the simulation box
 
+    slice_absolute_position : list of float, or None
+       Position(s), in meters, where to slice the data, along the
+       directions in `slice_across`s
+
     Returns
     -------
     A tuple with
@@ -74,8 +78,16 @@ def read_field_cartesian( filename, field_path, axis_labels,
             list_slicing_index.append(slicing_index)
             # Number of cells along the slicing direction
             n_cells = shape[ slicing_index ]
-            # Index of the slice (prevent stepping out of the array)
-            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            # Index of the slice
+            if slice_relative_position is not None:
+                i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            elif slice_absolute_position is not None:
+                i_cell = int(
+                    (slice_absolute_position[count]-global_offset[slicing_index])/grid_spacing[slicing_index]) )
+            else:
+                raise ValueError( 'slice_relative_position and '
+                    'slice_absolute_position cannot both be None.')
+            # Prevent stepping out of the array
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             list_i_cell.append(i_cell)
@@ -109,7 +121,7 @@ def read_field_cartesian( filename, field_path, axis_labels,
 
 
 def read_field_circ( filename, field_path, slice_relative_position,
-                    slice_across, m=0, theta=0. ):
+                    slice_absolute_position, slice_across, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -143,6 +155,10 @@ def read_field_circ( filename, field_path, slice_relative_position,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
+
+    slice_absolute_position : list of float, or None
+       Position(s), in meters, where to slice the data, along the
+       directions in `slice_across`s
 
     Returns
     -------
@@ -231,8 +247,15 @@ def read_field_circ( filename, field_path, slice_relative_position,
             coord_array = getattr( info, slice_across_item )
             # Number of cells along the slicing direction
             n_cells = len(coord_array)
-            # Index of the slice (prevent stepping out of the array)
-            i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            # Index of the slice
+            if slice_relative_position is not None:
+                i_cell = int( 0.5 * (slice_relative_position[count] + 1.) * n_cells )
+            elif slice_absolute_position:
+                i_cell = np.argmin( abs(coord_array-slice_absolute_position[count]) )
+            else:
+                raise ValueError( 'slice_relative_position and '
+                    'slice_absolute_position cannot both be None.')
+            # Present stepping out of the array
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             F_total = np.take( F_total, [i_cell], axis=slicing_index )
