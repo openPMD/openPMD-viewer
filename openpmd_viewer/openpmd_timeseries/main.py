@@ -409,8 +409,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
            -1 : lower edge of the simulation box
            0 : middle of the simulation box
            1 : upper edge of the simulation box
-           Default: None, which results in slicing at 0 in all direction
-           of `slice_across`.
+           Default: None, which results in slicing at the middle of the box,
+           in each direction of `slice_across
+           (unless `slice_absolute_position` is set)
+
+        slice_absolute_position : float or list of float, optional
+           Position(s), in meters, where to slice the data, along the
+           directions in `slice_across`
+           Default: None, which results in slicing at the middle of the box,
+           in each direction of `slice_across`
+           (unless `slice_relative_position` is set)
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -442,8 +450,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
         # Check slicing
-        slice_across, slice_relative_position = \
-            sanitize_slicing(slice_across, slice_relative_position)
+        slice_across, slice_relative_position, slice_absolute_position = \
+            sanitize_slicing( slice_across, slice_relative_position,
+                slice_absolute_position )
         if slice_across is not None:
             # Check that the elements are valid
             axis_labels = self.fields_metadata[field]['axis_labels']
@@ -495,21 +504,25 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = read_field_cartesian( filename, field_path,
-                axis_labels, slice_relative_position, slice_across)
+                axis_labels, slice_relative_position, slice_absolute_position,
+                slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
                 Fr, info = read_field_circ(filename, field + '/r',
-                    slice_relative_position, slice_across, m, theta)
+                    slice_relative_position, slice_absolute_position,
+                    slice_across, m, theta)
                 Ft, info = read_field_circ(filename, field + '/t',
-                    slice_relative_position, slice_across, m, theta)
+                    slice_relative_position, slice_absolute_position,
+                    slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = read_field_circ(filename, field_path,
-                    slice_relative_position, slice_across, m, theta)
+                    slice_relative_position, slice_absolute_position,
+                    slice_across, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
