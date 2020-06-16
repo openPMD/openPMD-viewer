@@ -91,7 +91,7 @@ class ParticleTracker( object ):
             then it is not garanteed that a given particle keeps the same index
         """
 
-        # Extract of load the particle id and sort them
+        # Extract or load the particle id and sort them
         if (type(select) is dict) or (select is None):
             self.selected_pid, = ts.get_particle(['id'], species=species,
                                     select=select, t=t, iteration=iteration)
