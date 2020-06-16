@@ -64,12 +64,14 @@ class ParticleTracker( object ):
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
 
-        select: dict, optional
+        select: dict or 1darray of int, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
-            'uz' : [5., None]  (Particles with uz above 5 mc)
+            'uz' : [5., None]  (Particles with uz above 5 mc).
+            Can also be a 1d array of interegers corresponding to the 
+            selected particles `id`
 
         preserve_particle_index: bool, optional
             When retrieving particles at a several iterations,
@@ -88,9 +90,14 @@ class ParticleTracker( object ):
             returned array is simply smaller when particles are absent) but
             then it is not garanteed that a given particle keeps the same index
         """
-        # Extract the particle id and sort them
-        self.selected_pid, = ts.get_particle(['id'], species=species,
-                                select=select, t=t, iteration=iteration)
+
+        # Extract or load the particle id and sort them
+        if (type(select) is dict) or (select is None):
+            self.selected_pid, = ts.get_particle(['id'], species=species,
+                                    select=select, t=t, iteration=iteration)
+        elif (type(select) is np.ndarray):
+            self.selected_pid = select
+
         self.selected_pid.sort()
 
         # Register a few metadata
