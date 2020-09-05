@@ -11,8 +11,8 @@ License: 3-Clause-BSD-LBNL
 import h5py
 import numpy as np
 from .utilities import get_shape, get_data, get_bpath, join_infile_path
-from opmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
-from ..utilities import construct_3d_from_circ
+from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
+from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
 def read_field_cartesian( filename, field_path, axis_labels,

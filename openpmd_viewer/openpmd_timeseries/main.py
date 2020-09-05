@@ -10,7 +10,9 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 from tqdm import tqdm
-from .utilities import apply_selection, fit_bins_to_grid, try_array
+from .utilities import apply_selection, fit_bins_to_grid, try_array, \
+                        sanitize_slicing, combine_cylindrical_components
+from .data_reader.h5py_reader.utilities import join_infile_path
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
 from .data_reader import DataReader

@@ -8,7 +8,6 @@ Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 import numpy as np
-from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
 
 class ParticleTracker( object ):
