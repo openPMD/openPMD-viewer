@@ -13,20 +13,6 @@ import h5py
 import numpy as np
 
 
-def open_file( filename ):
-    """
-    TODO
-    """
-    return h5py.File( filename, 'r' )
-
-
-def close_file( file_handle ):
-    """
-    TODO
-    """
-    file_handle.close()
-
-
 def list_files(path_to_dir):
     """
     Return a list of the hdf5 files in this directory,
@@ -40,14 +26,15 @@ def list_files(path_to_dir):
     Returns
     -------
     A tuple with:
-    - a list of strings which correspond to the absolute path of each file
     - an array of integers which correspond to the iteration of each file
+    - a dictionary that matches iterations to the corresponding filename
     """
     # Find all the files in the provided directory
     all_files = os.listdir(path_to_dir)
 
-    # Select the hdf5 files
-    iters_and_names = []
+    # Select the hdf5 files, and fill dictionary of correspondence
+    # between iterations and files
+    iteration_to_file = {}
     for filename in all_files:
         # Use only the name that end with .h5 or .hdf5
         if filename.endswith('.h5') or filename.endswith('.hdf5'):
@@ -57,18 +44,14 @@ def list_files(path_to_dir):
             f = h5py.File(full_name, 'r')
             iterations = list(f['/data'].keys())
             f.close()
-            # for each found iteration create list of tuples
-            # (which can be sorted together)
+            # Add iterations to dictionary
             for key_iteration in iterations:
-                iters_and_names.append((int(key_iteration), full_name))
+                iteration_to_file[ int(key_iteration) ] = full_name
 
-    # Sort the list of tuples according to the iteration
-    iters_and_names.sort()
-    # Extract the list of filenames and iterations
-    filenames = [name for (it, name) in iters_and_names]
-    iterations = np.array([it for (it, name) in iters_and_names])
+    # Extract iterations and sort them
+    iterations = np.array( sorted( list( iteration_to_file.keys() ) ) )
 
-    return(filenames, iterations)
+    return iterations, iteration_to_file
 
 
 def get_bpath(f):

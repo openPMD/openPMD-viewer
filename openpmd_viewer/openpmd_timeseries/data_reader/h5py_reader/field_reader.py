@@ -301,15 +301,15 @@ def find_dataset( dfile, field_path ):
     return( group, dset )
 
 
-def get_grid_parameters( dfile, avail_fields, metadata ):
+def get_grid_parameters( filename, avail_fields, metadata ):
     """
     Return the parameters of the spatial grid (grid size and grid range)
     in two dictionaries
 
     Parameters:
     -----------
-    dfile: an h5Py.File object
-       The file from which to extract the information
+    filename : string
+       The absolute path to the HDF5 file
 
     avail_fields: list
        A list of the available fields
@@ -328,6 +328,8 @@ def get_grid_parameters( dfile, avail_fields, metadata ):
     The values of `grid_range_dict` are lists of two floats, which correspond
     to the min and max of the grid, along each axis.
     """
+    # Open the HDF5 file
+    dfile = h5py.File( filename, 'r' )
     # Pick field with the highest dimensionality ('3d'>'thetaMode'>'2d')
     # (This function is for the purpose of histogramming the particles;
     # in this case, the highest dimensionality ensures that more particle
@@ -364,5 +366,6 @@ def get_grid_parameters( dfile, avail_fields, metadata ):
         grid_size_dict[coord] = grid_size[i]
         grid_range_dict[coord] = \
             [ grid_offset[i], grid_offset[i] + grid_size[i] * grid_spacing[i] ]
-
+    # Close the file
+    dfile.close()
     return( grid_size_dict, grid_range_dict )

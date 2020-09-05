@@ -24,36 +24,19 @@ class DataReader( object ):
         self.backend = backend
 
         # Point to the correct reader module
-        if backend == 'h5py':
-            self.reader_module = h5py_reader
-#        elif backend == 'openpmd-api':
+        if self.backend == 'h5py':
+            self.iteration_to_file = {}
+
+#        elif self.backend == 'openpmd-api':
 #            self.reader_module = openpmd_api_reader
         else:
             raise RuntimeError('Unknown backend: %s' % backend)
 
-        # Parameters for opened file
-        self.current_file_handle = None
-
-    def open_file( self, filename ):
+    def list_iterations(self, path_to_dir):
         """
-        TODO
-        """
-        # Check that no file is currently open
-        assert self.current_file_handle is None
-        # Open the file
-        self.current_file_handle = self.reader_module.open_file( filename )
-
-    def close_file( self ):
-        """
-        TODO
-        """
-        self.reader_module.close_file( self.current_file_handle )
-        self.current_file_handle = None
-
-    def list_files(self, path_to_dir):
-        """
-        Return a list of the openPMD files in this directory,
-        and a list of the corresponding iterations
+        Return a list of the iterations that correspond to the files
+        in this directory. (The correspondance between iterations and
+        files is stored internally.)
 
         Parameter
         ---------
@@ -62,20 +45,24 @@ class DataReader( object ):
 
         Returns
         -------
-        A tuple with:
-        - a list of strings which correspond to the absolute path of each file
-        - an array of integers which correspond to the iteration of each file
+        an array of integers which correspond to the iteration of each file
+        (in sorted order)
         """
-        return self.reader_module.list_files( path_to_dir )
+        if self.backend == 'h5py':
+            iterations, iteration_to_file = \
+                h5py_reader.list_files( path_to_dir )
+            # Store dictionary of correspondence between iteration and file
+            self.iteration_to_file = iteration_to_file
+        return iterations
 
-    def read_openPMD_params(self, filename, extract_parameters=True):
+    def read_openPMD_params(self, iteration, extract_parameters=True):
         """
         Extract the time and some openPMD parameters from a file
 
         Parameter
         ---------
-        filename: string
-            The path to the file from which parameters should be extracted
+        iteration: int
+            The iteration at which the parameters should be extracted
 
         extract_parameters: bool, optional
             Whether to extract all parameters or only the time
@@ -88,19 +75,21 @@ class DataReader( object ):
         - A dictionary containing several parameters, such as the geometry, etc
          When extract_parameters is False, the second argument returned is None
         """
-        return self.reader_module.read_openPMD_params(
-            filename, extract_parameters)
+        if self.backend == 'h5py':
+            filename = self.iteration_to_file[iteration]
+            return h5py_reader.read_openPMD_params(
+                    filename, extract_parameters)
 
-    def read_field_cartesian( self, filename, field, coord, axis_labels,
+    def read_field_cartesian( self, iteration, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
         """
-        Extract a given field from an HDF5 file in the openPMD format,
+        Extract a given field from an openPMD file in the openPMD format,
         when the geometry is cartesian (1d, 2d or 3d).
 
         Parameters
         ----------
-        filename : string
-           The absolute path to the HDF5 file
+        iteration : int
+           The iteration at which to extract the fields
 
         field : string, optional
            Which field to extract
@@ -133,20 +122,22 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        return self.reader_module.read_field_cartesian(
-            filename, field, coord, axis_labels,
-            slice_relative_position, slice_across )
+        if self.backend == 'h5py':
+            filename = self.iteration_to_file[iteration]
+            return h5py_reader.read_field_cartesian(
+                filename, field, coord, axis_labels,
+                slice_relative_position, slice_across )
 
-    def read_field_circ( self, filename, field, coord, slice_relative_position,
+    def read_field_circ( self, iteration, field, coord, slice_relative_position,
                         slice_across, m=0, theta=0. ):
         """
-        Extract a given field from an HDF5 file in the openPMD format,
+        Extract a given field from an openPMD file in the openPMD format,
         when the geometry is thetaMode
 
         Parameters
         ----------
-        filename : string
-           The absolute path to the HDF5 file
+        iteration : int
+           The iteration at which to extract the fields
 
         field : string, optional
            Which field to extract
@@ -185,16 +176,21 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        return self.reader_module.read_field_circ(
-            filename, field, coord, slice_relative_position,
-            slice_across, m, theta )
+        if self.backend == 'h5py':
+            filename = self.iteration_to_file[iteration]
+            return h5py_reader.read_field_circ(
+                filename, field, coord, slice_relative_position,
+                slice_across, m, theta )
 
-    def read_species_data( self, species, record_comp, extensions):
+    def read_species_data( self, iteration, species, record_comp, extensions):
         """
         Extract a given species' record_comp
 
         Parameters
         ----------
+        iteration: int
+            The iteration at which to extract the species data
+
         species: string
             The name of the species to extract (in the openPMD file)
 
@@ -205,16 +201,21 @@ class DataReader( object ):
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
         """
-        return self.reader_module.read_species_data(
-            self.current_file_handle, species, record_comp, extensions )
+        if self.backend == 'h5py':
+            filename = self.iteration_to_file[iteration]
+            return h5py_reader.read_species_data(
+                    filename, species, record_comp, extensions )
 
-    def get_grid_parameters(self, avail_fields, metadata ):
+    def get_grid_parameters(self, iteration, avail_fields, metadata ):
         """
         Return the parameters of the spatial grid (grid size and grid range)
         in two dictionaries
 
         Parameters:
         -----------
+        iteration: int
+            The iteration at which to extract the parameters
+
         avail_fields: list
            A list of the available fields
            e.g. ['B', 'E', 'rho']
@@ -233,5 +234,7 @@ class DataReader( object ):
         The values of `grid_range_dict` are lists of two floats, which
         correspond to the min and max of the grid, along each axis.
         """
-        return self.reader_module.get_grid_parameters(
-            self.current_file_handle, avail_fields, metadata )
+        if self.backend == 'h5py':
+            filename = self.iteration_to_file[iteration]
+            return h5py_reader.get_grid_parameters(
+                filename, avail_fields, metadata )

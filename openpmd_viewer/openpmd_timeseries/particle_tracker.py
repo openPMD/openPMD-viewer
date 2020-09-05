@@ -105,7 +105,7 @@ class ParticleTracker( object ):
         self.preserve_particle_index = preserve_particle_index
 
 
-    def extract_tracked_particles( self, data_reader, data_list,
+    def extract_tracked_particles( self, iteration, data_reader, data_list,
                                     species, extensions ):
         """
         Select the elements of each particle quantities in data_list,
@@ -113,6 +113,9 @@ class ParticleTracker( object ):
 
         Parameters
         ----------
+        iteration: int
+            The iteration at which to extract the particles
+
         data_reader: a DataReader object
             Used in order to extract the macroparticle IDs
 
@@ -134,7 +137,7 @@ class ParticleTracker( object ):
         initialization)
         """
         # Extract the particle id, and get the extraction indices
-        pid = data_reader.read_species_data(species, 'id', extensions)
+        pid = data_reader.read_species_data(iteration, species, 'id', extensions)
         selected_indices = self.get_extraction_indices( pid )
 
         # For each particle quantity, select only the tracked particles

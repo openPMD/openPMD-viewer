@@ -51,13 +51,17 @@ def sanitize_slicing(slice_across, slice_relative_position):
     # a user's notebook)
     return copy.copy(slice_across), copy.copy(slice_relative_position)
 
-def apply_selection(data_reader, data_list, select, species, extensions):
+def apply_selection(iteration, data_reader, data_list,
+                    select, species, extensions):
     """
     Select the elements of each particle quantities in data_list,
     based on the selection rules in `select`
 
     Parameters
     ----------
+    iteration: int
+        The iteration at which to apply the selection
+
     data_reader: a DataReader object
         Contains the method that read particle data
 
@@ -89,7 +93,8 @@ def apply_selection(data_reader, data_list, select, species, extensions):
 
     # Loop through the selection rules, and aggregate results in select_array
     for quantity in select.keys():
-        q = data_reader.read_species_data(species, quantity, extensions)
+        q = data_reader.read_species_data(
+            iteration, species, quantity, extensions)
         # Check lower bound
         if select[quantity][0] is not None:
             select_array = np.logical_and(
