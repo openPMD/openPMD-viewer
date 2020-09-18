@@ -8,8 +8,16 @@ Copyright 2020, openPMD-viewer contributors
 Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
-from . import h5py_reader
-backend = 'h5py'
+try:
+    import openpmd_api as io
+    from . import io_reader
+    backend = 'openpmd-api'
+except ImportError:
+    from . import h5py_reader
+    backend = 'h5py'
+import numpy as np
+import os
+import re
 
 
 class DataReader( object ):
@@ -30,7 +38,8 @@ class DataReader( object ):
         # Point to the correct reader module
         if backend == 'h5py':
             self.iteration_to_file = {}
-
+        elif backend == 'openpmd-api':
+            pass
         else:
             raise RuntimeError('Unknown backend: %s' % backend)
 
@@ -55,6 +64,28 @@ class DataReader( object ):
                 h5py_reader.list_files( path_to_dir )
             # Store dictionary of correspondence between iteration and file
             self.iteration_to_file = iteration_to_file
+
+        elif backend == 'openpmd-api':
+            # guess file ending from first file in directory
+            first_file_name = None
+            for file_name in os.listdir( path_to_dir ):
+                if file_name.split(os.extsep)[-1] in io.file_extensions:
+                    first_file_name = file_name
+            if first_file_name is None:
+                raise RuntimeError('Unknown files in {0}. '
+                                   'Not found in supported extensions: {1}'
+                                   .format(path_to_dir, io.file_extensions))
+
+            # match last occurance of integers and replace with %T wildcards
+            # examples: data00000100.h5 diag4_00000500.h5 io12.0.bp
+            #           te42st.1234.yolo.json scan7_run14_data123.h5
+            file_path = re.sub(r'(\d+)(\.(?!\d).+$)', r'%T\2', first_file_name)
+
+            self.series = io.Series(
+                os.path.join( path_to_dir, file_path),
+                io.Access.read_only )
+            iterations = np.array( self.series.iterations )
+
         return iterations
 
     def read_openPMD_params(self, iteration, extract_parameters=True):
@@ -81,6 +112,10 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_openPMD_params(
                     filename, extract_parameters)
+
+        elif backend == 'openpmd-api':
+            return io_reader.read_openPMD_params(
+                    self.series, iteration, extract_parameters)
 
     def read_field_cartesian( self, iteration, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
@@ -128,6 +163,10 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
                 filename, field, coord, axis_labels,
+                slice_relative_position, slice_across )
+        elif backend == 'openpmd-api':
+            return io_reader.read_field_cartesian(
+                self.series, iteration, field, coord, axis_labels,
                 slice_relative_position, slice_across )
 
     def read_field_circ( self, iteration, field, coord, slice_relative_position,
@@ -183,6 +222,10 @@ class DataReader( object ):
             return h5py_reader.read_field_circ(
                 filename, field, coord, slice_relative_position,
                 slice_across, m, theta )
+        elif backend == 'openpmd-api':
+            return io_reader.read_field_circ(
+                self.series, iteration, field, coord, slice_relative_position,
+                slice_across, m, theta )
 
     def read_species_data( self, iteration, species, record_comp, extensions):
         """
@@ -207,6 +250,9 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
                     filename, species, record_comp, extensions )
+        elif backend == 'openpmd-api':
+            return io_reader.read_species_data(
+                    self.series, iteration, species, record_comp, extensions )
 
     def get_grid_parameters(self, iteration, avail_fields, metadata ):
         """
@@ -240,3 +286,6 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.get_grid_parameters(
                 filename, avail_fields, metadata )
+        elif backend == 'openpmd-api':
+            return io_reader.get_grid_parameters(
+                self.series, iteration, avail_fields, metadata )
