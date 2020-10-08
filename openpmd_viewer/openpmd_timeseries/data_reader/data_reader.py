@@ -14,12 +14,17 @@ backend = 'h5py'
 
 class DataReader( object ):
     """
-    TODO
+    Class that performs various type of access the openPMD file.
+
+    The methods of this class are agnostic of the actual backend package
+    used in order to access the openPMD file (e.g. h5py or openpmd-api).
+    The backend that is used in practice depends on which package is
+    available on the current environment.
     """
 
     def __init__(self):
         """
-        TODO
+        Initialize the DataReader class.
         """
 
         # Point to the correct reader module
