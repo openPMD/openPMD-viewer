@@ -9,7 +9,6 @@ Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 from . import h5py_reader
-#from . import openpmd_api_reader
 
 
 class DataReader( object ):
@@ -27,8 +26,6 @@ class DataReader( object ):
         if self.backend == 'h5py':
             self.iteration_to_file = {}
 
-#        elif self.backend == 'openpmd-api':
-#            self.reader_module = openpmd_api_reader
         else:
             raise RuntimeError('Unknown backend: %s' % backend)
 
