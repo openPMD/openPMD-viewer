@@ -9,6 +9,7 @@ Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 from . import h5py_reader
+backend = 'h5py'
 
 
 class DataReader( object ):
@@ -16,14 +17,13 @@ class DataReader( object ):
     TODO
     """
 
-    def __init__(self, backend='h5py'):
+    def __init__(self):
         """
         TODO
         """
-        self.backend = backend
 
         # Point to the correct reader module
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             self.iteration_to_file = {}
 
         else:
@@ -45,7 +45,7 @@ class DataReader( object ):
         an array of integers which correspond to the iteration of each file
         (in sorted order)
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             iterations, iteration_to_file = \
                 h5py_reader.list_files( path_to_dir )
             # Store dictionary of correspondence between iteration and file
@@ -72,7 +72,7 @@ class DataReader( object ):
         - A dictionary containing several parameters, such as the geometry, etc
          When extract_parameters is False, the second argument returned is None
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_openPMD_params(
                     filename, extract_parameters)
@@ -119,7 +119,7 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
                 filename, field, coord, axis_labels,
@@ -173,7 +173,7 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
                 filename, field, coord, slice_relative_position,
@@ -198,7 +198,7 @@ class DataReader( object ):
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
                     filename, species, record_comp, extensions )
@@ -231,7 +231,7 @@ class DataReader( object ):
         The values of `grid_range_dict` are lists of two floats, which
         correspond to the min and max of the grid, along each axis.
         """
-        if self.backend == 'h5py':
+        if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.get_grid_parameters(
                 filename, avail_fields, metadata )

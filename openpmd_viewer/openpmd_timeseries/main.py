@@ -34,7 +34,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True, backend='h5py'):
+    def __init__(self, path_to_dir, check_all_files=True):
         """
         Initialize an openPMD time series
 
@@ -51,13 +51,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
-
-        backend: string
-            Select the backend to use, in order to read the files
-            Available options: 'h5py'
         """
         # Initialize data reader
-        self.data_reader = DataReader( backend )
+        self.data_reader = DataReader()
 
         # Extract the iterations available in this timeseries
         self.iterations = self.data_reader.list_iterations(path_to_dir)
