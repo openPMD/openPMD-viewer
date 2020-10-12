@@ -8,8 +8,50 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
+import os
 import h5py
 import numpy as np
+
+
+def list_files(path_to_dir):
+    """
+    Return a list of the hdf5 files in this directory,
+    and a list of the corresponding iterations
+
+    Parameter
+    ---------
+    path_to_dir : string
+        The path to the directory where the hdf5 files are.
+
+    Returns
+    -------
+    A tuple with:
+    - an array of integers which correspond to the iteration of each file
+    - a dictionary that matches iterations to the corresponding filename
+    """
+    # Find all the files in the provided directory
+    all_files = os.listdir(path_to_dir)
+
+    # Select the hdf5 files, and fill dictionary of correspondence
+    # between iterations and files
+    iteration_to_file = {}
+    for filename in all_files:
+        # Use only the name that end with .h5 or .hdf5
+        if filename.endswith('.h5') or filename.endswith('.hdf5'):
+            full_name = os.path.join(
+                os.path.abspath(path_to_dir), filename)
+            # extract all iterations from hdf5 file
+            f = h5py.File(full_name, 'r')
+            iterations = list(f['/data'].keys())
+            f.close()
+            # Add iterations to dictionary
+            for key_iteration in iterations:
+                iteration_to_file[ int(key_iteration) ] = full_name
+
+    # Extract iterations and sort them
+    iterations = np.array( sorted( list( iteration_to_file.keys() ) ) )
+
+    return iterations, iteration_to_file
 
 
 def get_bpath(f):

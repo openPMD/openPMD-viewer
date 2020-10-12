@@ -11,10 +11,11 @@ License: 3-Clause-BSD-LBNL
 import h5py
 import numpy as np
 from .utilities import get_shape, get_data, get_bpath, join_infile_path
-from .field_metainfo import FieldMetaInformation
-from ..utilities import construct_3d_from_circ
+from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
+from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
-def read_field_cartesian( filename, field_path, axis_labels,
+
+def read_field_cartesian( filename, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
@@ -25,9 +26,11 @@ def read_field_cartesian( filename, field_path, axis_labels,
     filename : string
        The absolute path to the HDF5 file
 
-    field_path : string
-       The relative path to the requested field, from the openPMD meshes path
-       (e.g. 'rho', 'E/z', 'B/x')
+    field : string, optional
+       Which field to extract
+
+    coord : string, optional
+       Which component of the field to extract
 
     axis_labels: list of strings
        The name of the dimensions of the array (e.g. ['x', 'y', 'z'])
@@ -57,6 +60,10 @@ def read_field_cartesian( filename, field_path, axis_labels,
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
+    if coord is None:
+        field_path = field
+    else:
+        field_path = join_infile_path( field, coord )
     group, dset = find_dataset( dfile, field_path )
 
     # Dimensions of the grid
@@ -108,7 +115,7 @@ def read_field_cartesian( filename, field_path, axis_labels,
     return( F, info )
 
 
-def read_field_circ( filename, field_path, slice_relative_position,
+def read_field_circ( filename, field, coord, slice_relative_position,
                     slice_across, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
@@ -119,9 +126,11 @@ def read_field_circ( filename, field_path, slice_relative_position,
     filename : string
        The absolute path to the HDF5 file
 
-    field_path : string
-       The relative path to the requested field, from the openPMD meshes path
-       (e.g. 'rho', 'E/r', 'B/x')
+    field : string, optional
+       Which field to extract
+
+    coord : string, optional
+       Which component of the field to extract
 
     m : int or string, optional
        The azimuthal mode to be extracted
@@ -155,6 +164,10 @@ def read_field_circ( filename, field_path, slice_relative_position,
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
     # Extract the dataset and and corresponding group
+    if coord is None:
+        field_path = field
+    else:
+        field_path = join_infile_path( field, coord )
     group, dset = find_dataset( dfile, field_path )
 
     # Extract the metainformation
@@ -288,15 +301,15 @@ def find_dataset( dfile, field_path ):
     return( group, dset )
 
 
-def get_grid_parameters( dfile, avail_fields, metadata ):
+def get_grid_parameters( filename, avail_fields, metadata ):
     """
     Return the parameters of the spatial grid (grid size and grid range)
     in two dictionaries
 
     Parameters:
     -----------
-    dfile: an h5Py.File object
-       The file from which to extract the information
+    filename : string
+       The absolute path to the HDF5 file
 
     avail_fields: list
        A list of the available fields
@@ -315,6 +328,8 @@ def get_grid_parameters( dfile, avail_fields, metadata ):
     The values of `grid_range_dict` are lists of two floats, which correspond
     to the min and max of the grid, along each axis.
     """
+    # Open the HDF5 file
+    dfile = h5py.File( filename, 'r' )
     # Pick field with the highest dimensionality ('3d'>'thetaMode'>'2d')
     # (This function is for the purpose of histogramming the particles;
     # in this case, the highest dimensionality ensures that more particle
@@ -351,5 +366,6 @@ def get_grid_parameters( dfile, avail_fields, metadata ):
         grid_size_dict[coord] = grid_size[i]
         grid_range_dict[coord] = \
             [ grid_offset[i], grid_offset[i] + grid_size[i] * grid_spacing[i] ]
-
+    # Close the file
+    dfile.close()
     return( grid_size_dict, grid_range_dict )
