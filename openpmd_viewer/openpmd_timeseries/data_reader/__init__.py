@@ -1,2 +1,2 @@
-from .data_reader import DataReader
-__all__ = ['DataReader']
+from .data_reader import DataReader, backend
+__all__ = ['DataReader', 'backend']
