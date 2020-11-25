@@ -64,7 +64,12 @@ class DataReader( object ):
                 h5py_reader.list_files( path_to_dir )
             # Store dictionary of correspondence between iteration and file
             self.iteration_to_file = iteration_to_file
-
+            if len(iterations) == 0:
+                raise RuntimeError(
+                    "Found no valid files in directory {0}.\n"
+                    "Please check that this is the path to the openPMD files."
+                    "(valid files must have the extension '.h5')"
+                    .format(path_to_dir))
         elif backend == 'openpmd-api':
             # guess file ending from first file in directory
             first_file_name = None
@@ -72,9 +77,11 @@ class DataReader( object ):
                 if file_name.split(os.extsep)[-1] in io.file_extensions:
                     first_file_name = file_name
             if first_file_name is None:
-                raise RuntimeError('Unknown files in {0}. '
-                                   'Not found in supported extensions: {1}'
-                                   .format(path_to_dir, io.file_extensions))
+                raise RuntimeError(
+                    "Found no valid files in directory {0}.\n"
+                    "Please check that this is the path to the openPMD files."
+                    "(valid files must have one of the following extensions: {1})"
+                    .format(path_to_dir, io.file_extensions))
 
             # match last occurance of integers and replace with %T wildcards
             # examples: data00000100.h5 diag4_00000500.h5 io12.0.bp

@@ -17,7 +17,7 @@ from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 def read_field_cartesian( series, iteration, field_name, component_name,
                           axis_labels, slice_relative_position, slice_across ):
     """
-    Extract a given field from an HDF5 file in the openPMD format,
+    Extract a given field from a file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
 
     Parameters
@@ -122,7 +122,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
 def read_field_circ( series, iteration, field_name, component_name,
                      slice_relative_position, slice_across, m=0, theta=0. ):
     """
-    Extract a given field from an HDF5 file in the openPMD format,
+    Extract a given field from a file in the openPMD format,
     when the geometry is thetaMode
 
     Parameters
