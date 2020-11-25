@@ -40,7 +40,8 @@ setup(name='openPMD-viewer',
       extras_require = {
         'GUI':  ["ipywidgets", "matplotlib"],
         'plot': ["matplotlib"],
-        'tutorials': ["ipywidgets", "matplotlib", "wget"]
+        'tutorials': ["ipywidgets", "matplotlib", "wget"],
+        'openpmd-api': ["openpmd-api"]
         },
       cmdclass={'test': PyTest},
       platforms='any',
