@@ -34,7 +34,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True):
+    def __init__(self, path_to_dir, check_all_files=True, backend=None):
         """
         Initialize an openPMD time series
 
@@ -53,7 +53,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             For fast access to the files, this can be changed to False.
         """
         # Initialize data reader
-        self.data_reader = DataReader()
+        self.data_reader = DataReader(backend)
 
         # Extract the iterations available in this timeseries
         self.iterations = self.data_reader.list_iterations(path_to_dir)

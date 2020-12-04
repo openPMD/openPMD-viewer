@@ -8,6 +8,12 @@ Copyright 2020, openPMD-viewer contributors
 Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
+
+try:
+    from . import h5py_reader
+except ImportError:
+    print('No h5py backend')
+
 try:
     import openpmd_api as io
     from . import io_reader
@@ -15,6 +21,7 @@ try:
 except ImportError:
     from . import h5py_reader
     backend = 'h5py'
+
 import numpy as np
 import os
 import re
@@ -30,18 +37,23 @@ class DataReader( object ):
     available on the current environment.
     """
 
-    def __init__(self):
+    def __init__(self, backend_set):
         """
         Initialize the DataReader class.
         """
 
+        if backend_set is not None:
+            self.backend = backend_set
+        else:
+            self.backend = backend
+
         # Point to the correct reader module
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             self.iteration_to_file = {}
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             pass
         else:
-            raise RuntimeError('Unknown backend: %s' % backend)
+            raise RuntimeError('Unknown backend: %s' % self.backend)
 
     def list_iterations(self, path_to_dir):
         """
@@ -59,7 +71,7 @@ class DataReader( object ):
         an array of integers which correspond to the iteration of each file
         (in sorted order)
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             iterations, iteration_to_file = \
                 h5py_reader.list_files( path_to_dir )
             # Store dictionary of correspondence between iteration and file
@@ -70,7 +82,7 @@ class DataReader( object ):
                     "Please check that this is the path to the openPMD files."
                     "(valid files must have the extension '.h5')"
                     .format(path_to_dir))
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             # guess file ending from first file in directory
             first_file_name = None
             for file_name in os.listdir( path_to_dir ):
@@ -115,12 +127,12 @@ class DataReader( object ):
         - A dictionary containing several parameters, such as the geometry, etc
          When extract_parameters is False, the second argument returned is None
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_openPMD_params(
                     filename, iteration, extract_parameters)
 
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             return io_reader.read_openPMD_params(
                     self.series, iteration, extract_parameters)
 
@@ -166,12 +178,12 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
                 filename, iteration, field, coord, axis_labels,
                 slice_relative_position, slice_across )
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             return io_reader.read_field_cartesian(
                 self.series, iteration, field, coord, axis_labels,
                 slice_relative_position, slice_across )
@@ -224,12 +236,12 @@ class DataReader( object ):
            info : a FieldMetaInformation object
            (contains information about the grid; see the corresponding docstring)
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
                 filename, iteration, field, coord, slice_relative_position,
                 slice_across, m, theta )
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             return io_reader.read_field_circ(
                 self.series, iteration, field, coord, slice_relative_position,
                 slice_across, m, theta )
@@ -253,11 +265,11 @@ class DataReader( object ):
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
                     filename, iteration, species, record_comp, extensions )
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             return io_reader.read_species_data(
                     self.series, iteration, species, record_comp, extensions )
 
@@ -289,10 +301,10 @@ class DataReader( object ):
         The values of `grid_range_dict` are lists of two floats, which
         correspond to the min and max of the grid, along each axis.
         """
-        if backend == 'h5py':
+        if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.get_grid_parameters(
                 filename, iteration, avail_fields, metadata )
-        elif backend == 'openpmd-api':
+        elif self.backend == 'openpmd-api':
             return io_reader.get_grid_parameters(
                 self.series, iteration, avail_fields, metadata )
