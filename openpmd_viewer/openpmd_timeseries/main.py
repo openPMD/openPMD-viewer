@@ -444,7 +444,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     'The `slice_across` argument is erroneous: contains %s\n'
                     'The available axes are: \n - %s' % (axis, axes_list) )
 
-        # Check the coordinate (for vector fields)
+        # Check the coordinate, for vector fields
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
             if self.fields_metadata[field]['geometry'] == 'thetaMode':
@@ -456,6 +456,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     "argument is missing or erroneous.\nThe available "
                     "coordinates are: \n - %s\nPlease set the `coord` "
                     "argument accordingly." % (field, coord_list))
+        # Automatically set the coordinate to None, for scalar fields
+        else:
+            coord = None
+
         # Check the mode (for thetaMode)
         if self.fields_metadata[field]['geometry'] == "thetaMode":
             avail_circ_modes = self.fields_metadata[field]['avail_circ_modes']
