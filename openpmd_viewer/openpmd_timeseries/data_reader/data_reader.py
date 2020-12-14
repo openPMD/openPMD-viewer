@@ -9,18 +9,26 @@ Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 
-try:
-    from . import h5py_reader
-except ImportError:
-    print('No h5py backend')
+backend_avail = []
 
 try:
     import openpmd_api as io
     from . import io_reader
-    backend = 'openpmd-api'
+    backend_avail.append('openpmd-api')
 except ImportError:
+    pass
+
+try:
     from . import h5py_reader
-    backend = 'h5py'
+    backend_avail.append('h5py')
+except ImportError:
+    pass
+
+if len(backend_avail)>0:
+    backend = backend_avail[0]
+else:
+    print('No backends are found')
+    raise ImportError
 
 import numpy as np
 import os
