@@ -27,8 +27,8 @@ jobs:
       name: Setup conda
       with:
         auto-update-conda: true
-        python-version: ${{ matrix.python-version }}
         activate-environment: testing
+        auto-activate-base: false
         channels: conda-forge,defaults
         channel-priority: true
 
@@ -36,9 +36,9 @@ jobs:
       name: Install dependencies
       run: |
         if [ "${{ matrix.python-version }}" != "3.8" ]; then
-          conda install --yes cython numpy scipy h5py openpmd-api matplotlib jupyter pytest pyflakes python-wget
+          conda install --yes cython numpy scipy h5py openpmd-api matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget
         else
-          conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python-wget
+          conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget 
         fi
 
     - shell: bash -l {0}
