@@ -21,8 +21,8 @@ git checkout dev
 ```
 and install it
 ```
-pip wheel .
-pip install *whl
+python -m pip wheel .
+python -m pip install *whl
 ```
 
 - Start a new branch from the development branch, in order to
@@ -54,8 +54,8 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
   ```
   - Make sure that the tests pass (please install `wget` and `jupyter` before running the tests: `pip install wget jupyter`)
   ```
-  pip wheel .
-  pip install *whl matplotlib jupyter
+  python -m pip wheel .
+  python -m pip install *whl matplotlib jupyter
   python setup.py test
   ```
   (Be patient: the `test_tutorials.py` can take approx. 20 seconds if
