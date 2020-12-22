@@ -42,11 +42,11 @@ class DataReader( object ):
     available on the current environment.
     """
 
-    def __init__(self, backend_set):
+    def __init__(self, backend):
         """
         Initialize the DataReader class.
         """
-        self.backend = backend_set
+        self.backend = backend
 
         # Point to the correct reader module
         if self.backend == 'h5py':
