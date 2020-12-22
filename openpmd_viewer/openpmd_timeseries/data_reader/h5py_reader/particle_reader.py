@@ -12,10 +12,10 @@ License: 3-Clause-BSD-LBNL
 import h5py
 import numpy as np
 from scipy import constants
-from .utilities import get_data, get_bpath, join_infile_path
+from .utilities import get_data, join_infile_path
 
 
-def read_species_data(filename, species, record_comp, extensions):
+def read_species_data(filename, iteration, species, record_comp, extensions):
     """
     Extract a given species' record_comp
 
@@ -23,6 +23,9 @@ def read_species_data(filename, species, record_comp, extensions):
     ----------
     filename : string
        The absolute path to the HDF5 file
+
+    iteration : int
+        The iteration at which to obtain the data
 
     species: string
         The name of the species to extract (in the openPMD file)
@@ -50,7 +53,7 @@ def read_species_data(filename, species, record_comp, extensions):
         opmd_record_comp = record_comp
 
     # Open the HDF5 file
-    base_path = get_bpath(dfile)
+    base_path = '/data/{0}'.format( iteration )
     particles_path = dfile.attrs['particlesPath'].decode()
 
     # Extract the right dataset

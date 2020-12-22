@@ -118,7 +118,7 @@ class DataReader( object ):
         if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_openPMD_params(
-                    filename, extract_parameters)
+                    filename, iteration, extract_parameters)
 
         elif backend == 'openpmd-api':
             return io_reader.read_openPMD_params(
@@ -169,7 +169,7 @@ class DataReader( object ):
         if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
-                filename, field, coord, axis_labels,
+                filename, iteration, field, coord, axis_labels,
                 slice_relative_position, slice_across )
         elif backend == 'openpmd-api':
             return io_reader.read_field_cartesian(
@@ -227,7 +227,7 @@ class DataReader( object ):
         if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
-                filename, field, coord, slice_relative_position,
+                filename, iteration, field, coord, slice_relative_position,
                 slice_across, m, theta )
         elif backend == 'openpmd-api':
             return io_reader.read_field_circ(
@@ -256,7 +256,7 @@ class DataReader( object ):
         if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
-                    filename, species, record_comp, extensions )
+                    filename, iteration, species, record_comp, extensions )
         elif backend == 'openpmd-api':
             return io_reader.read_species_data(
                     self.series, iteration, species, record_comp, extensions )
@@ -292,7 +292,7 @@ class DataReader( object ):
         if backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.get_grid_parameters(
-                filename, avail_fields, metadata )
+                filename, iteration, avail_fields, metadata )
         elif backend == 'openpmd-api':
             return io_reader.get_grid_parameters(
                 self.series, iteration, avail_fields, metadata )
