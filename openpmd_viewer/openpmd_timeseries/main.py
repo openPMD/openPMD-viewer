@@ -14,7 +14,7 @@ from .utilities import apply_selection, fit_bins_to_grid, try_array, \
                         sanitize_slicing, combine_cylindrical_components
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
-from .data_reader import DataReader
+from .data_reader import DataReader, available_backends
 from .interactive import InteractiveViewer
 
 
@@ -57,6 +57,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
             or `h5py`. If not provided will use `openpmd-api` if available
             and `h5py` otherwise.
         """
+        # Check backend
+        if backend is None:
+            backend = available_backends[0] #Pick openpmd-api first if available
+        elif backend not in available_backends:
+            raise RuntimeError("Invalid backend requested: {0}\n"
+                    "The available backends are: {1}"
+                    .format(backend, available_backends) )
+        self.backend = backend
+
         # Initialize data reader
         self.data_reader = DataReader(backend)
 
