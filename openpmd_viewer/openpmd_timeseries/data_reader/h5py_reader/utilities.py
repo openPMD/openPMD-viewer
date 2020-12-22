@@ -54,22 +54,6 @@ def list_files(path_to_dir):
     return iterations, iteration_to_file
 
 
-def get_bpath(f):
-    """
-    Return a string that corresponds to the base path of the data.
-
-    NB: For openPMD 1.0.0, the basePath is always of the form
-    '/data/%T' where %T is replaced by the actual iteration which
-    is present in the file.
-
-    Parameters:
-    -----------
-    f: am h5py.File object
-    """
-    iteration = list(f['/data'].keys())[0]
-    return('/data/%s' % iteration)
-
-
 def is_scalar_record(record):
     """
     Determine whether a record is a scalar record or a vector record

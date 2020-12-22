@@ -10,10 +10,10 @@ License: 3-Clause-BSD-LBNL
 
 import h5py
 import numpy as np
-from .utilities import is_scalar_record, get_shape, get_bpath, join_infile_path
+from .utilities import is_scalar_record, get_shape, join_infile_path
 
 
-def read_openPMD_params(filename, extract_parameters=True):
+def read_openPMD_params(filename, iteration, extract_parameters=True):
     """
     Extract the time and some openPMD parameters from a file
 
@@ -21,6 +21,9 @@ def read_openPMD_params(filename, extract_parameters=True):
     ---------
     filename: string
         The path to the file from which parameters should be extracted
+
+    iteration : int
+        The iteration at which to obtain the data
 
     extract_parameters: bool, optional
         Whether to extract all parameters or only the time
@@ -42,7 +45,7 @@ def read_openPMD_params(filename, extract_parameters=True):
             "%s)" % (filename, version))
 
     # Find the base path object, and extract the time
-    bpath = f[get_bpath(f)]
+    bpath = f['/data/{0}'.format( iteration )]
     t = bpath.attrs["time"] * bpath.attrs["timeUnitSI"]
 
     # If the user did not request more parameters, close file and exit

@@ -10,12 +10,12 @@ License: 3-Clause-BSD-LBNL
 
 import h5py
 import numpy as np
-from .utilities import get_shape, get_data, get_bpath, join_infile_path
+from .utilities import get_shape, get_data, join_infile_path
 from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
-def read_field_cartesian( filename, field, coord, axis_labels,
+def read_field_cartesian( filename, iteration, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
@@ -25,6 +25,9 @@ def read_field_cartesian( filename, field, coord, axis_labels,
     ----------
     filename : string
        The absolute path to the HDF5 file
+
+    iteration : int
+        The iteration at which to obtain the data
 
     field : string, optional
        Which field to extract
@@ -64,7 +67,7 @@ def read_field_cartesian( filename, field, coord, axis_labels,
         field_path = field
     else:
         field_path = join_infile_path( field, coord )
-    group, dset = find_dataset( dfile, field_path )
+    group, dset = find_dataset( dfile, iteration, field_path )
 
     # Dimensions of the grid
     shape = list( get_shape( dset ) )
@@ -115,8 +118,8 @@ def read_field_cartesian( filename, field, coord, axis_labels,
     return( F, info )
 
 
-def read_field_circ( filename, field, coord, slice_relative_position,
-                    slice_across, m=0, theta=0. ):
+def read_field_circ( filename, iteration, field, coord,
+                     slice_relative_position, slice_across, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -125,6 +128,9 @@ def read_field_circ( filename, field, coord, slice_relative_position,
     ----------
     filename : string
        The absolute path to the HDF5 file
+
+    iteration : int
+        The iteration at which to obtain the data
 
     field : string, optional
        Which field to extract
@@ -168,7 +174,7 @@ def read_field_circ( filename, field, coord, slice_relative_position,
         field_path = field
     else:
         field_path = join_infile_path( field, coord )
-    group, dset = find_dataset( dfile, field_path )
+    group, dset = find_dataset( dfile, iteration, field_path )
 
     # Extract the metainformation
     Nm, Nr, Nz = get_shape( dset )
@@ -260,7 +266,7 @@ def read_field_circ( filename, field, coord, slice_relative_position,
     return( F_total, info )
 
 
-def find_dataset( dfile, field_path ):
+def find_dataset( dfile, iteration, field_path ):
     """
     Extract the dataset that corresponds to field_path,
     and the corresponding group
@@ -285,7 +291,7 @@ def find_dataset( dfile, field_path ):
     - an h5py.Dataset object
     """
     # Find the meshes path
-    base_path = get_bpath( dfile )
+    base_path = '/data/{0}'.format( iteration )
     relative_meshes_path = dfile.attrs["meshesPath"].decode()
 
     # Get the proper dataset
@@ -301,7 +307,7 @@ def find_dataset( dfile, field_path ):
     return( group, dset )
 
 
-def get_grid_parameters( filename, avail_fields, metadata ):
+def get_grid_parameters( filename, iteration, avail_fields, metadata ):
     """
     Return the parameters of the spatial grid (grid size and grid range)
     in two dictionaries
@@ -310,6 +316,9 @@ def get_grid_parameters( filename, avail_fields, metadata ):
     -----------
     filename : string
        The absolute path to the HDF5 file
+
+    iteration : int
+        The iteration at which to obtain the data
 
     avail_fields: list
        A list of the available fields
@@ -342,7 +351,7 @@ def get_grid_parameters( filename, avail_fields, metadata ):
     field_name = avail_fields[ index_best_field ]
 
     # Get the corresponding field data
-    group, dset = find_dataset( dfile, field_name )
+    group, dset = find_dataset( dfile, iteration, field_name )
     if metadata[field_name]['type'] == 'vector':
         # For field vector, extract the first coordinate, to get the dataset
         first_coord = next(iter(group.keys()))
