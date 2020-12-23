@@ -14,7 +14,7 @@ from .utilities import apply_selection, fit_bins_to_grid, try_array, \
                         sanitize_slicing, combine_cylindrical_components
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
-from .data_reader import DataReader
+from .data_reader import DataReader, available_backends
 from .interactive import InteractiveViewer
 
 
@@ -34,7 +34,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True):
+    def __init__(self, path_to_dir, check_all_files=True, backend=None):
         """
         Initialize an openPMD time series
 
@@ -51,9 +51,23 @@ class OpenPMDTimeSeries(InteractiveViewer):
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
+
+        backend: string
+            Backend to be used for data reading. Can be `openpmd-api`
+            or `h5py`. If not provided will use `openpmd-api` if available
+            and `h5py` otherwise.
         """
+        # Check backend
+        if backend is None:
+            backend = available_backends[0] #Pick openpmd-api first if available
+        elif backend not in available_backends:
+            raise RuntimeError("Invalid backend requested: {0}\n"
+                    "The available backends are: {1}"
+                    .format(backend, available_backends) )
+        self.backend = backend
+
         # Initialize data reader
-        self.data_reader = DataReader()
+        self.data_reader = DataReader(backend)
 
         # Extract the iterations available in this timeseries
         self.iterations = self.data_reader.list_iterations(path_to_dir)

@@ -26,7 +26,7 @@ except ImportError:
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
-    def __init__( self, path_to_dir, check_all_files=True ):
+    def __init__( self, path_to_dir, check_all_files=True, backend=None ):
         """
         Initialize an OpenPMD time series with various methods to diagnose the
         data
@@ -44,9 +44,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
+
+        backend: string
+            Backend to be used for data reading. Can be `openpmd-api`
+            or `h5py`. If not provided will use `openpmd-api` if available
+            and `h5py` otherwise.
         """
         OpenPMDTimeSeries.__init__( self, path_to_dir,
-                                    check_all_files=check_all_files )
+                                    check_all_files=check_all_files, backend=backend )
 
     def get_mean_gamma( self, t=None, iteration=None, species=None,
                         select=None ):
