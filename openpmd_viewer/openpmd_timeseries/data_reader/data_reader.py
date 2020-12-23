@@ -8,32 +8,29 @@ Copyright 2020, openPMD-viewer contributors
 Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
+import numpy as np
+import os
+import re
 
-backend_avail = []
+available_backends = []
 
 try:
     import openpmd_api as io
     from . import io_reader
-    backend_avail.append('openpmd-api')
+    available_backends.append('openpmd-api')
 except ImportError:
     pass
 
 try:
     from . import h5py_reader
-    backend_avail.append('h5py')
+    available_backends.append('h5py')
 except ImportError:
     pass
 
-if len(backend_avail)>0:
-    backend = backend_avail[0]
-else:
-    print('No backends are found')
-    raise ImportError
-
-import numpy as np
-import os
-import re
-
+if len(available_backends) == 0:
+    raise ImportError('No openPMD backend found.\n'
+        'Please install either `h5py` or `openpmd-api`:\n'
+        'e.g. with `pip install h5py` or `pip install openpmd-api`')
 
 class DataReader( object ):
     """
@@ -45,15 +42,11 @@ class DataReader( object ):
     available on the current environment.
     """
 
-    def __init__(self, backend_set):
+    def __init__(self, backend):
         """
         Initialize the DataReader class.
         """
-
-        if backend_set is not None:
-            self.backend = backend_set
-        else:
-            self.backend = backend
+        self.backend = backend
 
         # Point to the correct reader module
         if self.backend == 'h5py':
