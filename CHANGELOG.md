@@ -1,5 +1,14 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.1.0
+
+This new release introduces the option to read `openPMD` files with different backends. In addition to the legacy `h5py` backend (which can read only HDF5 openPMD file), `openPMD-viewer` now has the option to use the `openpmd-api` backend (which can read both HDF5 and ADIOS openPMD files). Because the `openpmd-api` backend is thus more general, it is selected by default if available (i.e. if installed locally).
+The user can override the default choice, by passing the `backend` argument when creating an `OpenPMDTimeSeries` object, and check which backend has been chosen by inspecting the `.backend` attribute of this object.
+
+In addition, several smaller changes were introduced in this PR:
+- `openPMD-viewer` can now properly read `groupBased` openPMD  files (i.e. files that contain several iterations) [#301](https://github.com/openPMD/openPMD-viewer/pull/301).
+- Users can now pass arrays of ID to the `ParticleTracker` [#283](https://github.com/openPMD/openPMD-viewer/pull/283)
+
 ## 1.0.1
 
 This is a bug-fix release.
