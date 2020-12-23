@@ -38,7 +38,10 @@ def read_openPMD_params(series, iteration, extract_parameters=True):
     it = series.iterations[iteration]
 
     # extract the time
-    t = it.time() * it.time_unit_SI()
+    if callable(it.time):  # prior to openPMD-api 0.13.0
+        t = it.time() * it.time_unit_SI()
+    else:
+        t = it.time * it.time_unit_SI
 
     # If the user did not request more parameters, close file and exit
     if not extract_parameters:
