@@ -445,7 +445,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the current and bin centers
         return(current, info)
 
-    def get_laser_envelope( self, t=None, iteration=None, pol=None, laser_coord='z',
+    def get_laser_envelope( self, t=None, iteration=None, pol=None, laser_propagation='z',
                             m='all', theta=0, slice_across=None,
                             slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
