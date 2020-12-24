@@ -467,7 +467,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         pol : string
             Polarization of the field. Options are 'x', 'y', 'z'
 
-        laser_coord : string, optinal
+        laser_propagation : string, optional
             Coordinate along which laser field propagates.
             Default is 'z'.
 
