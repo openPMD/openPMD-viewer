@@ -445,7 +445,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the current and bin centers
         return(current, info)
 
-    def get_laser_envelope( self, t=None, iteration=None, pol=None, laser_propagation='z',
+    def get_laser_envelope( self, t=None, iteration=None, pol=None,
+                            laser_propagation='z',
                             m='all', theta=0, slice_across=None,
                             slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
@@ -522,17 +523,17 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         if pol not in ['x', 'y', 'z']:
             raise ValueError('The `pol` argument is missing or erroneous.')
 
-        # Prevent slicing across `laser_coord`, when extracting the raw electric field
-        # (`laser_coord` axis is needed for calculation of envelope)
-        # but record whether the user asked for slicing across `laser_coord`,
+        # Prevent slicing across `laser_propagation`, when extracting the raw electric field
+        # (`laser_propagation` axis is needed for calculation of envelope)
+        # but record whether the user asked for slicing across `laser_propagation`,
         # and whether a corresponding `slice_relative_position` coordinate
-        # along `laser_coord` was given, so as to perform this slicing later in this function.
+        # along `laser_propagation` was given, so as to perform this slicing later in this function.
         slicing_coord_laser = None
         if slice_across is not None:
             slice_across, slice_relative_position = \
                 sanitize_slicing(slice_across, slice_relative_position)
-            if laser_coord in slice_across:
-                index_slicing_coord_laser = slice_across.index(laser_coord)
+            if laser_propagation in slice_across:
+                index_slicing_coord_laser = slice_across.index(laser_propagation)
                 slice_across.pop(index_slicing_coord_laser)
                 slicing_coord_laser = slice_relative_position.pop(index_slicing_coord_laser)
         # Get field data, and perform Hilbert transform
@@ -541,12 +542,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                               slice_across=slice_across,
                               slice_relative_position=slice_relative_position )
         inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
-        e_complx = hilbert(field, axis=inverted_axes_dict[laser_coord])
+        e_complx = hilbert(field, axis=inverted_axes_dict[laser_propagation])
         envelope = np.abs(e_complx)
-        # If the user asked for slicing along `laser_coord`, do it now
+        # If the user asked for slicing along `laser_propagation`, do it now
         if slicing_coord_laser is not None:
-            slicing_index = inverted_axes_dict[laser_coord]
-            coord_array = getattr( info, laser_coord )
+            slicing_index = inverted_axes_dict[laser_propagation]
+            coord_array = getattr( info, laser_propagation )
             # Number of cells along the slicing direction
             n_cells = len(coord_array)
             # Index of the slice (prevent stepping out of the array)
@@ -556,7 +557,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             envelope = np.take( envelope, [i_cell], axis=slicing_index )
             envelope = np.squeeze(envelope)
             # Remove the sliced labels from the FieldMetaInformation
-            info._remove_axis(laser_coord)
+            info._remove_axis(laser_propagation)
 
         # Plot the result if needed
         if plot:
