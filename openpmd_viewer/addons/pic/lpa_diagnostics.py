@@ -450,8 +450,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the current and bin centers
         return(current, info)
 
-    def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            theta=0, slice_across=None,
+    def get_laser_envelope( self, t=None, iteration=None, pol=None,
+                            laser_propagation='z',
+                            m='all', theta=0, slice_across=None,
                             slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
         """
@@ -470,7 +471,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Either `t` or `iteration` should be given by the user.
 
         pol : string
-            Polarization of the field. Options are 'x', 'y'
+            Polarization of the field. Options are 'x', 'y', 'z'
+
+        laser_propagation : string, optional
+            Coordinate along which laser field propagates.
+            Default is 'z'.
 
         m : int or str, optional
            Only used for thetaMode geometry
@@ -520,44 +525,44 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - A FieldMetaInformation object
         """
         # Check if polarization has been entered
-        if pol not in ['x', 'y']:
+        if pol not in ['x', 'y', 'z']:
             raise ValueError('The `pol` argument is missing or erroneous.')
 
-        # Prevent slicing across z, when extracting the raw electric field
-        # (z axis is needed for calculation of envelope)
-        # but record whether the user asked for slicing across z,
+        # Prevent slicing across `laser_propagation`, when extracting the raw electric field
+        # (`laser_propagation` axis is needed for calculation of envelope)
+        # but record whether the user asked for slicing across `laser_propagation`,
         # and whether a corresponding `slice_relative_position` coordinate
-        # along z was given, so as to perform this slicing later in this function.
-        slicing_coord_z = None
+        # along `laser_propagation` was given, so as to perform this slicing later in this function.
+        slicing_coord_laser = None
         if slice_across is not None:
             slice_across, slice_relative_position = \
                 sanitize_slicing(slice_across, slice_relative_position)
-            if 'z' in slice_across:
-                index_slicing_z = slice_across.index('z')
-                slice_across.pop(index_slicing_z)
-                slicing_coord_z = slice_relative_position.pop(index_slicing_z)
+            if laser_propagation in slice_across:
+                index_slicing_coord_laser = slice_across.index(laser_propagation)
+                slice_across.pop(index_slicing_coord_laser)
+                slicing_coord_laser = slice_relative_position.pop(index_slicing_coord_laser)
         # Get field data, and perform Hilbert transform
         field, info = self.get_field( t=t, iteration=iteration, field='E',
                               coord=pol, theta=theta, m=m,
                               slice_across=slice_across,
                               slice_relative_position=slice_relative_position )
-        e_complx = hilbert(field, axis=-1)
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        e_complx = hilbert(field, axis=inverted_axes_dict[laser_propagation])
         envelope = np.abs(e_complx)
-        # If the user asked for slicing along z, do it now
-        if slicing_coord_z is not None:
-            inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
-            slicing_index = inverted_axes_dict['z']
-            coord_array = getattr( info, 'z' )
+        # If the user asked for slicing along `laser_propagation`, do it now
+        if slicing_coord_laser is not None:
+            slicing_index = inverted_axes_dict[laser_propagation]
+            coord_array = getattr( info, laser_propagation )
             # Number of cells along the slicing direction
             n_cells = len(coord_array)
             # Index of the slice (prevent stepping out of the array)
-            i_cell = int( 0.5 * (slicing_coord_z + 1.) * n_cells )
+            i_cell = int( 0.5 * (slicing_coord_laser + 1.) * n_cells )
             i_cell = max( i_cell, 0 )
             i_cell = min( i_cell, n_cells - 1)
             envelope = np.take( envelope, [i_cell], axis=slicing_index )
             envelope = np.squeeze(envelope)
             # Remove the sliced labels from the FieldMetaInformation
-            info._remove_axis('z')
+            info._remove_axis(laser_propagation)
 
         # Plot the result if needed
         if plot:
