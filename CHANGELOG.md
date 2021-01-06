@@ -6,6 +6,7 @@ This new release introduces the option to read `openPMD` files with different ba
 The user can override the default choice, by passing the `backend` argument when creating an `OpenPMDTimeSeries` object, and check which backend has been chosen by inspecting the `.backend` attribute of this object.
 
 In addition, several smaller changes were introduced in this PR:
+- The method `get_laser_envelope` can now take the argument `laser_propagation` in order to support lasers that do not propagates along the `z` axis.
 - `openPMD-viewer` can now properly read `groupBased` openPMD  files (i.e. files that contain several iterations) [#301](https://github.com/openPMD/openPMD-viewer/pull/301).
 - Users can now pass arrays of ID to the `ParticleTracker` [#283](https://github.com/openPMD/openPMD-viewer/pull/283)
 
