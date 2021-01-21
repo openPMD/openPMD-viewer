@@ -53,6 +53,88 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         OpenPMDTimeSeries.__init__( self, path_to_dir,
                                     check_all_files=check_all_files, backend=backend )
 
+    def get_energy_spread( self, t=None, iteration=None, species=None,
+                        select=None, center='mean', width='std', property='energy' ):
+        """
+        Calculate the central energy and energy spread according to the
+        particle weights
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an available file, the last file before `t` will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : str
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 meters)
+            'z' : [0, 100] (Particles having z between 0 and 100 meters)
+
+        center : str
+            Method to find the central energy of the particle distribution
+            Should be one of
+
+            - 'mean'
+            - 'median'
+
+        width : str
+            Method to find the energy spread of the particle distribution
+            Should be one of
+
+            - 'std'
+            - 'mad'
+
+        property : str
+            Unit of energy. Should be one of
+
+            - 'energy' returns energy in eV
+            - 'gamma' returns Lorentz factor
+
+        Returns
+        -------
+        A tuple of floats with:
+        - central energy
+        - energy spread
+        """
+        # Get particle data
+        ux, uy, uz, w, m = self.get_particle(
+            var_list=['ux', 'uy', 'uz', 'w', 'mass'], select=select,
+            species=species, t=t, iteration=iteration)
+        # Calculate Lorentz factor and energy for all particles
+        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+        energy = (gamma - 1) * m * const.c ** 2 / const.e * 1e-6
+
+        if property == 'energy':
+            prop = energy
+        elif property == 'gamma':
+            prop = gamma
+        else:
+            raise ValueError('Invalid output property: %s'%property)
+        # Calculate weighted center
+        if center == 'mean':
+            p_center = w_ave(prop, w)
+        elif center == 'median':
+            p_center = w_median(prop, w)
+        else:
+            raise ValueError('Invalid center property: %s' % center)
+        # Calculate weighted width
+        if width == 'std':
+            p_width = w_std(prop, w)
+        elif width == 'mad':
+            p_width = w_mad(prop, w)
+        else:
+            raise ValueError('Invalid width property: %s' % width)
+        return p_center, p_width
+
     def get_mean_gamma( self, t=None, iteration=None, species=None,
                         select=None ):
         """
@@ -1030,6 +1112,55 @@ def w_std( a, weights ):
         variance = np.average((a - average) ** 2, weights=weights)
         return( np.sqrt(variance) )
 
+def w_median(a, weights):
+    """
+        Compute the weighted median of a 1D numpy array.
+        Parameters
+        ----------
+        a : ndarray
+            Input array (one dimension).
+        weights : ndarray
+            Array with the weights of the same size of `data`.
+        Returns
+        -------
+        median : float
+            The output value.
+        """
+    quantile = .5
+    if not isinstance(a, np.matrix):
+        a = np.asarray(a)
+    if not isinstance(weights, np.matrix):
+        weights = np.asarray(weights)
+    nd = a.ndim
+    ndw = weights.ndim
+    if a.shape != weights.shape:
+        raise TypeError("the length of data and weights must be the same")
+    ind_sorted = np.argsort(a)
+    sorted_data = a[ind_sorted]
+    sorted_weights = weights[ind_sorted]
+
+    Sn = np.cumsum(sorted_weights)
+    Pn = (Sn - 0.5 * sorted_weights) / Sn[-1]
+    # Get the value of the weighted median
+    return np.interp(quantile, Pn, sorted_data)
+
+def w_mad(a, w):
+    """
+        Compute the weighted median absolute deviation of a 1D numpy array.
+        Parameters
+        ----------
+        a : ndarray
+            Input array (one dimension).
+        weights : ndarray
+            Array with the weights of the same size of `data`.
+        Returns
+        -------
+        mad : float
+            The output value.
+        """
+    med = w_median(a, w)
+    mad = w_median(np.abs(a - med), w)
+    return med, mad
 
 def gaussian_profile( x, x0, E0, w0 ):
     """
