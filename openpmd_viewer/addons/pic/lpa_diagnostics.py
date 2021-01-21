@@ -1131,8 +1131,6 @@ def w_median(a, weights):
         a = np.asarray(a)
     if not isinstance(weights, np.matrix):
         weights = np.asarray(weights)
-    nd = a.ndim
-    ndw = weights.ndim
     if a.shape != weights.shape:
         raise TypeError("the length of data and weights must be the same")
     ind_sorted = np.argsort(a)
