@@ -1160,7 +1160,7 @@ def w_mad(a, w):
         """
     med = w_median(a, w)
     mad = w_median(np.abs(a - med), w)
-    return med, mad
+    return mad
 
 def gaussian_profile( x, x0, E0, w0 ):
     """
