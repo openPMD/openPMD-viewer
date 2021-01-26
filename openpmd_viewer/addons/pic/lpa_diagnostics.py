@@ -126,6 +126,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             p_center = w_median(prop, w)
         else:
             raise ValueError('Invalid center property: %s' % center)
+
         # Calculate weighted width
         if width == 'std':
             p_width = w_std(prop, w)
