@@ -1140,6 +1140,7 @@ def w_median(a, weights):
     sorted_weights = weights[ind_sorted]
 
     Sn = np.cumsum(sorted_weights)
+    # Center and normalize the cumsum (i.e. divide by the total sum)
     Pn = (Sn - 0.5 * sorted_weights) / Sn[-1]
     # Get the value of the weighted median
     return np.interp(quantile, Pn, sorted_data)
