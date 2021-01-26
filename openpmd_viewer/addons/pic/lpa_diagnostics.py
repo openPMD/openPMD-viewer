@@ -134,6 +134,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             p_width = w_mad(prop, w)
         else:
             raise ValueError('Invalid width property: %s' % width)
+
         return p_center, p_width
 
     def get_mean_gamma( self, t=None, iteration=None, species=None,
