@@ -118,6 +118,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             prop = gamma
         else:
             raise ValueError('Invalid output property: %s'%property)
+
         # Calculate weighted center
         if center == 'mean':
             p_center = w_ave(prop, w)
