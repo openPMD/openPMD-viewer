@@ -1116,18 +1116,18 @@ def w_std( a, weights ):
 
 def w_median(a, weights):
     """
-        Compute the weighted median of a 1D numpy array.
-        Parameters
-        ----------
-        a : ndarray
-            Input array (one dimension).
-        weights : ndarray
-            Array with the weights of the same size of `data`.
-        Returns
-        -------
-        median : float
-            The output value.
-        """
+    Compute the weighted median of a 1D numpy array.
+    Parameters
+    ----------
+    a : ndarray
+        Input array (one dimension).
+    weights : ndarray
+        Array with the weights of the same size of `data`.
+    Returns
+    -------
+    median : float
+        The output value.
+    """
     quantile = .5
     if not isinstance(a, np.matrix):
         a = np.asarray(a)
