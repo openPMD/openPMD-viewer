@@ -1146,18 +1146,18 @@ def w_median(a, weights):
 
 def w_mad(a, w):
     """
-        Compute the weighted median absolute deviation of a 1D numpy array.
-        Parameters
-        ----------
-        a : ndarray
-            Input array (one dimension).
-        weights : ndarray
-            Array with the weights of the same size of `data`.
-        Returns
-        -------
-        mad : float
-            The output value.
-        """
+    Compute the weighted median absolute deviation of a 1D numpy array.
+    Parameters
+    ----------
+    a : ndarray
+        Input array (one dimension).
+    weights : ndarray
+        Array with the weights of the same size of `data`.
+    Returns
+    -------
+    mad : float
+        The output value.
+    """
     med = w_median(a, w)
     mad = w_median(np.abs(a - med), w)
     return mad
