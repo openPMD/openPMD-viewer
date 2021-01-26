@@ -111,10 +111,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             species=species, t=t, iteration=iteration)
         # Calculate Lorentz factor and energy for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
-        energy = (gamma - 1) * m * const.c ** 2 / const.e * 1e-6
-
         if property == 'energy':
-            prop = energy
+            prop = (gamma - 1) * m * const.c ** 2 / const.e * 1e-6
+
         elif property == 'gamma':
             prop = gamma
         else:
