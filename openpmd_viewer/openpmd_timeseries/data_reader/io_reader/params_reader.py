@@ -83,8 +83,12 @@ def read_openPMD_params(series, iteration, extract_parameters=True):
             # Check whether the field is a vector or a scalar
             if field.scalar:
                 metadata['type'] = 'scalar'
+                components = []
             else:
                 metadata['type'] = 'vector'
+                components = [comp for comp, _ in field.items()]
+            # Register available components
+            metadata['avail_components'] = components
             # Check the number of modes
             if metadata['geometry'] == "thetaMode":
                 # simply check first record component
