@@ -102,6 +102,9 @@ def read_openPMD_params(series, iteration, extract_parameters=True):
                 elif dim == 3:
                     metadata['geometry'] = "3dcartesian"
                 metadata['avail_circ_modes'] = []
+            # Check if is cylindrical
+            elif metadata['geometry'] == "cylindrical":
+                metadata['avail_circ_modes'] = []
 
             params['avail_fields'].append( field_name )
             params['fields_metadata'][field_name] = metadata
