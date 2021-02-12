@@ -177,10 +177,18 @@ def read_field_circ( series, iteration, field_name, component_name,
     else:
         component = field[component_name]
 
+    # Determine geometry (thetaMode or cylindrical)
+    geometry = field.get_attribute('geometry')
+
     # Extract the metainformation
     #   FIXME here and in h5py reader, we need to invert the order on 'F' for
     #         grid spacing/offset/position
-    Nm, Nr, Nz = component.shape
+    if geometry == 'thetaMode':
+        Nm, Nr, Nz = component.shape
+    else:
+        Nr, Nz = component.shape
+        Nm = 1
+        m = 0
     info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
         field.grid_spacing, field.grid_global_offset,
         field.grid_unit_SI, component.position, thetaMode=True )
@@ -192,6 +200,9 @@ def read_field_circ( series, iteration, field_name, component_name,
         rmax = info.rmax
         inv_dr = 1./info.dr
         Fcirc = get_data( series, component )  # (Extracts all modes)
+        # If purely cylindrical, add axis to mimic mode 0
+        if geometry == 'cylindrical':
+            Fcirc = np.expand_dims(Fcirc, axis=0)
         nr = Fcirc.shape[1]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
@@ -206,6 +217,14 @@ def read_field_circ( series, iteration, field_name, component_name,
         F_total = np.zeros( (nx, ny, nz) )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
             nx, ny, nz, nr, nmodes, inv_dr, rmax )
+
+    elif geometry == 'cylindrical':
+
+        # Extract and mirror data
+        F_total = np.zeros( (2 * Nr, Nz ) )
+        F = get_data( series, component )
+        F_total[Nr:, :] = F[:, :]
+        F_total[:Nr, :] = F[::-1, :]
 
     else:
 
@@ -304,7 +323,7 @@ def get_grid_parameters( series, iteration, avail_fields, metadata ):
     # in this case, the highest dimensionality ensures that more particle
     # quantities can be properly histogrammed.)
     geometry_ranking = {'1dcartesian': 0, '2dcartesian': 1,
-                        'thetaMode': 2, '3dcartesian': 3}
+                        'cylindrical':2, 'thetaMode': 3, '3dcartesian': 4}
     fields_ranking = [ geometry_ranking[ metadata[field]['geometry'] ]
                         for field in avail_fields ]
     index_best_field = fields_ranking.index( max(fields_ranking) )
