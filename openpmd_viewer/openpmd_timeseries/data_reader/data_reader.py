@@ -190,7 +190,7 @@ class DataReader( object ):
                 slice_relative_position, slice_across )
 
     def read_field_circ( self, iteration, field, coord, slice_relative_position,
-                        slice_across, m=0, theta=0. ):
+                        slice_across, m=0, theta=0., max_resolution_3d=None ):
         """
         Extract a given field from an openPMD file in the openPMD format,
         when the geometry is thetaMode
@@ -241,11 +241,11 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
                 filename, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, m, theta, max_resolution_3d )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_circ(
                 self.series, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, m, theta, max_resolution_3d )
 
     def read_species_data( self, iteration, species, record_comp, extensions):
         """
