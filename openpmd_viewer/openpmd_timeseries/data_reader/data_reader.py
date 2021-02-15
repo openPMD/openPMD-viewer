@@ -229,6 +229,13 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        max_resolution_3d : list of int or None
+            Maximum resolution that the 3D reconstruction of the field (when
+            `theta` is None) can have. The list should contain two values,
+            e.g. `[200, 100]`, indicating the maximum longitudinal and
+            transverse resolution, respectively. This is useful for
+            performance reasons, particularly for 3D visualization.
+
         Returns
         -------
         A tuple with
