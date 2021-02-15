@@ -219,7 +219,7 @@ def read_field_circ( filename, iteration, field, coord,
             if nr > max_res_transv/2:
                 # Calculate excess of elements along r
                 excess_r = int(np.round(nr/(max_res_transv/2)))
-                # Preserve only one every excess_z elements
+                # Preserve only one every excess_r elements
                 Fcirc = Fcirc[:, ::excess_r, :]
                 # Update info and necessary parameters accordingly
                 info.r = info.r[::excess_r]
