@@ -16,7 +16,7 @@ from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
 def read_field_cartesian( filename, iteration, field, coord, axis_labels,
-                          slice_relative_position, slice_across ):
+                          slice_relative_position, slice_across, units ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
@@ -103,11 +103,11 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
 
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         # Extract data
-        F = get_data( dset, list_i_cell, list_slicing_index )
+        F = get_data( dset, units, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 group.attrs['gridUnitSI'], dset.attrs['position'] )
     else:
-        F = get_data( dset )
+        F = get_data( dset, units )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
@@ -119,7 +119,7 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
 
 
 def read_field_circ( filename, iteration, field, coord,
-                     slice_relative_position, slice_across, m=0, theta=0. ):
+                     slice_relative_position, slice_across, units, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -188,7 +188,7 @@ def read_field_circ( filename, iteration, field, coord,
         # Get cylindrical info
         rmax = info.rmax
         inv_dr = 1./info.dr
-        Fcirc = get_data( dset )  # (Extracts all modes)
+        Fcirc = get_data( dset, units )  # (Extracts all modes)
         nr = Fcirc.shape[1]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
@@ -221,22 +221,22 @@ def read_field_circ( filename, iteration, field, coord,
             mult_above_axis = np.array( mult_above_axis )
             mult_below_axis = np.array( mult_below_axis )
             # - Sum the modes
-            F = get_data( dset )  # (Extracts all modes)
+            F = get_data( dset, units )  # (Extracts all modes)
             F_total[Nr:, :] = np.tensordot( mult_above_axis,
                                             F, axes=(0, 0) )[:, :]
             F_total[:Nr, :] = np.tensordot( mult_below_axis,
                                             F, axes=(0, 0) )[::-1, :]
         elif m == 0:
             # Extract mode 0
-            F = get_data( dset, 0, 0 )
+            F = get_data( dset, units, 0, 0 )
             F_total[Nr:, :] = F[:, :]
             F_total[:Nr, :] = F[::-1, :]
         else:
             # Extract higher mode
             cos = np.cos( m * theta )
             sin = np.sin( m * theta )
-            F_cos = get_data( dset, 2 * m - 1, 0 )
-            F_sin = get_data( dset, 2 * m, 0 )
+            F_cos = get_data( dset, units, 2 * m - 1, 0 )
+            F_sin = get_data( dset, units, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
             F_total[Nr:, :] = F[:, :]
             F_total[:Nr, :] = (-1) ** m * F[::-1, :]

@@ -15,7 +15,7 @@ from scipy import constants
 from .utilities import get_data, join_infile_path
 
 
-def read_species_data(filename, iteration, species, record_comp, extensions):
+def read_species_data(filename, iteration, species, record_comp, extensions, units):
     """
     Extract a given species' record_comp
 
@@ -74,16 +74,16 @@ def read_species_data(filename, iteration, species, record_comp, extensions):
         macro_weighted = record_dset.attrs['macroWeighted']
         weighting_power = record_dset.attrs['weightingPower']
         if (macro_weighted == 1) and (weighting_power != 0):
-            w = get_data( species_grp[ 'weighting' ] )
+            w = get_data( species_grp[ 'weighting' ], units )
             data *= w ** (-weighting_power)
 
     # - Return positions, with an offset
     if record_comp in ['x', 'y', 'z']:
-        offset = get_data(species_grp['positionOffset/%s' % record_comp])
+        offset = get_data(species_grp['positionOffset/%s' % record_comp], units)
         data += offset
     # - Return momentum in normalized units
-    elif record_comp in ['ux', 'uy', 'uz' ]:
-        m = get_data(species_grp['mass'])
+    elif record_comp in ['ux', 'uy', 'uz' ] and units == 'SI_u':
+        m = get_data(species_grp['mass'], units)
         # Normalize only if the particle mass is non-zero
         if np.all( m != 0 ):
             norm_factor = 1. / (m * constants.c)

@@ -34,7 +34,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True, backend=None):
+    def __init__(self, path_to_dir, check_all_files=True, backend=None, units='SI_u'):
         """
         Initialize an openPMD time series
 
@@ -65,6 +65,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     "The available backends are: {1}"
                     .format(backend, available_backends) )
         self.backend = backend
+
+        # Check if units is vailid
+        if units not in ['SI_u','SI','no_SI']:
+            print(units)
+            print('wrong')
+            raise OpenPMDException("Invalit value for argument units."
+                "Must be 'SI_u', 'SI', or 'no_SI'")
+        self.units = units
 
         # Initialize data reader
         self.data_reader = DataReader(backend)
@@ -272,14 +280,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
         data_list = []
         for quantity in var_list:
             data_list.append( self.data_reader.read_species_data(
-                iteration, species, quantity, self.extensions))
+                iteration, species, quantity, self.extensions, self.units))
         # Apply selection if needed
         if isinstance( select, dict ):
             data_list = apply_selection( iteration, self.data_reader,
-                data_list, select, species, self.extensions)
+                data_list, select, species, self.extensions, self.units)
         elif isinstance( select, ParticleTracker ):
             data_list = select.extract_tracked_particles( iteration,
-                self.data_reader, data_list, species, self.extensions )
+                self.data_reader, data_list, species, self.extensions, self.units)
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
@@ -287,13 +295,13 @@ class OpenPMDTimeSeries(InteractiveViewer):
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
                 w = self.data_reader.read_species_data(
-                    iteration, species, 'w', self.extensions)
+                    iteration, species, 'w', self.extensions, self.units)
                 if isinstance( select, dict ):
                     w, = apply_selection( iteration, self.data_reader,
-                        [w], select, species, self.extensions)
+                        [w], select, species, self.extensions, self.units)
                 elif isinstance( select, ParticleTracker ):
                     w, = select.extract_tracked_particles( iteration,
-                        self.data_reader, [w], species, self.extensions )
+                        self.data_reader, [w], species, self.extensions, self.units)
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])
@@ -502,7 +510,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = self.data_reader.read_field_cartesian(
                 iteration, field, coord, axis_labels,
-                slice_relative_position, slice_across)
+                slice_relative_position, slice_across, self.units)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
@@ -510,16 +518,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # For Cartesian components, combine r and t components
                 Fr, info = self.data_reader.read_field_circ(
                     iteration, field, 'r', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, self.units, m, theta)
                 Ft, info = self.data_reader.read_field_circ(
                     iteration, field, 't', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, self.units, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = self.data_reader.read_field_circ(iteration,
                     field, coord, slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, self.units, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection

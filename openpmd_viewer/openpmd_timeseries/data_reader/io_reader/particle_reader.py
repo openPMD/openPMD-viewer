@@ -15,7 +15,7 @@ from .utilities import get_data
 
 
 def read_species_data(series, iteration, species_name, component_name,
-                      extensions):
+                      extensions, units):
     """
     Extract a given species' record_comp
 
@@ -47,7 +47,7 @@ def read_species_data(series, iteration, species_name, component_name,
                         'uy': ['momentum', 'y'],
                         'uz': ['momentum', 'z'],
                         'w': ['weighting', None]}
-    
+
     if component_name in dict_record_comp:
         ompd_record_name, ompd_record_comp_name = \
             dict_record_comp[component_name]
@@ -70,7 +70,7 @@ def read_species_data(series, iteration, species_name, component_name,
         output_type = np.uint64
     else:
         output_type = np.float64
-    data = get_data( series, component, output_type=output_type )
+    data = get_data( series, component, units, output_type=output_type)
 
     # For ED-PIC: if the data is weighted for a full macroparticle,
     # divide by the weight with the proper power
@@ -80,17 +80,17 @@ def read_species_data(series, iteration, species_name, component_name,
         weighting_power = record.get_attribute('weightingPower')
         if (macro_weighted == 1) and (weighting_power != 0):
             w_component = next(species['weighting'].items())[1]
-            w = get_data( w_component )
+            w = get_data(series, w_component, units)
             data *= w ** (-weighting_power)
 
     # - Return positions, with an offset
     if component_name in ['x', 'y', 'z']:
-        offset = get_data(series, species['positionOffset'][component_name])
+        offset = get_data(series, species['positionOffset'][component_name], units)
         data += offset
     # - Return momentum in normalized units
-    elif component_name in ['ux', 'uy', 'uz' ]:
+    elif component_name in ['ux', 'uy', 'uz' ] and units == 'SI_u':
         mass_component = next(species['mass'].items())[1]
-        m = get_data(series, mass_component)
+        m = get_data(series, mass_component, units)
         # Normalize only if the particle mass is non-zero
         if np.all( m != 0 ):
             norm_factor = 1. / (m * constants.c)
