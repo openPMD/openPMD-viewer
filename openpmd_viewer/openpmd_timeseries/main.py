@@ -61,7 +61,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         units: string
             Type of units to be used for data reading. 'SI' for SI units,
             'SI_u' for SI units but with normalized momentum u,
-            'no_SI' to ignore the units_SI atribute for all components.
+            'raw' to ignore the units_SI atribute for all components.
         """
         # Check backend
         if backend is None:
@@ -73,9 +73,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.backend = backend
 
         # Check if units is vailid
-        if units not in ['SI_u','SI','no_SI']:
+        if units not in ['SI_u','SI','raw']:
             raise OpenPMDException("Invalit value for argument units. "
-                "Must be 'SI_u', 'SI', or 'no_SI'")
+                "Must be 'SI_u', 'SI', or 'raw'")
         self.units = units
 
         # Initialize data reader

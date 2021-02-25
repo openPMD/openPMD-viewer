@@ -26,7 +26,7 @@ def get_data(series, record_component, units, i_slice=None, pos_slice=None,
 
     units: string
         Type of units to be used for data reading. Won't multiply data
-        with unit_SI when 'no_SI'
+        with unit_SI when 'raw'
 
     pos_slice: int or list of int, optional
         Slice direction(s).
@@ -74,7 +74,7 @@ def get_data(series, record_component, units, i_slice=None, pos_slice=None,
         data = data.astype( output_type )
     # Scale by the conversion factor
     if output_type in [ np.float64, np.float32, np.float16 ]:
-        if record_component.unit_SI != 1.0 and not units == 'no_SI':
+        if record_component.unit_SI != 1.0 and not units == 'raw':
             data *= record_component.unit_SI
     return data
 
