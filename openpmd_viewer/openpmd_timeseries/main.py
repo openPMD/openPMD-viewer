@@ -74,7 +74,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Check if units is vailid
         if units not in ['SI_u','SI','no_SI']:
-            raise OpenPMDException("Invalit value for argument units."
+            raise OpenPMDException("Invalit value for argument units. "
                 "Must be 'SI_u', 'SI', or 'no_SI'")
         self.units = units
 
