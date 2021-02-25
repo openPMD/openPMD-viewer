@@ -36,6 +36,10 @@ def read_species_data(series, iteration, species_name, component_name,
 
     extensions: list of strings
         The extensions that the current OpenPMDTimeSeries complies with
+
+    units: string
+        Type of units to be used for data reading. Will convert ux uy uz to
+        narmalized units if 'SI_u'
     """
     it = series.iterations[iteration]
 
@@ -85,7 +89,8 @@ def read_species_data(series, iteration, species_name, component_name,
 
     # - Return positions, with an offset
     if component_name in ['x', 'y', 'z']:
-        offset = get_data(series, species['positionOffset'][component_name], units)
+        offset = get_data(series, species['positionOffset'][component_name],
+                          units)
         data += offset
     # - Return momentum in normalized units
     elif component_name in ['ux', 'uy', 'uz' ] and units == 'SI_u':

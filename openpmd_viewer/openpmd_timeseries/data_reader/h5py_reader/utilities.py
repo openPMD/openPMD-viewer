@@ -85,6 +85,10 @@ def get_data(dset, units, i_slice=None, pos_slice=None, output_type=np.float64):
     dset: an h5py.Dataset or h5py.Group (when constant)
         The object from which the data is extracted
 
+    units: string
+        Type of units to be used for data reading. Won't multiply data
+        with unit_SI when 'no_SI'
+
     pos_slice: int or list of int, optional
         Slice direction(s).
         When None, no slicing is performed
@@ -142,8 +146,6 @@ def get_data(dset, units, i_slice=None, pos_slice=None, output_type=np.float64):
     if output_type in [ np.float64, np.float32, np.float16 ]:
         if dset.attrs['unitSI'] != 1.0 and not units == 'no_SI':
            data *= dset.attrs['unitSI']
-    print(data)
-    print('h5py_reader_SI')
     return(data)
 
 

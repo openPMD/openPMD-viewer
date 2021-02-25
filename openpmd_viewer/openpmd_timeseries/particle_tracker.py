@@ -129,6 +129,9 @@ class ParticleTracker( object ):
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
 
+        units: string
+            Type of units to be used for data reading.
+
         Returns
         -------
         A list of 1darrays that correspond to data_list, but where only the
@@ -137,7 +140,8 @@ class ParticleTracker( object ):
         initialization)
         """
         # Extract the particle id, and get the extraction indices
-        pid = data_reader.read_species_data(iteration, species, 'id', extensions, units)
+        pid = data_reader.read_species_data(iteration, species, 'id',
+                                            extensions, units)
         selected_indices = self.get_extraction_indices( pid )
 
         # For each particle quantity, select only the tracked particles

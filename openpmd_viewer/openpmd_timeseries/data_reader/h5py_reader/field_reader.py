@@ -53,6 +53,9 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
        0 : middle of the simulation box
        1 : upper edge of the simulation box
 
+    units: string
+       Type of units to be used for data reading.
+
     Returns
     -------
     A tuple with
@@ -119,7 +122,8 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
 
 
 def read_field_circ( filename, iteration, field, coord,
-                     slice_relative_position, slice_across, units, m=0, theta=0. ):
+                     slice_relative_position, slice_across,
+                     units, m=0, theta=0. ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
     when the geometry is thetaMode
@@ -158,6 +162,9 @@ def read_field_circ( filename, iteration, field, coord,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
+
+    units: string
+       Type of units to be used for data reading.
 
     Returns
     -------

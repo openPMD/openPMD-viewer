@@ -15,7 +15,8 @@ from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
 def read_field_cartesian( series, iteration, field_name, component_name,
-                          axis_labels, slice_relative_position, slice_across, units ):
+                          axis_labels, slice_relative_position, slice_across,
+                          units):
     """
     Extract a given field from a file in the openPMD format,
     when the geometry is cartesian (1d, 2d or 3d).
@@ -51,6 +52,9 @@ def read_field_cartesian( series, iteration, field_name, component_name,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
+
+    units: string
+       Type of units to be used for data reading.
 
     Returns
     -------
@@ -106,7 +110,8 @@ def read_field_cartesian( series, iteration, field_name, component_name,
 
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         # Extract data
-        F = get_data( series, component, units, list_i_cell, list_slicing_index )
+        F = get_data( series, component, units,
+                      list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 grid_unit_SI, grid_position )
     else:
@@ -120,7 +125,8 @@ def read_field_cartesian( series, iteration, field_name, component_name,
 
 
 def read_field_circ( series, iteration, field_name, component_name,
-                     slice_relative_position, slice_across, units, m=0, theta=0. ):
+                     slice_relative_position, slice_across,
+                     units, m=0, theta=0. ):
     """
     Extract a given field from a file in the openPMD format,
     when the geometry is thetaMode
@@ -159,6 +165,9 @@ def read_field_circ( series, iteration, field_name, component_name,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
+
+    units: string
+       Type of units to be used for data reading.
 
     Returns
     -------
@@ -238,7 +247,7 @@ def read_field_circ( series, iteration, field_name, component_name,
             # Extract higher mode
             cos = np.cos( m * theta )
             sin = np.sin( m * theta )
-            F_cos = get_data( series, component, uníts, 2 * m - 1, 0 )
+            F_cos = get_data( series, component, units, 2 * m - 1, 0 )
             F_sin = get_data( series, component, units, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
             F_total[Nr:, :] = F[:, :]

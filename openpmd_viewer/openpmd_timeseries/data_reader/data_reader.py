@@ -172,6 +172,9 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        units: string
+           Type of units to be used for data reading.
+
         Returns
         -------
         A tuple with
@@ -229,6 +232,9 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        units: string
+           Type of units to be used for data reading.
+
         Returns
         -------
         A tuple with
@@ -247,7 +253,8 @@ class DataReader( object ):
                 self.series, iteration, field, coord, slice_relative_position,
                 slice_across, units, m, theta )
 
-    def read_species_data( self, iteration, species, record_comp, extensions, units):
+    def read_species_data( self, iteration, species, record_comp,
+                           extensions, units):
         """
         Extract a given species' record_comp
 
@@ -265,14 +272,19 @@ class DataReader( object ):
 
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
+
+        units: string
+            Type of units to be used for data reading.
         """
         if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
-                    filename, iteration, species, record_comp, extensions, units)
+                    filename, iteration, species, record_comp,
+                    extensions, units)
         elif self.backend == 'openpmd-api':
             return io_reader.read_species_data(
-                    self.series, iteration, species, record_comp, extensions, units)
+                    self.series, iteration, species, record_comp,
+                    extensions, units)
 
     def get_grid_parameters(self, iteration, avail_fields, metadata ):
         """

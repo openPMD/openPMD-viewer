@@ -34,7 +34,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True, backend=None, units='SI_u'):
+    def __init__(self, path_to_dir, check_all_files=True, backend=None,
+                 units='SI_u'):
         """
         Initialize an openPMD time series
 
@@ -56,6 +57,11 @@ class OpenPMDTimeSeries(InteractiveViewer):
             Backend to be used for data reading. Can be `openpmd-api`
             or `h5py`. If not provided will use `openpmd-api` if available
             and `h5py` otherwise.
+
+        units: string
+            Type of units to be used for data reading. 'SI' for SI units,
+            'SI_u' for SI units but with normalized momentum u,
+            'no_SI' to ignore the units_SI atribute for all components.
         """
         # Check backend
         if backend is None:
@@ -68,8 +74,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Check if units is vailid
         if units not in ['SI_u','SI','no_SI']:
-            print(units)
-            print('wrong')
             raise OpenPMDException("Invalit value for argument units."
                 "Must be 'SI_u', 'SI', or 'no_SI'")
         self.units = units
@@ -287,7 +291,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 data_list, select, species, self.extensions, self.units)
         elif isinstance( select, ParticleTracker ):
             data_list = select.extract_tracked_particles( iteration,
-                self.data_reader, data_list, species, self.extensions, self.units)
+                self.data_reader, data_list, species,
+                self.extensions, self.units)
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
@@ -301,7 +306,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
                         [w], select, species, self.extensions, self.units)
                 elif isinstance( select, ParticleTracker ):
                     w, = select.extract_tracked_particles( iteration,
-                        self.data_reader, [w], species, self.extensions, self.units)
+                        self.data_reader, [w], species,
+                        self.extensions, self.units)
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])

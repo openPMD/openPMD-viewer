@@ -24,6 +24,10 @@ def get_data(series, record_component, units, i_slice=None, pos_slice=None,
 
     record_component: an openPMD.Record_Component
 
+    units: string
+        Type of units to be used for data reading. Won't multiply data
+        with unit_SI when 'no_SI'
+
     pos_slice: int or list of int, optional
         Slice direction(s).
         When None, no slicing is performed
@@ -72,8 +76,6 @@ def get_data(series, record_component, units, i_slice=None, pos_slice=None,
     if output_type in [ np.float64, np.float32, np.float16 ]:
         if record_component.unit_SI != 1.0 and not units == 'no_SI':
             data *= record_component.unit_SI
-    print(data)
-    print('io_reader_SI')
     return data
 
 
