@@ -40,7 +40,7 @@ def read_species_data(filename, iteration, species, record_comp,
 
     units: string
         Type of units to be used for data reading. Will convert ux uy uz to
-        narmalized units if 'SI_u'
+        normalized units if 'SI_u'
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
