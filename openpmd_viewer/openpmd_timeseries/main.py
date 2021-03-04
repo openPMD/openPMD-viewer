@@ -60,7 +60,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         units: string
             Type of units to be used for data reading. 'SI' for SI units,
-            'SI_u' for SI units but with normalized momentum u,
+            'SI_u' for SI units but with momentum normalized by m_species * c,
             'raw' to ignore the units_SI atribute for all components.
         """
         # Check backend
