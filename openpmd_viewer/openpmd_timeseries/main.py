@@ -73,7 +73,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         self.backend = backend
 
         # Check if units is vailid
-        if units not in ['SI_u','SI','raw']:
+        if units not in ['SI_u', 'SI', 'raw']:
             raise OpenPMDException("Invalid value for argument units. "
                 "Must be 'SI_u', 'SI', or 'raw'")
         self.units = units
