@@ -106,7 +106,7 @@ class ParticleTracker( object ):
 
 
     def extract_tracked_particles( self, iteration, data_reader, data_list,
-                                    species, extensions ):
+                                    species, extensions, units):
         """
         Select the elements of each particle quantities in data_list,
         so as to only return those that correspond to the tracked particles
@@ -129,6 +129,9 @@ class ParticleTracker( object ):
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
 
+        units: string
+            Type of units to be used for data reading.
+
         Returns
         -------
         A list of 1darrays that correspond to data_list, but where only the
@@ -137,7 +140,8 @@ class ParticleTracker( object ):
         initialization)
         """
         # Extract the particle id, and get the extraction indices
-        pid = data_reader.read_species_data(iteration, species, 'id', extensions)
+        pid = data_reader.read_species_data(iteration, species, 'id',
+                                            extensions, units)
         selected_indices = self.get_extraction_indices( pid )
 
         # For each particle quantity, select only the tracked particles

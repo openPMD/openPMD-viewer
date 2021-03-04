@@ -138,7 +138,7 @@ class DataReader( object ):
                     self.series, iteration, extract_parameters)
 
     def read_field_cartesian( self, iteration, field, coord, axis_labels,
-                          slice_relative_position, slice_across ):
+                          slice_relative_position, slice_across, units ):
         """
         Extract a given field from an openPMD file in the openPMD format,
         when the geometry is cartesian (1d, 2d or 3d).
@@ -172,6 +172,9 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        units: string
+           Type of units to be used for data reading.
+
         Returns
         -------
         A tuple with
@@ -183,14 +186,14 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
                 filename, iteration, field, coord, axis_labels,
-                slice_relative_position, slice_across )
+                slice_relative_position, slice_across, units )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_cartesian(
                 self.series, iteration, field, coord, axis_labels,
-                slice_relative_position, slice_across )
+                slice_relative_position, slice_across, units )
 
     def read_field_circ( self, iteration, field, coord, slice_relative_position,
-                        slice_across, m=0, theta=0. ):
+                        slice_across, units, m=0, theta=0. ):
         """
         Extract a given field from an openPMD file in the openPMD format,
         when the geometry is thetaMode
@@ -229,6 +232,9 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        units: string
+           Type of units to be used for data reading.
+
         Returns
         -------
         A tuple with
@@ -241,13 +247,14 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
                 filename, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, units, m, theta )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_circ(
                 self.series, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, units, m, theta )
 
-    def read_species_data( self, iteration, species, record_comp, extensions):
+    def read_species_data( self, iteration, species, record_comp,
+                           extensions, units):
         """
         Extract a given species' record_comp
 
@@ -265,14 +272,19 @@ class DataReader( object ):
 
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with
+
+        units: string
+            Type of units to be used for data reading.
         """
         if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_species_data(
-                    filename, iteration, species, record_comp, extensions )
+                    filename, iteration, species, record_comp,
+                    extensions, units)
         elif self.backend == 'openpmd-api':
             return io_reader.read_species_data(
-                    self.series, iteration, species, record_comp, extensions )
+                    self.series, iteration, species, record_comp,
+                    extensions, units)
 
     def get_grid_parameters(self, iteration, avail_fields, metadata ):
         """

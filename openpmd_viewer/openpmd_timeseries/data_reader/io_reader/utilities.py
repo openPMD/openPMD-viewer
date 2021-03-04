@@ -11,7 +11,7 @@ License: 3-Clause-BSD-LBNL
 import numpy as np
 
 
-def get_data(series, record_component, i_slice=None, pos_slice=None,
+def get_data(series, record_component, units, i_slice=None, pos_slice=None,
              output_type=np.float64):
     """
     Extract the data from a (possibly constant) dataset
@@ -23,6 +23,10 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
         An open, readable openPMD-api series object
 
     record_component: an openPMD.Record_Component
+
+    units: string
+        Type of units to be used for data reading. Won't multiply data
+        with unit_SI when 'raw'
 
     pos_slice: int or list of int, optional
         Slice direction(s).
@@ -70,9 +74,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
         data = data.astype( output_type )
     # Scale by the conversion factor
     if output_type in [ np.float64, np.float32, np.float16 ]:
-        if record_component.unit_SI != 1.0:
+        if record_component.unit_SI != 1.0 and not units == 'raw':
             data *= record_component.unit_SI
-
     return data
 
 

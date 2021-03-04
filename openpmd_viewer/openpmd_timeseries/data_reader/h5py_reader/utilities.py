@@ -75,7 +75,7 @@ def is_scalar_record(record):
     return(scalar)
 
 
-def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
+def get_data(dset, units, i_slice=None, pos_slice=None, output_type=np.float64):
     """
     Extract the data from a (possibly constant) dataset
     Slice the data according to the parameters i_slice and pos_slice
@@ -84,6 +84,10 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
     -----------
     dset: an h5py.Dataset or h5py.Group (when constant)
         The object from which the data is extracted
+
+    units: string
+        Type of units to be used for data reading. Won't multiply data
+        with unit_SI when 'raw'
 
     pos_slice: int or list of int, optional
         Slice direction(s).
@@ -140,9 +144,8 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
         data = data.astype( output_type )
     # Scale by the conversion factor
     if output_type in [ np.float64, np.float32, np.float16 ]:
-        if dset.attrs['unitSI'] != 1.0:
-            data *= dset.attrs['unitSI']
-
+        if dset.attrs['unitSI'] != 1.0 and not units == 'raw':
+           data *= dset.attrs['unitSI']
     return(data)
 
 
