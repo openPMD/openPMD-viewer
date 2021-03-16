@@ -310,6 +310,14 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             y = y_array[iy]
             r = np.sqrt( x**2 + y**2 )
             ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
+
+            if ir>0:
+                s0 = ir + 0.5 - r* inv_dr
+                s1 = 1. - s0
+            else:
+                s0 = 0
+                s1 = 1.
+
             # Handle out-of-bounds
             if ir < 0:
                 ir = 0
@@ -320,12 +328,19 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
                 expItheta = 1. + 0.j
             else:
                 expItheta = (x+1.j*y)/r
+
+            Fcirc_proj = s1 * Fcirc[:, ir, :] + s0 * Fcirc[:, ir-1, :]
+
             for im in range(nmodes):
                 mode = modes[im]
                 if mode==0:
-                    F3d[ix, iy, :] += Fcirc[0, ir, :]
+#                    F3d[ix, iy, :] += s1 * Fcirc[0, ir, :] + s0 * Fcirc[0, ir-1, :]
+                    F3d[ix, iy, :] += Fcirc_proj[0]
                 else:
                     cos = (expItheta**mode).real
                     sin = (expItheta**mode).imag
-                    F3d[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
-                                    + Fcirc[2*mode, ir, :]*sin
+                    F3d[ix, iy, :] += Fcirc_proj[2*mode-1]*cos + \
+                        Fcirc_proj[2*mode]*sin
+
+#                    F3d[ix, iy, :] += (s1 * Fcirc[2*mode-1, ir, :] + s0 * Fcirc[2*mode-1, ir-1, :])*cos \
+#                                    + (s1 * Fcirc[2*mode, ir, :] + s0 * Fcirc[2*mode, ir-1, :])*sin
