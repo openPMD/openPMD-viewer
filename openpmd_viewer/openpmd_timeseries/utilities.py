@@ -317,7 +317,7 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             if ir >= nr:
                 ir = nr-1
 
-            # Calculate linear projection of the field
+            # Calculate linear projection from ir and ir-1
             if ir>0:
                 s0 = ir + 0.5 - r* inv_dr
                 s1 = 1. - s0
