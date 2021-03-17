@@ -120,7 +120,8 @@ def read_field_cartesian( series, iteration, field_name, component_name,
 
 
 def read_field_circ( series, iteration, field_name, component_name,
-                     slice_relative_position, slice_across, m=0, theta=0. ):
+                     slice_relative_position, slice_across, m=0, theta=0.,
+                     max_resolution_3d=None ):
     """
     Extract a given field from a file in the openPMD format,
     when the geometry is thetaMode
@@ -159,6 +160,13 @@ def read_field_circ( series, iteration, field_name, component_name,
        -1 : lower edge of the simulation box
        0 : middle of the simulation box
        1 : upper edge of the simulation box
+
+    max_resolution_3d : list of int or None
+        Maximum resolution that the 3D reconstruction of the field (when
+        `theta` is None) can have. The list should contain two values,
+        e.g. `[200, 100]`, indicating the maximum longitudinal and transverse
+        resolution, respectively. This is useful for performance reasons,
+        particularly for 3D visualization.
 
     Returns
     -------
@@ -199,6 +207,28 @@ def read_field_circ( series, iteration, field_name, component_name,
             modes = [ m ]
         modes = np.array( modes, dtype='int' )
         nmodes = len(modes)
+
+        # If necessary, reduce resolution of 3D reconstruction
+        if max_resolution_3d is not None:
+            max_res_lon, max_res_transv = max_resolution_3d
+            if Nz > max_res_lon:
+                # Calculate excess of elements along z
+                excess_z = int(np.round(Nz/max_res_lon))
+                # Preserve only one every excess_z elements
+                Fcirc = Fcirc[:, :, ::excess_z]
+                # Update info accordingly
+                info.z = info.z[::excess_z]
+                info.dz = info.z[1] - info.z[0]
+            if nr > max_res_transv/2:
+                # Calculate excess of elements along r
+                excess_r = int(np.round(nr/(max_res_transv/2)))
+                # Preserve only one every excess_r elements
+                Fcirc = Fcirc[:, ::excess_r, :]
+                # Update info and necessary parameters accordingly
+                info.r = info.r[::excess_r]
+                info.dr = info.r[1] - info.r[0]
+                inv_dr = 1./info.dr
+                nr = Fcirc.shape[1]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()

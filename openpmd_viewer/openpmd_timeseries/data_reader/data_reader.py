@@ -190,7 +190,7 @@ class DataReader( object ):
                 slice_relative_position, slice_across )
 
     def read_field_circ( self, iteration, field, coord, slice_relative_position,
-                        slice_across, m=0, theta=0. ):
+                        slice_across, m=0, theta=0., max_resolution_3d=None ):
         """
         Extract a given field from an openPMD file in the openPMD format,
         when the geometry is thetaMode
@@ -229,6 +229,13 @@ class DataReader( object ):
            0 : middle of the simulation box
            1 : upper edge of the simulation box
 
+        max_resolution_3d : list of int or None
+            Maximum resolution that the 3D reconstruction of the field (when
+            `theta` is None) can have. The list should contain two values,
+            e.g. `[200, 100]`, indicating the maximum longitudinal and
+            transverse resolution, respectively. This is useful for
+            performance reasons, particularly for 3D visualization.
+
         Returns
         -------
         A tuple with
@@ -241,11 +248,11 @@ class DataReader( object ):
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
                 filename, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, m, theta, max_resolution_3d )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_circ(
                 self.series, iteration, field, coord, slice_relative_position,
-                slice_across, m, theta )
+                slice_across, m, theta, max_resolution_3d )
 
     def read_species_data( self, iteration, species, record_comp, extensions):
         """
