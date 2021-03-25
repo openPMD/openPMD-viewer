@@ -93,7 +93,7 @@ def read_openPMD_params(series, iteration, extract_parameters=True):
             if metadata['geometry'] == "thetaMode":
                 # simply check first record component
                 field_component = next(field.items())[1]
-                Nm = field_component.ndim
+                Nm = field_component.shape[0]
                 metadata['avail_circ_modes'] = ['all'] + \
                     [str(m) for m in range(int(Nm / 2) + 1)]
             # Check if this a 1d, 2d or 3d Cartesian
