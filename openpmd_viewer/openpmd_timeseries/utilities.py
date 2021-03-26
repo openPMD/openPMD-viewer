@@ -310,22 +310,33 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             y = y_array[iy]
             r = np.sqrt( x**2 + y**2 )
             ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
+
             # Handle out-of-bounds
             if ir < 0:
                 ir = 0
             if ir >= nr:
                 ir = nr-1
+
+            # Calculate linear projection from ir and ir-1
+            if ir>0:
+                s0 = ir + 0.5 - r* inv_dr
+                s1 = 1. - s0
+                Fcirc_proj = s1*Fcirc[:, ir, :] + s0*Fcirc[:, ir-1, :]
+            else:
+                Fcirc_proj = Fcirc[:, ir, :]
+
             # Loop over all modes and recontruct data
             if r == 0:
                 expItheta = 1. + 0.j
             else:
                 expItheta = (x+1.j*y)/r
+
             for im in range(nmodes):
                 mode = modes[im]
                 if mode==0:
-                    F3d[ix, iy, :] += Fcirc[0, ir, :]
+                    F3d[ix, iy, :] += Fcirc_proj[0, :]
                 else:
                     cos = (expItheta**mode).real
                     sin = (expItheta**mode).imag
-                    F3d[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
-                                    + Fcirc[2*mode, ir, :]*sin
+                    F3d[ix, iy, :] += Fcirc_proj[2*mode-1,:]*cos + \
+                        Fcirc_proj[2*mode,:]*sin
