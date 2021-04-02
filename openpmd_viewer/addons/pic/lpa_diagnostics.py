@@ -96,7 +96,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         property : str
             Unit of energy. Should be one of
 
-            - 'energy' returns energy in eV
+            - 'energy' returns energy in MeV
             - 'gamma' returns Lorentz factor
 
         Returns
