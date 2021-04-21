@@ -212,12 +212,15 @@ def simplify_record(record_comps):
     if 'momentum/x' in record_comps:
         record_comps.remove('momentum/x')
         record_comps.append('ux')
+        record_comps.append('px')
     if 'momentum/y' in record_comps:
         record_comps.remove('momentum/y')
         record_comps.append('uy')
+        record_comps.append('py')
     if 'momentum/z' in record_comps:
         record_comps.remove('momentum/z')
         record_comps.append('uz')
+        record_comps.append('pz')
 
     # Replace the name for 'weights'
     if 'weighting' in record_comps:

@@ -46,8 +46,11 @@ def read_species_data(series, iteration, species_name, component_name,
                         'ux': ['momentum', 'x'],
                         'uy': ['momentum', 'y'],
                         'uz': ['momentum', 'z'],
+                        'px': ['momentum', 'x'],
+                        'py': ['momentum', 'y'],
+                        'pz': ['momentum', 'z'],
                         'w': ['weighting', None]}
-    
+
     if component_name in dict_record_comp:
         ompd_record_name, ompd_record_comp_name = \
             dict_record_comp[component_name]
