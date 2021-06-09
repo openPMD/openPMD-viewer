@@ -32,7 +32,7 @@ jobs:
         channels: conda-forge,defaults
         channel-priority: true
 
-    - shell: bash -l {0}
+    - shell: bash -e -l {0}
       name: Install dependencies
       run: |
         if [ "${{ matrix.python-version }}" != "3.8" ]; then
@@ -41,9 +41,9 @@ jobs:
           conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget 
         fi
 
-    - shell: bash -l {0}
+    - shell: bash -e  -l {0}
       name: pyflakes
       run: python -m pyflakes openpmd_viewer
-    - shell: bash -l {0}
+    - shell: bash -e -l {0}
       name: Test
       run: python setup.py test
