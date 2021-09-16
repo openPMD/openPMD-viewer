@@ -923,7 +923,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Find the indices of the maximum field, and
         # pick the corresponding transverse slice
         itrans_max, iz_max = np.unravel_index(
-            np.argmax( field ), dims=field.shape )
+            np.argmax( field ), field.shape )
         trans_slice = field[ :, iz_max ]
         # Get transverse positons
         trans_pos = getattr(info, info.axes[0])
