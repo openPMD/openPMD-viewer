@@ -1,5 +1,29 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.2.0
+
+This new release introduces several bug-fixes and miscellaneous features:
+
+- There is a new function `get_energy_spread` that returns the energy
+  spread of the beam. This is partially redundant with `get_mean_gamma`,
+  which is kept for backward compatibility.
+  (see [#304](https://github.com/openPMD/openPMD-viewer/pull/304)
+  and [#317](https://github.com/openPMD/openPMD-viewer/pull/317))
+
+- The 3D field reconstruction from `ThetaMode` data now has an option
+  `max_resolution_3d` that limits the resolution of the final 3D array.
+  This is added in order to limit the memory footprint of this array.
+  (see [#307](https://github.com/openPMD/openPMD-viewer/pull/307))
+  The 3D reconstruction is now also more accurate, thanks to the implementation
+  of linear interpolation.
+  (see [#311](https://github.com/openPMD/openPMD-viewer/pull/311))
+
+- A bug that affected reading `ThetaMode` data with the `openpmd-api` backend
+  has been fixed. (see [#313](https://github.com/openPMD/openPMD-viewer/pull/313))
+
+- A bug that affected `get_laser_waist` has been fixed:
+  (see [#320](https://github.com/openPMD/openPMD-viewer/pull/320))
+
 ## 1.1.0
 
 This new release introduces the option to read `openPMD` files with different backends. In addition to the legacy `h5py` backend (which can read only HDF5 openPMD file), `openPMD-viewer` now has the option to use the `openpmd-api` backend (which can read both HDF5 and ADIOS openPMD files). Because the `openpmd-api` backend is thus more general, it is selected by default if available (i.e. if installed locally).
