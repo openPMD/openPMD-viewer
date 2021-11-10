@@ -26,7 +26,7 @@ visualize the data.
 
 The notebooks in the folder `tutorials/` demonstrate how to use both
 the API and the interactive GUI. You can view these notebooks online
-[here](https://github.com/openPMD/openPMD-viewer/tree/main/tutorials).
+[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
 
 Alternatively, you can even
 [*run* our tutorials online](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/master?filepath=tutorials%2F)!
