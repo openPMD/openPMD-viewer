@@ -95,5 +95,5 @@ notebooks is provided when logging to
 
 ## Contributing to the openPMD-viewer
 
-We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/main/CONTRIBUTING.md) for
+We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
 guidelines on how to contribute.
