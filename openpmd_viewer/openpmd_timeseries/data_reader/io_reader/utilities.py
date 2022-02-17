@@ -11,6 +11,15 @@ License: 3-Clause-BSD-LBNL
 import numpy as np
 
 
+def chunk_to_slice(chunk):
+    """
+    Convert an openPMD_api.ChunkInfo to np.s_
+    """
+    stops = [a + b for a, b in zip(chunk.offset, chunk.extent)]
+    indices_per_dim = zip(chunk.offset, stops)
+    index_tuple = map(lambda s: slice(s[0], s[1], None), indices_per_dim)
+    return tuple(index_tuple)
+
 def get_data(series, record_component, i_slice=None, pos_slice=None,
              output_type=np.float64):
     """
@@ -46,8 +55,17 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if i_slice is not None and not isinstance(i_slice, list):
         i_slice = [i_slice]
 
+    chunks = record_component.available_chunks()
+
     if pos_slice is None:
-        data = record_component[()]
+        # mask invalid regions with zero
+        data = np.zeros_like(record_component)
+        for chunk in chunks:
+            chunk_slice = chunk_to_slice(chunk)
+            # read only valid region
+            x = record_component[chunk_slice]
+            series.flush()
+            data[chunk_slice] = x
     else:
         # Get largest element of pos_slice
         max_pos = max(pos_slice)
@@ -60,8 +78,33 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
             list_index[dir_index] = i_slice[count]
         # Convert list_index into a tuple
         tuple_index = tuple(list_index)
-        # Slice dset according to tuple_index
-        data = record_component[tuple_index]
+        print("tuple_index={}".format(tuple_index))
+
+        # potentially a better approach as below, since we only slice
+        # out hyperplanes, planes & lines:
+        # - allocate zero array for result, which is a hyperplane/plane/line
+        # - iterate over slices in tuple_index
+        # - reduce selected read range to "valid" range
+
+        # initial experiment:
+        # full_indices can be HUGE, avoid!!
+        full_indices = np.indices(record_component.shape)[0]
+        #full_shape = full_indices.shape
+        #print("full_shape.shape={}".format(full_shape))
+        #print("full_shape={}".format(full_shape))
+
+        # prepare sliced data according to tuple_index
+        slice_indices = full_indices[tuple_index]
+        slice_shape = slice_indices.shape
+        data = np.zeros(slice_shape, dtype=output_type)
+        # write now in index space between intersection of slice_indices and chunk indices
+        for chunk in chunks:
+            chunk_slice = chunk_to_slice(chunk)
+            chunk_indices = full_indices[chunk_slice]
+            intersect_indices = np.intersect1d(chunk_indices, slice_indices)
+            print(intersect_indices)
+            data[slice_indices] = record_component[intersect_indices]
+        #data = np.zeros_like(record_component)[tuple_index]  # just avoid invalid reads for now
 
     series.flush()
 
