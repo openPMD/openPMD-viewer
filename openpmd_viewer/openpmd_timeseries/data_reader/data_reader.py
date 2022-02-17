@@ -81,7 +81,9 @@ class DataReader( object ):
                 raise RuntimeError(
                     "Found no valid files in directory {0}.\n"
                     "Please check that this is the path to the openPMD files."
-                    "(valid files must have the extension '.h5')"
+                    "Valid files must have the extension '.h5' if you "
+                    "use the `h5py` backend. For ADIOS '.bp' and other files, "
+                    "please install the `openpmd-api` package."
                     .format(path_to_dir))
         elif self.backend == 'openpmd-api':
             # guess file ending from first file in directory
