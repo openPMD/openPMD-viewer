@@ -38,12 +38,12 @@ setup(name='openPMD-viewer',
       tests_require=['pytest', 'jupyter'],
       install_requires=install_requires,
       extras_require = {
-        'all': ["ipympl", "ipywidgets", "matplotlib", "numba", "openpmd-api", "wget"],
+        'all': ["ipympl", "ipywidgets", "matplotlib", "numba", "openpmd-api~=0.14.0", "wget"],
         'GUI':  ["ipywidgets", "ipympl", "matplotlib"],
         'plot': ["matplotlib"],
         'tutorials': ["ipywidgets", "ipympl", "matplotlib", "wget"],
         'numba': ["numba"],
-        'openpmd-api': ["openpmd-api"]
+        'openpmd-api': ["openpmd-api~=0.14.0"]
         },
       cmdclass={'test': PyTest},
       platforms='any',

@@ -11,6 +11,16 @@ License: 3-Clause-BSD-LBNL
 import numpy as np
 
 
+def chunk_to_slice(chunk):
+    """
+    Convert an openPMD_api.ChunkInfo to slice
+    """
+    stops = [a + b for a, b in zip(chunk.offset, chunk.extent)]
+    indices_per_dim = zip(chunk.offset, stops)
+    index_tuple = map(lambda s: slice(s[0], s[1], None), indices_per_dim)
+    return tuple(index_tuple)
+
+
 def get_data(series, record_component, i_slice=None, pos_slice=None,
              output_type=np.float64):
     """
@@ -46,24 +56,69 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if i_slice is not None and not isinstance(i_slice, list):
         i_slice = [i_slice]
 
-    if pos_slice is None:
-        data = record_component[()]
-    else:
-        # Get largest element of pos_slice
-        max_pos = max(pos_slice)
-        # Create list of indices list_index of type
-        # [:, :, :, ...] where Ellipsis starts at max_pos + 1
-        list_index = [np.s_[:]] * (max_pos + 2)
-        list_index[max_pos + 1] = np.s_[...]
-        # Fill list_index with elements of i_slice
-        for count, dir_index in enumerate(pos_slice):
-            list_index[dir_index] = i_slice[count]
-        # Convert list_index into a tuple
-        tuple_index = tuple(list_index)
-        # Slice dset according to tuple_index
-        data = record_component[tuple_index]
+    chunks = record_component.available_chunks()
 
-    series.flush()
+    if pos_slice is None:
+        # mask invalid regions with zero
+        data = np.zeros_like(record_component)
+        for chunk in chunks:
+            chunk_slice = chunk_to_slice(chunk)
+            # read only valid region
+            x = record_component[chunk_slice]
+            series.flush()
+            data[chunk_slice] = x
+    else:
+        full_shape = record_component.shape
+
+        slice_shape = list(full_shape)      # copy
+        pos_slice_sorted = pos_slice.copy() # copy for in-place sort
+        pos_slice_sorted.sort(reverse=True)
+        for dir_index in pos_slice_sorted:  # remove indices in list
+            del slice_shape[dir_index]
+
+        # mask invalid regions with zero
+        data = np.zeros(slice_shape, dtype=output_type)
+
+        # build requested ND slice with respect to full data
+        s = []
+        for d in range(len(full_shape)):
+            if d in pos_slice:
+                s.append(i_slice[pos_slice.index(d)]) # one index in such directions
+            else: # all indices in other direction
+                s.append(slice(None, None, None))
+        s = tuple(s)
+
+        # now we check which chunks contribute to the slice
+        for chunk in chunks:
+            skip_this_chunk = False
+            s_valid = list(s)  # same as s but reduced to valid regions in chunk
+            s_target = []  # starts and stops in sliced array
+            chunk_slice = chunk_to_slice(chunk)
+            # read only valid region
+            for d, slice_d in enumerate(s):
+                start = chunk_slice[d].start
+                stop = chunk_slice[d].stop
+                if isinstance(slice_d, int):
+                    # Nothing to do for s_target (dimension sliced out)
+                    # Nothing to do for s_valid (dimension index is set)
+                    if slice_d < start or slice_d >= stop:
+                        # chunk not in slice line/plane
+                        skip_this_chunk = True
+                else:
+                    if slice_d.start is None or slice_d.start < start:
+                        s_valid[d] = slice(start, s_valid[d].stop)
+                    if slice_d.stop is None or slice_d.stop > stop:
+                        s_valid[d] = slice(s_valid[d].start, stop)
+                    s_target.append(slice(start, stop))
+
+            s_valid = tuple(s_valid)
+            s_target = tuple(s_target)
+
+            # read
+            if not skip_this_chunk:
+                x = record_component[s_valid]
+                series.flush()
+                data[s_target] = x
 
     # Convert to the right type
     if data.dtype != output_type:
