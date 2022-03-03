@@ -1,5 +1,10 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.3.0
+
+This new release introduces preliminary support for MR datasets
+(see [#332](https://github.com/openPMD/openPMD-viewer/pull/332)).
+
 ## 1.2.0
 
 This new release introduces several bug-fixes and miscellaneous features:
