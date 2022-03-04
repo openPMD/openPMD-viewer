@@ -59,8 +59,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     chunks = record_component.available_chunks()
 
     if pos_slice is None:
-        # mask invalid regions with zero
-        data = np.zeros_like(record_component)
+        # mask invalid regions with NaN
+        data = np.full_like(record_component, np.nan)
         for chunk in chunks:
             chunk_slice = chunk_to_slice(chunk)
             # read only valid region
@@ -76,8 +76,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
         for dir_index in pos_slice_sorted:  # remove indices in list
             del slice_shape[dir_index]
 
-        # mask invalid regions with zero
-        data = np.zeros(slice_shape, dtype=output_type)
+        # mask invalid regions with NaN
+        data = np.full(slice_shape, np.nan, dtype=output_type)
 
         # build requested ND slice with respect to full data
         s = []

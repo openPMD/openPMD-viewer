@@ -7,3 +7,4 @@ openpmd_viewer.egg-info/
 .cache/
 .eggs/
 .vs/
+__pycache__
