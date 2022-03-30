@@ -153,9 +153,9 @@ class FieldMetaInformation(object):
         Convert FieldMetaInformation from cylindrical to 3D Cartesian
         """
 
+        print('axes', self.axes)
         try:
-            assert self.axes[0] == 'r'
-            assert self.axes[1] == 'z'
+            assert (self.axes[0] == 'r' and self.axes[1] == 'z') or (self.axes[0] == 'z' and self.axes[1] == 'r')
         except (KeyError, AssertionError):
             raise ValueError('_convert_cylindrical_to_3Dcartesian'
                 ' can only be applied to a timeseries in thetaMode geometry')

@@ -299,7 +299,7 @@ def histogram_cic_2d( q1, q2, w,
 
 @jit
 def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
-    nx, ny, nz, nr, nmodes, inv_dr, rmax ):
+    nx, ny, nz, nr, nmodes, inv_dr, rmax, rz_switch = False ):
     """
     Reconstruct the field from a quasi-cylindrical simulation (`Fcirc`), as
     a 3D cartesian array (`F3d`).
@@ -321,9 +321,15 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             if ir>0:
                 s0 = ir + 0.5 - r* inv_dr
                 s1 = 1. - s0
-                Fcirc_proj = s1*Fcirc[:, ir, :] + s0*Fcirc[:, ir-1, :]
+                if not rz_switch:
+                    Fcirc_proj = s1*Fcirc[:, ir, :] + s0*Fcirc[:, ir-1, :]
+                else:
+                    Fcirc_proj = s1*Fcirc[:, :, ir] + s0*Fcirc[:, :, ir-1]
             else:
-                Fcirc_proj = Fcirc[:, ir, :]
+                if not rz_switch:
+                    Fcirc_proj = Fcirc[:, ir, :]
+                else:
+                    Fcirc_proj = Fcirc[:, :, ir]
 
             # Loop over all modes and recontruct data
             if r == 0:
