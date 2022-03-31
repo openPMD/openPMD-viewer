@@ -190,7 +190,6 @@ def read_field_circ( series, iteration, field_name, component_name,
     #         grid spacing/offset/position
     
     coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
-    print(coord_labels)
     if coord_labels[0] == 'r':
         rz_switch = False
         Nm, Nr, Nz = component.shape
