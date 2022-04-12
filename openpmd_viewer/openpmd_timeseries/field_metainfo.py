@@ -153,7 +153,6 @@ class FieldMetaInformation(object):
         Convert FieldMetaInformation from cylindrical to 3D Cartesian
         """
 
-        print('axes', self.axes)
         try:
             assert (self.axes[0] == 'r' and self.axes[1] == 'z') or (self.axes[0] == 'z' and self.axes[1] == 'r')
         except (KeyError, AssertionError):
