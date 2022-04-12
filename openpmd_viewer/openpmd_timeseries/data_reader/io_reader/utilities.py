@@ -56,17 +56,21 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if i_slice is not None and not isinstance(i_slice, list):
         i_slice = [i_slice]
 
+    # ADIOS2: Actual chunks, all other: one chunk
     chunks = record_component.available_chunks()
 
+    # read whole data set
     if pos_slice is None:
         # mask invalid regions with NaN
-        data = np.full_like(record_component, np.nan)
+        #   note: full_like triggers a full read, thus we avoid it #340
+        data = np.full(record_component.shape, np.nan, record_component.dtype)
         for chunk in chunks:
             chunk_slice = chunk_to_slice(chunk)
             # read only valid region
             x = record_component[chunk_slice]
             series.flush()
             data[chunk_slice] = x
+    # slice: read only part of the data set
     else:
         full_shape = record_component.shape
 
