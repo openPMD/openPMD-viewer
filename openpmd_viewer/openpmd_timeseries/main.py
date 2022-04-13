@@ -626,10 +626,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self._current_i = abs(iteration - self.iterations).argmin()
             else:
                 iter_list = '\n - '.join([str(it) for it in self.iterations])
-                print("The requested iteration '%s' is not available.\nThe "
-                      "available iterations are: \n - %s\nThe first iteration "
-                      "is used instead." % (iteration, iter_list))
-                self._current_i = 0
+                raise OpenPMDException(
+                      "The requested iteration '%s' is not available.\nThe "
+                      "available iterations are: \n - %s\n" % (iteration, iter_list))
         else:
             pass  # self._current_i retains its previous value
 
