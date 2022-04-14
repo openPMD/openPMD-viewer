@@ -185,7 +185,7 @@ def read_field_circ( filename, iteration, field, coord,
     group, dset = find_dataset( dfile, iteration, field_path )
 
     # Extract the metainformation
-    coord_labels = {ii: coord.decode() for (ii,coord) in 
+    coord_labels = {ii: coord.decode() for (ii,coord) in
                                 enumerate(group.attrs['axisLabels'])}
     if coord_labels[0] == 'r':
         rz_switch = False  # fastest varying index is z
@@ -206,10 +206,6 @@ def read_field_circ( filename, iteration, field, coord,
         rmax = info.rmax
         inv_dr = 1./info.dr
         Fcirc = get_data( dset )  # (Extracts all modes)
-        if rz_switch:
-            nr = Fcirc.shape[2]
-        else:
-            nr = Fcirc.shape[1]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
         else:
@@ -231,9 +227,9 @@ def read_field_circ( filename, iteration, field, coord,
                 # Update info accordingly
                 info.z = info.z[::excess_z]
                 info.dz = info.z[1] - info.z[0]
-            if nr > max_res_transv/2:
+            if Nr > max_res_transv/2:
                 # Calculate excess of elements along r
-                excess_r = int(np.round(nr/(max_res_transv/2)))
+                excess_r = int(np.round(Nr/(max_res_transv/2)))
                 # Preserve only one every excess_r elements
                 if not rz_switch:
                     Fcirc = Fcirc[:, ::excess_r, :]
@@ -243,17 +239,13 @@ def read_field_circ( filename, iteration, field, coord,
                 info.r = info.r[::excess_r]
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
-                if not rz_switch:
-                    nr = Fcirc.shape[1]
-                else:
-                    nr = Fcirc.shape[2]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
         F_total = np.zeros( (nx, ny, nz) )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
-            nx, ny, nz, nr, nmodes, inv_dr, rmax, rz_switch=rz_switch )
+            nx, ny, nz, Nr, nmodes, inv_dr, rmax, rz_switch=rz_switch )
 
     else:
 

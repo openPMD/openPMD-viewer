@@ -116,7 +116,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
             grid_spacing, global_offset,
             grid_unit_SI, grid_position )
 
-    return F, info 
+    return F, info
 
 
 def read_field_circ( series, iteration, field_name, component_name,
@@ -188,7 +188,7 @@ def read_field_circ( series, iteration, field_name, component_name,
     # Extract the metainformation
     #   FIXME here and in h5py reader, we need to invert the order on 'F' for
     #         grid spacing/offset/position
-    
+
     coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
     if coord_labels[0] == 'r':
         rz_switch = False
@@ -198,7 +198,7 @@ def read_field_circ( series, iteration, field_name, component_name,
         rz_switch = True
         Nm, Nz, Nr = component.shape
         N_pair = (Nz, Nr)
-    
+
     # Nm, Nr, Nz = component.shape
     info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
@@ -211,10 +211,6 @@ def read_field_circ( series, iteration, field_name, component_name,
         rmax = info.rmax
         inv_dr = 1./info.dr
         Fcirc = get_data( series, component )  # (Extracts all modes)
-        if not rz_switch:
-            nr = Fcirc.shape[1]
-        else:
-            nr = Fcirc.shape[2]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
         else:
@@ -236,9 +232,9 @@ def read_field_circ( series, iteration, field_name, component_name,
                 # Update info accordingly
                 info.z = info.z[::excess_z]
                 info.dz = info.z[1] - info.z[0]
-            if nr > max_res_transv/2:
+            if Nr > max_res_transv/2:
                 # Calculate excess of elements along r
-                excess_r = int(np.round(nr/(max_res_transv/2)))
+                excess_r = int(np.round(Nr/(max_res_transv/2)))
                 # Preserve only one every excess_r elements
                 if not rz_switch:
                     Fcirc = Fcirc[:, ::excess_r, :]
@@ -248,14 +244,13 @@ def read_field_circ( series, iteration, field_name, component_name,
                 info.r = info.r[::excess_r]
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
-                nr = Fcirc.shape[1]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
         F_total = np.zeros( (nx, ny, nz) )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
-            nx, ny, nz, nr, nmodes, inv_dr, rmax, rz_switch=rz_switch)
+            nx, ny, nz, Nr, nmodes, inv_dr, rmax, rz_switch=rz_switch)
 
     else:
 
