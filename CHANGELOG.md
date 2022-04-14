@@ -1,5 +1,22 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.4.0
+
+This new release introduces several improvements:
+
+- The changes introduced in 1.3.0 caused a major slowdown when reading certain
+types of data. This has been fixed in this new release. (See [#340](https://github.com/openPMD/openPMD-viewer/pull/340) for more details.)
+
+- `openPMD-viewer` now supports `thetaMode` geometry with data written using
+`r` as the fastest index (as written by e.g. [WarpX](https://github.com/ECP-WarpX/WarpX))
+in addition to the previously supported data format which used `z` as the fastest index
+(as written by e.g. [fbpic](https://github.com/fbpic/fbpic)). (See
+[337](https://github.com/openPMD/openPMD-viewer/pull/337))
+
+- `openPMD-viewer` will raise an exception if the user asks for an iteration
+that is  not part of the dataset (instead of printing a message and reverting
+to the first iteration, which can be confusing) (See [336](https://github.com/openPMD/openPMD-viewer/pull/336))
+
 ## 1.3.0
 
 This new release introduces preliminary support for MR datasets
