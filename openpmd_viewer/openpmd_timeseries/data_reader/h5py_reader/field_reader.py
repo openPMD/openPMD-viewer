@@ -188,11 +188,11 @@ def read_field_circ( filename, iteration, field, coord,
     coord_labels = {ii: coord.decode() for (ii,coord) in 
                                 enumerate(group.attrs['axisLabels'])}
     if coord_labels[0] == 'r':
-        rz_switch = False
+        rz_switch = False  # fastest varying index is z
         Nm, Nr, Nz = get_shape( dset )
         N_pair = (Nr, Nz)
     else:
-        rz_switch = True
+        rz_switch = True  # fastest varying index is r
         Nm, Nz, Nr = get_shape( dset )
         N_pair = (Nz, Nr)
     info = FieldMetaInformation( coord_labels, N_pair,
@@ -206,10 +206,10 @@ def read_field_circ( filename, iteration, field, coord,
         rmax = info.rmax
         inv_dr = 1./info.dr
         Fcirc = get_data( dset )  # (Extracts all modes)
-        if not rz_switch:
-            nr = Fcirc.shape[1]
-        else:
+        if rz_switch:
             nr = Fcirc.shape[2]
+        else:
+            nr = Fcirc.shape[1]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
         else:

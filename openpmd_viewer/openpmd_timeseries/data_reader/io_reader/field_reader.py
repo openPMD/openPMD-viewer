@@ -291,7 +291,6 @@ def read_field_circ( series, iteration, field_name, component_name,
         elif m == 0:
             # Extract mode 0
             F = get_data( series, component, 0, 0 )
-            print(F.shape)
             if not rz_switch:
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = F[::-1, :]
