@@ -133,15 +133,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
         If two quantities are requested by the user, this plots
         a 2d histogram of these quantities.
 
-        In the case of momenta, the result is returned as:
-        - unitless momentum (i.e. gamma*beta) for particles with non-zero mass
-        - in kg.m.s^-1 for particles with zero mass
-
         Parameters
         ----------
         var_list : list of string, optional
             A list of the particle variables to extract. If var_list is not
-            provided, the available particle quantities are printed
+            provided, the available particle quantities are printed.
+            Note that `px`, `py`, `pz` represent the momentum in kg.m.s^-1,
+            while `ux`, `uy`, `uz` represent the unitless momentum
+            (i.e. gamma*beta).
 
         species: string
             A string indicating the name of the species

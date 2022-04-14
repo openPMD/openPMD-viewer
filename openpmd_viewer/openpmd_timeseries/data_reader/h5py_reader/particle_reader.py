@@ -46,6 +46,9 @@ def read_species_data(filename, iteration, species, record_comp, extensions):
                         'ux': 'momentum/x',
                         'uy': 'momentum/y',
                         'uz': 'momentum/z',
+                        'px': 'momentum/x',
+                        'py': 'momentum/y',
+                        'pz': 'momentum/z',                        
                         'w': 'weighting'}
     if record_comp in dict_record_comp:
         opmd_record_comp = dict_record_comp[record_comp]
