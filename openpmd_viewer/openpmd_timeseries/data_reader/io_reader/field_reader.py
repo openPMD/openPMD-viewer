@@ -116,7 +116,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
             grid_spacing, global_offset,
             grid_unit_SI, grid_position )
 
-    return F, info 
+    return F, info
 
 
 def read_field_circ( series, iteration, field_name, component_name,
@@ -188,8 +188,19 @@ def read_field_circ( series, iteration, field_name, component_name,
     # Extract the metainformation
     #   FIXME here and in h5py reader, we need to invert the order on 'F' for
     #         grid spacing/offset/position
-    Nm, Nr, Nz = component.shape
-    info = FieldMetaInformation( { 0: 'r', 1: 'z' }, (Nr, Nz),
+
+    coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
+    if coord_labels[0] == 'r':
+        rz_switch = False
+        Nm, Nr, Nz = component.shape
+        N_pair = (Nr, Nz)
+    else:
+        rz_switch = True
+        Nm, Nz, Nr = component.shape
+        N_pair = (Nz, Nr)
+
+    # Nm, Nr, Nz = component.shape
+    info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
         field.grid_unit_SI, component.position, thetaMode=True )
 
@@ -200,7 +211,6 @@ def read_field_circ( series, iteration, field_name, component_name,
         rmax = info.rmax
         inv_dr = 1./info.dr
         Fcirc = get_data( series, component )  # (Extracts all modes)
-        nr = Fcirc.shape[1]
         if m == 'all':
             modes = [ mode for mode in range(0, int(Nm / 2) + 1) ]
         else:
@@ -215,32 +225,40 @@ def read_field_circ( series, iteration, field_name, component_name,
                 # Calculate excess of elements along z
                 excess_z = int(np.round(Nz/max_res_lon))
                 # Preserve only one every excess_z elements
-                Fcirc = Fcirc[:, :, ::excess_z]
+                if not rz_switch:
+                    Fcirc = Fcirc[:, :, ::excess_z]
+                else:
+                    Fcirc = Fcirc[:, ::excess_z, :]
                 # Update info accordingly
                 info.z = info.z[::excess_z]
                 info.dz = info.z[1] - info.z[0]
-            if nr > max_res_transv/2:
+            if Nr > max_res_transv/2:
                 # Calculate excess of elements along r
-                excess_r = int(np.round(nr/(max_res_transv/2)))
+                excess_r = int(np.round(Nr/(max_res_transv/2)))
                 # Preserve only one every excess_r elements
-                Fcirc = Fcirc[:, ::excess_r, :]
+                if not rz_switch:
+                    Fcirc = Fcirc[:, ::excess_r, :]
+                else:
+                    Fcirc = Fcirc[:, :, ::excess_r]
                 # Update info and necessary parameters accordingly
                 info.r = info.r[::excess_r]
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
-                nr = Fcirc.shape[1]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
         F_total = np.zeros( (nx, ny, nz) )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
-            nx, ny, nz, nr, nmodes, inv_dr, rmax )
+            nx, ny, nz, Nr, nmodes, inv_dr, rmax, rz_switch=rz_switch)
 
     else:
 
         # Extract the modes and recombine them properly
-        F_total = np.zeros( (2 * Nr, Nz ) )
+        if not rz_switch:
+            F_total = np.zeros( (2 * Nr, Nz ) )
+        else:
+            F_total = np.zeros( (Nz, 2 * Nr ) )
         if m == 'all':
             # Sum of all the modes
             # - Prepare the multiplier arrays
@@ -255,15 +273,25 @@ def read_field_circ( series, iteration, field_name, component_name,
             mult_below_axis = np.array( mult_below_axis )
             # - Sum the modes
             F = get_data( series, component )  # (Extracts all modes)
-            F_total[Nr:, :] = np.tensordot( mult_above_axis,
-                                            F, axes=(0, 0) )[:, :]
-            F_total[:Nr, :] = np.tensordot( mult_below_axis,
-                                            F, axes=(0, 0) )[::-1, :]
+            if not rz_switch:
+                F_total[Nr:, :] = np.tensordot( mult_above_axis,
+                                                F, axes=(0, 0) )[:, :]
+                F_total[:Nr, :] = np.tensordot( mult_below_axis,
+                                                F, axes=(0, 0) )[::-1, :]
+            else:
+                F_total[:, Nr:] = np.tensordot( mult_above_axis,
+                                                F, axes=(0, 0) )[:, :]
+                F_total[:, :Nr] = np.tensordot( mult_below_axis,
+                                                F, axes=(0, 0) )[:, ::-1]
         elif m == 0:
             # Extract mode 0
             F = get_data( series, component, 0, 0 )
-            F_total[Nr:, :] = F[:, :]
-            F_total[:Nr, :] = F[::-1, :]
+            if not rz_switch:
+                F_total[Nr:, :] = F[:, :]
+                F_total[:Nr, :] = F[::-1, :]
+            else:
+                F_total[:, Nr:] = F[:, :]
+                F_total[:, :Nr] = F[:, ::-1]
         else:
             # Extract higher mode
             cos = np.cos( m * theta )
@@ -271,8 +299,12 @@ def read_field_circ( series, iteration, field_name, component_name,
             F_cos = get_data( series, component, 2 * m - 1, 0 )
             F_sin = get_data( series, component, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
-            F_total[Nr:, :] = F[:, :]
-            F_total[:Nr, :] = (-1) ** m * F[::-1, :]
+            if not rz_switch:
+                F_total[Nr:, :] = F[:, :]
+                F_total[:Nr, :] = (-1) ** m * F[::-1, :]
+            else:
+                F_total[:, Nr:] = F[:, :]
+                F_total[:, :Nr] = (-1) ** m * F[:, ::-1]
 
     # Perform slicing if needed
     if slice_across is not None:
