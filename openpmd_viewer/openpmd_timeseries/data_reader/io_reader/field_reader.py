@@ -10,7 +10,6 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 
-from openpmd_viewer.openpmd_timeseries.data_order import RZorder
 from .utilities import get_data
 from ...data_order import RZorder, order_error_msg
 from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
