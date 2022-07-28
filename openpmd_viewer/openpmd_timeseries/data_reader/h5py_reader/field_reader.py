@@ -239,6 +239,11 @@ def read_field_circ( filename, iteration, field, coord,
                 info.r = info.r[::excess_r]
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
+                # Update Nr after reducing radial resolution.
+                if not rz_switch:
+                    Nr = Fcirc.shape[1]
+                else:
+                    Nr = Fcirc.shape[2]
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
