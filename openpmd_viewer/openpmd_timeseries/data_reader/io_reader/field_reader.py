@@ -254,10 +254,12 @@ def read_field_circ( series, iteration, field_name, component_name,
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
                 # Update Nr after reducing radial resolution.
-                if not rz_switch:
+                if coord_order is RZorder.mrz:
                     Nr = Fcirc.shape[1]
-                else:
+                elif coord_order is RZorder.mzr:
                     Nr = Fcirc.shape[2]
+                else:
+                    raise Exception(order_error_msg)
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
