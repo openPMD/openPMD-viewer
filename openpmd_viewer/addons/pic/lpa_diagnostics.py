@@ -933,9 +933,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         i_max = np.unravel_index( np.argmax( field ), field.shape )
         # Pick the corresponding transverse slice
         # (Transverse to laser propagation)
-        trans_slice = np.take( field, [i_max[slicing_index]], axis=slicing_index )
+        trans_slice = np.take( field, [i_max[slicing_index]], axis=slicing_index ).flatten()
         # Get transverse positions
-        trans_pos = getattr(info, info.axes[slicing_index])
+        trans_pos = getattr(info, info.axes[(slicing_index+1)%2])
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
