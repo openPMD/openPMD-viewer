@@ -94,7 +94,7 @@ class DataReader( object ):
             if first_file_name is None:
                 raise RuntimeError(
                     "Found no valid files in directory {0}.\n"
-                    "Please check that this is the path to the openPMD files."
+                    "Please check that this is the path to the openPMD files.\n"
                     "(valid files must have one of the following extensions: {1})"
                     .format(path_to_dir, io.file_extensions))
 
