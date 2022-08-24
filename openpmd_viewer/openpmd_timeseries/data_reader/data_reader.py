@@ -88,23 +88,33 @@ class DataReader( object ):
         elif self.backend == 'openpmd-api':
             # guess file ending from first file in directory
             first_file_name = None
-            for file_name in os.listdir( path_to_dir ):
-                if file_name.split(os.extsep)[-1] in io.file_extensions:
-                    first_file_name = file_name
+
+            is_single_file = os.path.isfile(path_to_dir)
+            if is_single_file:
+                first_file_name = path_to_dir
+            else:
+                for file_name in os.listdir( path_to_dir ):
+                    if file_name.split(os.extsep)[-1] in io.file_extensions:
+                        first_file_name = file_name
             if first_file_name is None:
                 raise RuntimeError(
                     "Found no valid files in directory {0}.\n"
-                    "Please check that this is the path to the openPMD files.\n"
+                    "Please check that this is the path to the openPMD files."
                     "(valid files must have one of the following extensions: {1})"
                     .format(path_to_dir, io.file_extensions))
 
-            # match last occurance of integers and replace with %T wildcards
-            # examples: data00000100.h5 diag4_00000500.h5 io12.0.bp
-            #           te42st.1234.yolo.json scan7_run14_data123.h5
-            file_path = re.sub(r'(\d+)(\.(?!\d).+$)', r'%T\2', first_file_name)
+            if is_single_file:
+                file_path = path_to_dir
+                series_name = file_path
+            else:
+                # match last occurance of integers and replace with %T wildcards
+                # examples: data00000100.h5 diag4_00000500.h5 io12.0.bp
+                #           te42st.1234.yolo.json scan7_run14_data123.h5
+                file_path = re.sub(r'(\d+)(\.(?!\d).+$)', r'%T\2', first_file_name)
+                series_name = os.path.join( path_to_dir, file_path)
 
             self.series = io.Series(
-                os.path.join( path_to_dir, file_path),
+                series_name,
                 io.Access.read_only )
             iterations = np.array( self.series.iterations )
 
