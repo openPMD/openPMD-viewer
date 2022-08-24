@@ -29,8 +29,14 @@ def list_files(path_to_dir):
     - an array of integers which correspond to the iteration of each file
     - a dictionary that matches iterations to the corresponding filename
     """
-    # Find all the files in the provided directory
-    all_files = os.listdir(path_to_dir)
+    # group based encoding?
+    is_single_file = os.path.isfile(path_to_dir)
+
+    if is_single_file:
+        all_files = [path_to_dir]
+    else:
+        # Find all the files in the provided directory
+        all_files = os.listdir(path_to_dir)
 
     # Select the hdf5 files, and fill dictionary of correspondence
     # between iterations and files
@@ -38,8 +44,11 @@ def list_files(path_to_dir):
     for filename in all_files:
         # Use only the name that end with .h5 or .hdf5
         if filename.endswith('.h5') or filename.endswith('.hdf5'):
-            full_name = os.path.join(
-                os.path.abspath(path_to_dir), filename)
+            if is_single_file:
+                full_name = filename
+            else:
+                full_name = os.path.join(
+                    os.path.abspath(path_to_dir), filename)
             # extract all iterations from hdf5 file
             f = h5py.File(full_name, 'r')
             iterations = list(f['/data'].keys())
