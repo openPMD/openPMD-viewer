@@ -618,7 +618,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self._current_i = len(self.t) - 1
             # Find the last existing output
             else:
-                self._current_i = self.t[self.t <= t].argmax()
+                self._current_i = abs(self.t - t).argmin()
         # If an iteration is requested
         elif (iteration is not None):
             if (iteration in self.iterations):
