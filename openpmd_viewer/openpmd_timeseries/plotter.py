@@ -303,7 +303,11 @@ class Plotter(object):
         # Get the x axis
         xaxis = getattr( info, info.axes[0] )
         # Plot the data
-        plt.plot( xaxis, F )
+        if F.dtype in [np.complex256, np.complex128, np.complex64]:
+            plot_data = abs(F) # For complex numbers, plot the absolute value
+        else:
+            plot_data = F
+        plt.plot( xaxis, plot_data )
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
@@ -374,7 +378,11 @@ class Plotter(object):
         plt.ylabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
 
         # Plot the data
-        plt.imshow(F, extent=info.imshow_extent, origin='lower',
+        if F.dtype in [np.complex256, np.complex128, np.complex64]:
+            plot_data = abs(F)
+        else:
+            plot_data = F
+        plt.imshow(plot_data, extent=info.imshow_extent, origin='lower',
                    interpolation='nearest', aspect='auto', **kw)
         plt.colorbar()
 
