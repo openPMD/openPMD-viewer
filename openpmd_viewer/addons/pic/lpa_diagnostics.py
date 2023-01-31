@@ -540,8 +540,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                             slice_relative_position=None, plot=False,
                             plot_range=[[None, None], [None, None]], **kw ):
         """
-        Calculate a laser field by filtering out high frequencies. Can either
-        return the envelope slice-wise or a full 2D envelope.
+        Calculate a laser field by filtering out high frequencies. By default
+        this is done by looking at the `E` field, but if the field
+        `laserEnvelope` is present, then this is used instead. Can either
+        return the envelope slice-wise or in the full domain.
 
         Parameters
         ----------
@@ -608,6 +610,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - Envelope data (1D or 2D array)
         - A FieldMetaInformation object
         """
+        # Check whether the laser envelope is present, in this case return it
+        if 'laserEnvelope' in self.avail_fields:
+            envelope, info = self.get_field( 'laserEnvelope', t=t, m=m,
+                iteration=iteration, theta=theta, slice_across=slice_across,
+                slice_relative_position=slice_relative_position,
+                plot=plot, plot_range=plot_range, **kw )
+            return envelope, info
+
         # Check if polarization has been entered
         if pol not in ['x', 'y', 'z']:
             raise ValueError('The `pol` argument is missing or erroneous.')
