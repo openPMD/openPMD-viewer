@@ -29,7 +29,7 @@ default_plot_profile = {
     'FieldAlwaysRefresh': True,
     'ParticlesColorbarMin': -5.e9,
     'ParticlesColorbarMax': 5.e9,
-    'ParticlesColormap': plt.cm.Blues,
+    'ParticlesColormap': 'Blues',
     'ParticlesHRangeMax': 10.,
     'ParticlesVRangeMax': 10.,
     'ParticlesAlwaysRefresh': True,
