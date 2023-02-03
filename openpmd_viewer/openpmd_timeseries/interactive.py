@@ -20,6 +20,20 @@ try:
 except ImportError:
     dependencies_installed = False
 
+default_plot_profile = {
+    'FieldColorbarMin': -5.e9,
+    'FieldColorbarMax': 5.e9,
+    'FieldColormap': 'viridis',
+    'FieldHRangeMax': 10.,
+    'FieldVRangeMax': 10.,
+    'FieldAlwaysRefresh': True,
+    'ParticlesColorbarMin': -5.e9,
+    'ParticlesColorbarMax': 5.e9,
+    'ParticlesColormap': plt.cm.Blues,
+    'ParticlesHRangeMax': 10.,
+    'ParticlesVRangeMax': 10.,
+    'ParticlesAlwaysRefresh': True,
+}
 
 class InteractiveViewer(object):
 
@@ -27,7 +41,8 @@ class InteractiveViewer(object):
         pass
 
     def slider(self, figsize=(6, 5), fields_figure=0, particles_figure=1,
-               exclude_particle_records=['charge', 'mass'], **kw):
+               exclude_particle_records=['charge', 'mass'],
+               plot_profile=None, **kw):
         """
         Navigate the simulation using a slider
 
@@ -55,6 +70,11 @@ class InteractiveViewer(object):
         if not dependencies_installed:
             raise RuntimeError("Failed to load the openPMD-viewer slider.\n"
                 "(Make sure that ipywidgets and matplotlib are installed.)")
+
+        if plot_profile is None:
+            self.dp = default_plot_profile
+        else:
+            self.dp = plot_profile
 
         # -----------------------
         # Define useful functions
@@ -374,17 +394,17 @@ class InteractiveViewer(object):
             set_widget_dimensions( fld_figure_button, width=50 )
             # Colormap button
             fld_color_button = ColorBarSelector( refresh_field,
-                default_cmap=kw.get('cmap', 'viridis'),
-                default_vmin=kw.get('vmin', -5.e9),
-                default_vmax=kw.get('vmax', 5.e9) )
+                default_cmap=kw.get('cmap', self.dp['FieldColormap']),
+                default_vmin=kw.get('vmin', self.dp['FieldColorbarMin']),
+                default_vmax=kw.get('vmax', self.dp['FieldColorbarMax']) )
             # Range buttons
             fld_hrange_button = RangeSelector( refresh_field,
-                default_value=10., title='Horizontal axis:')
+                default_value=self.dp['FieldHRangeMax'], title='Horizontal axis:')
             fld_vrange_button = RangeSelector( refresh_field,
-                default_value=10., title='Vertical axis:')
+                default_value=self.dp['FieldVRangeMax'], title='Vertical axis:')
             # Refresh buttons
             fld_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True)
+                description='Always refresh', value=self.dp['FieldAlwaysRefresh'])
             fld_refresh_button = widgets.Button(
                 description='Refresh now!')
             fld_refresh_button.on_click( partial(refresh_field, force=True) )
@@ -466,21 +486,21 @@ class InteractiveViewer(object):
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = ColorBarSelector( refresh_ptcl,
-                default_cmap=kw.get('cmap', 'Blues'),
-                default_vmin=kw.get('vmin', -5.e9),
-                default_vmax=kw.get('vmax', 5.e9) )
+                default_cmap=kw.get('cmap', self.dp['ParticlesColormap']),
+                default_vmin=kw.get('vmin', self.dp['ParticlesColorbarMin']),
+                default_vmax=kw.get('vmax', self.dp['ParticlesColorbarMax']) )
             # Range buttons
             ptcl_hrange_button = RangeSelector( refresh_ptcl,
-                default_value=10., title='Horizontal axis:')
+                default_value=self.dp['ParticlesHRangeMax'], title='Horizontal axis:')
             ptcl_vrange_button = RangeSelector( refresh_ptcl,
-                default_value=10., title='Vertical axis:')
+                default_value=self.dp['ParticlesVRangeMax'], title='Vertical axis:')
             # Use field mesh buttons
             ptcl_use_field_button = widgets.ToggleButton(
                 description=' Use field mesh', value=True )
             ptcl_use_field_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True)
+                description='Always refresh', value=self.dp['ParticlesAlwaysRefresh'])
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
             ptcl_refresh_button.on_click( partial(refresh_ptcl, force=True) )
