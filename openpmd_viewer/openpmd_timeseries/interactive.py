@@ -33,6 +33,7 @@ default_plot_profile = {
     'ParticlesHRangeMax': 10.,
     'ParticlesVRangeMax': 10.,
     'ParticlesAlwaysRefresh': True,
+    'ParticlesBins': 100,
 }
 
 class InteractiveViewer(object):
@@ -481,7 +482,7 @@ class InteractiveViewer(object):
             ptcl_figure_button = widgets.IntText( value=particles_figure )
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
-            ptcl_bins_button = widgets.IntText( value=100 )
+            ptcl_bins_button = widgets.IntText( value=self.dp['ParticlesBins'] )
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
