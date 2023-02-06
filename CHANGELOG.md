@@ -1,5 +1,15 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.5.0
+
+This release fixes a few miscellaneous bugs:
+
+- Better 3D reconstruction for `theta=None` (See [#344](https://github.com/openPMD/openPMD-viewer/pull/344))
+
+- Better support for ADIOS data (See [#355](https://github.com/openPMD/openPMD-viewer/pull/355))
+
+- Support for group-based encoding (See [#346](https://github.com/openPMD/openPMD-viewer/pull/346))
+
 ## 1.4.0
 
 This new release introduces several improvements:
