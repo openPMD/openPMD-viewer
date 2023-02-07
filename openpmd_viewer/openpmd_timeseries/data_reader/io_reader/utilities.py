@@ -66,6 +66,15 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
         data = np.full(record_component.shape, np.nan, record_component.dtype)
         for chunk in chunks:
             chunk_slice = chunk_to_slice(chunk)
+
+            # skip empty slices
+            # https://github.com/ornladios/ADIOS2
+            volume = 1
+            for csl in chunk_slice:
+                volume *= csl.stop - csl.start
+            if volume == 0:
+                continue
+
             # read only valid region
             x = record_component[chunk_slice]
             series.flush()
@@ -98,6 +107,15 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
             s_valid = list(s)  # same as s but reduced to valid regions in chunk
             s_target = []  # starts and stops in sliced array
             chunk_slice = chunk_to_slice(chunk)
+
+            # skip empty slices
+            # https://github.com/ornladios/ADIOS2
+            volume = 1
+            for csl in chunk_slice:
+                volume *= csl.stop - csl.start
+            if volume == 0:
+                continue
+
             # read only valid region
             for d, slice_d in enumerate(s):
                 start = chunk_slice[d].start
@@ -128,8 +146,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if (output_type is not None) and (data.dtype != output_type):
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if data.dtype in [ np.float128, np.float64, np.float32, np.float16,
-                        np.complex256, np.complex128, np.complex64 ]:
+    if np.issubdtype(data.dtype, np.floating) or \
+        np.issubdtype(data.dtype, np.complexfloating):
         if record_component.unit_SI != 1.0:
             data *= record_component.unit_SI
 

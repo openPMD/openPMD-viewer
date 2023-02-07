@@ -294,19 +294,22 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time = self.t[current_i]
 
-        # Get the title and labels
-        plt.title("%s at %.2e s   (iteration %d)" % (field_label,
-                    time, iteration), fontsize=self.fontsize)
-
-        # Add the name of the axes
-        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
         # Get the x axis
         xaxis = getattr( info, info.axes[0] )
         # Plot the data
-        if F.dtype in [np.complex256, np.complex128, np.complex64]:
+        if np.issubdtype(F.dtype, np.complexfloating):
             plot_data = abs(F) # For complex numbers, plot the absolute value
+            title = "|%s|" %field_label
         else:
             plot_data = F
+            title = "%s" %field_label
+
+        # Get the title and labels
+        title += " at %.2e s   (iteration %d)" % (time, iteration)
+        plt.title(title, fontsize=self.fontsize)
+        # Add the name of the axes
+        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
+
         plt.plot( xaxis, plot_data )
         # Get the limits of the plot
         # - Along the first dimension
@@ -360,31 +363,31 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time = self.t[current_i]
 
+        # Plot the data
+        if np.issubdtype(F.dtype, np.complexfloating):
+            plot_data = abs(F)
+            title = "|%s|" %field_label
+        else:
+            plot_data = F
+            title = "%s" %field_label
+        plt.imshow(plot_data, extent=info.imshow_extent, origin='lower',
+                   interpolation='nearest', aspect='auto', **kw)
+        plt.colorbar()
+
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.2e s   (iteration %d)"
-                      % (field_label, mode, time, iteration),
-                      fontsize=self.fontsize)
+            title += " in the mode %s at %.2e s   (iteration %d)" \
+                      % (mode, time, iteration)
         # 2D Cartesian geometry
         else:
-            plt.title("%s at %.2e s   (iteration %d)"
-                      % (field_label, time, iteration),
-                      fontsize=self.fontsize)
+            title += " at %.2e s   (iteration %d)" % (time, iteration)
+        plt.title(title, fontsize=self.fontsize)
 
         # Add the name of the axes
         plt.xlabel('$%s \;(m)$' % info.axes[1], fontsize=self.fontsize)
         plt.ylabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
-
-        # Plot the data
-        if F.dtype in [np.complex256, np.complex128, np.complex64]:
-            plot_data = abs(F)
-        else:
-            plot_data = F
-        plt.imshow(plot_data, extent=info.imshow_extent, origin='lower',
-                   interpolation='nearest', aspect='auto', **kw)
-        plt.colorbar()
 
         # Get the limits of the plot
         # - Along the first dimension
