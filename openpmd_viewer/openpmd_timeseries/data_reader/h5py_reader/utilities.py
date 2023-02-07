@@ -148,8 +148,8 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=None):
     if (output_type is not None) and (data.dtype != output_type):
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if np.isinstance(data.dtype, np.floating) or \
-        np.isinstance(data.dtype, np.complexfloating):
+    if np.issubdtype(data.dtype, np.floating) or \
+        np.issubdtype(data.dtype, np.complexfloating):
         if dset.attrs['unitSI'] != 1.0:
             data *= dset.attrs['unitSI']
 
