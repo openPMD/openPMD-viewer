@@ -297,7 +297,7 @@ class Plotter(object):
         # Get the x axis
         xaxis = getattr( info, info.axes[0] )
         # Plot the data
-        if F.dtype in [np.complex256, np.complex128, np.complex64]:
+        if np.issubdtype(F.dtype, np.complexfloating):
             plot_data = abs(F) # For complex numbers, plot the absolute value
             title = "|%s|" %field_label
         else:
@@ -364,7 +364,7 @@ class Plotter(object):
         time = self.t[current_i]
 
         # Plot the data
-        if F.dtype in [np.complex256, np.complex128, np.complex64]:
+        if np.issubdtype(F.dtype, np.complexfloating):
             plot_data = abs(F)
             title = "|%s|" %field_label
         else:

@@ -128,8 +128,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if (output_type is not None) and (data.dtype != output_type):
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if data.dtype in [ np.float128, np.float64, np.float32, np.float16,
-                        np.complex256, np.complex128, np.complex64 ]:
+    if np.issubdtype(data.dtype, np.floating) or \
+        np.issubdtype(data.dtype, np.complexfloating):
         if record_component.unit_SI != 1.0:
             data *= record_component.unit_SI
 
