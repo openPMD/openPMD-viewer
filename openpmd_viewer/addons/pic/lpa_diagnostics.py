@@ -104,11 +104,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple of floats with:
         - central energy
         - energy spread
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w, m = self.get_particle(
             var_list=['ux', 'uy', 'uz', 'w', 'mass'], select=select,
             species=species, t=t, iteration=iteration)
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate Lorentz factor and energy for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         if property == 'energy':
@@ -168,11 +172,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple of floats with:
         - mean weighted gamma
         - weighted standard deviation of gamma
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle(
             var_list=['ux', 'uy', 'uz', 'w'], select=select,
             species=species, t=t, iteration=iteration )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate weighted mean and average
@@ -185,7 +193,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             mean_gamma = np.nan
         std_gamma = w_std(gamma, w)
         # Return the result
-        return( mean_gamma, std_gamma )
+        return mean_gamma, std_gamma
 
     def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
                               select=None, plot=False, **kw):
@@ -326,16 +334,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple with:
         - divergence in x plane in rad
         - divergence in y plane in rad
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
                                            species=species, select=select )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate divergence
         div_x = w_std( np.arctan2(ux, uz), w )
         div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
-        return( div_x, div_y )
+        return div_x, div_y
 
     def get_emittance(self, t=None, iteration=None, species=None,
                       select=None, kind='normalized', description='projected',
