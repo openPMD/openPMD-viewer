@@ -1,5 +1,13 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.6.0
+
+This release adds a few features:
+
+- `openPMD-viewer` can now read complex datasets (See [#353](https://github.com/openPMD/openPMD-viewer/pull/353))
+
+- Avoid errors in LPA diagnostics in the absence of selected particles (See [#358](https://github.com/openPMD/openPMD-viewer/pull/358))
+
 ## 1.5.0
 
 This release fixes a few miscellaneous bugs:
