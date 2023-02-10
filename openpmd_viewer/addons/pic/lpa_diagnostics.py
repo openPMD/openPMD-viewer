@@ -616,7 +616,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 iteration=iteration, theta=theta, slice_across=slice_across,
                 slice_relative_position=slice_relative_position,
                 plot=plot, plot_range=plot_range, **kw )
-            return envelope, info
+            return np.abs(envelope), info
 
         # Check if polarization has been entered
         if pol not in ['x', 'y', 'z']:
@@ -920,7 +920,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Float with laser waist in meters
         """
         # In 3D, slice across 'y' by default
-        geometry = self.fields_metadata['E']['geometry']
+        if 'laserEnvelope' in self.fields_metadata:
+            geometry = self.fields_metadata['laserEnvelope']['geometry']
+        else:
+            geometry = self.fields_metadata['E']['geometry']
         if geometry == '3dcartesian':
             slice_across = 'y'
         else:
