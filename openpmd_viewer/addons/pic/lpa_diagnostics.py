@@ -886,7 +886,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         method='fit' ):
+                         method='fit', profile_method='peak' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -917,6 +917,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            'rms': RMS radius, weighted by the transverse profile
            ('rms' tends to give more weight to the "wings" of the pulse)
 
+        profile_method : str, optional, default 'peak'
+            Method used to obtain the transverse profile. Options are: 'peak','projection'
+
         Returns
         -------
         Float with laser waist in meters
@@ -932,17 +935,26 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
                          pol=pol, slice_across=slice_across, theta=theta)
         assert field.ndim == 2
-        # Find the indices of the maximum field, and
-        # pick the corresponding transverse slice
-        itrans_max, iz_max = np.unravel_index(
-            np.argmax( field ), field.shape )
-        trans_slice = field[ :, iz_max ]
         # Get transverse positons
         trans_pos = getattr(info, info.axes[0])
 
+        if profile_method == 'peak':
+            # Find the indices of the maximum field, and
+            # pick the corresponding transverse slice
+            itrans_max, iz_max = np.unravel_index(
+                np.argmax( field ), field.shape )
+            trans_profile = field[ :, iz_max ]
+        elif profile_method == 'projection':
+            # Project field along the propagation direction
+            trans_profile = np.sum( field, axis=1 )
+             
+        if trans_profile.sum() == 0:
+            # No laser
+            return( np.nan )
+        
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
-        w0 = np.sqrt(2) * w_std(trans_pos, trans_slice)
+        w0 = np.sqrt(2) * w_std(trans_pos, trans_profile)
         if method == 'rms':
             return( w0 )
 
@@ -954,7 +966,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             x0 = 0
             # Perform the fit
             params, _ = curve_fit( gaussian_profile, trans_pos,
-                                   trans_slice, p0=[x0, E0, w0 ])
+                                   trans_profile, p0=[x0, E0, w0 ])
             return( params[2] )
 
         else:
