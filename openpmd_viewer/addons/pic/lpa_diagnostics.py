@@ -949,11 +949,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             trans_profile = np.sum( field, axis=1 )
         else:
             raise ValueError('Unknown profile_method: {:s}'.format(profile_method))
-             
+
         if trans_profile.sum() == 0:
             # No laser
             return( np.nan )
-        
+
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
         w0 = np.sqrt(2) * w_std(trans_pos, trans_profile)
