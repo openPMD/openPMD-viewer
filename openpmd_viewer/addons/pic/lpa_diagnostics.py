@@ -947,6 +947,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         elif profile_method == 'projection':
             # Project field along the propagation direction
             trans_profile = np.sum( field, axis=1 )
+        else:
+            raise ValueError('Unknown profile_method: {:s}'.format(profile_method))
              
         if trans_profile.sum() == 0:
             # No laser
@@ -961,7 +963,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Compute waist with Gaussian fit
         elif method == 'fit':
             # Get initial guess for the amplitude
-            E0 = field[ itrans_max, iz_max ]
+            E0 = trans_profile.max()
             # Assume that the pulse is centered
             x0 = 0
             # Perform the fit
