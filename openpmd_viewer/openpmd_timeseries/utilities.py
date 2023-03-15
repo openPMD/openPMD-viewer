@@ -12,6 +12,7 @@ import copy
 import math
 import numpy as np
 from .numba_wrapper import jit
+from .data_order import RZorder, order_error_msg
 
 def sanitize_slicing(slice_across, slice_relative_position):
     """
@@ -299,7 +300,7 @@ def histogram_cic_2d( q1, q2, w,
 
 @jit
 def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
-    nx, ny, nz, nr, nmodes, inv_dr, rmax, rz_switch = False ):
+    nx, ny, nz, nr, nmodes, inv_dr, rmax, coord_order): 
     """
     Reconstruct the field from a quasi-cylindrical simulation (`Fcirc`), as
     a 3D cartesian array (`F3d`).
@@ -321,15 +322,19 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             if ir>0:
                 s0 = ir + 0.5 - r* inv_dr
                 s1 = 1. - s0
-                if not rz_switch:
+                if coord_order is RZorder.mrz:
                     Fcirc_proj = s1*Fcirc[:, ir, :] + s0*Fcirc[:, ir-1, :]
-                else:
+                elif coord_order is RZorder.mzr:
                     Fcirc_proj = s1*Fcirc[:, :, ir] + s0*Fcirc[:, :, ir-1]
-            else:
-                if not rz_switch:
-                    Fcirc_proj = Fcirc[:, ir, :]
                 else:
+                    raise Exception(order_error_msg)
+            else:
+                if coord_order is RZorder.mrz:
+                    Fcirc_proj = Fcirc[:, ir, :]
+                elif coord_order is RZorder.mzr:
                     Fcirc_proj = Fcirc[:, :, ir]
+                else:
+                    raise Exception(order_error_msg)
 
             # Loop over all modes and recontruct data
             if r == 0:
