@@ -886,7 +886,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         method='fit' ):
+                         laser_propagation='z', method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -911,6 +911,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
+        laser_propagation : string, optional
+            Coordinate along which laser field propagates.
+            Default is 'z'.
+
         method : str, optional
            The method which is used to compute the waist
            'fit': Gaussian fit of the transverse profile
@@ -930,15 +934,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
-                         pol=pol, slice_across=slice_across, theta=theta)
+                         pol=pol, laser_propagation=laser_propagation,
+                         slice_across=slice_across, theta=theta)
         assert field.ndim == 2
-        # Find the indices of the maximum field, and
-        # pick the corresponding transverse slice
-        itrans_max, iz_max = np.unravel_index(
-            np.argmax( field ), field.shape )
-        trans_slice = field[ :, iz_max ]
-        # Get transverse positons
-        trans_pos = getattr(info, info.axes[0])
+
+        # Detect direction of laser propagation
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        slicing_index = inverted_axes_dict[laser_propagation]
+        # Find the indices of the maximum field
+        i_max = np.unravel_index( np.argmax( field ), field.shape )
+        # Pick the corresponding transverse slice
+        # (Transverse to laser propagation)
+        trans_slice = np.take( field, [i_max[slicing_index]], axis=slicing_index ).flatten()
+        # Get transverse positions
+        trans_pos = getattr(info, info.axes[(slicing_index+1)%2])
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
@@ -949,7 +958,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Compute waist with Gaussian fit
         elif method == 'fit':
             # Get initial guess for the amplitude
-            E0 = field[ itrans_max, iz_max ]
+            E0 = trans_pos.max()
             # Assume that the pulse is centered
             x0 = 0
             # Perform the fit
