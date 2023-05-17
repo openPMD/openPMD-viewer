@@ -188,18 +188,17 @@ def read_field_circ( filename, iteration, field, coord,
     # Extract the metainformation
     coord_labels = {ii: coord.decode() for (ii,coord) in
                                 enumerate(group.attrs['axisLabels'])}
-    coord_label_str = ''.join(coord_labels.values())
-    coord_label_str = 'm' + coord_label_str
-    coord_order = RZorder[coord_label_str]
-
-    if coord_order == RZorder.mrz:
+    if coord_labels[0] == 'r':
+        coord_order = RZorder.mrz
         Nm, Nr, Nz = get_shape( dset )
         N_pair = (Nr, Nz)
-    elif coord_order == RZorder.mzr:
+    elif coord_labels[1] == 'r':
         Nm, Nz, Nr = get_shape( dset )
         N_pair = (Nz, Nr)
+        coord_order = RZorder.mzr
     else:
         raise Exception(order_error_msg)
+
     info = FieldMetaInformation( coord_labels, N_pair,
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
         group.attrs['gridUnitSI'], dset.attrs['position'], thetaMode=True )

@@ -192,15 +192,15 @@ def read_field_circ( series, iteration, field_name, component_name,
     #         grid spacing/offset/position
 
     coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
-    coord_label_str = ''.join(coord_labels.values())
-    coord_label_str = 'm' + coord_label_str
-    coord_order = RZorder[coord_label_str]
-    if coord_order is RZorder.mrz:
+
+    if coord_labels[0] == 'r':
+        coord_order = RZorder.mrz
         Nm, Nr, Nz = component.shape
         N_pair = (Nr, Nz)
-    elif coord_order is RZorder.mzr:
+    elif coord_labels[1] == 'r':
         Nm, Nz, Nr = component.shape
         N_pair = (Nz, Nr)
+        coord_order = RZorder.mzr
     else:
         raise Exception(order_error_msg)
 
