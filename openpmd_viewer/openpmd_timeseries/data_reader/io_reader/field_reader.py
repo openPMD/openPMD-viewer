@@ -271,12 +271,6 @@ def read_field_circ( series, iteration, field_name, component_name,
     else:
 
         # Extract the modes and recombine them properly
-        if coord_order is RZorder.mrz:
-            F_total = np.zeros( (2 * Nr, Nz ) )
-        elif coord_order is RZorder.mzr:
-            F_total = np.zeros( (Nz, 2 * Nr ) )
-        else:
-            raise Exception(order_error_msg)
         if m == 'all':
             # Sum of all the modes
             # - Prepare the multiplier arrays
@@ -292,11 +286,13 @@ def read_field_circ( series, iteration, field_name, component_name,
             # - Sum the modes
             F = get_data( series, component )  # (Extracts all modes)
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:Nr, :] = np.tensordot( mult_below_axis,
                                                 F, axes=(0, 0) )[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:, :Nr] = np.tensordot( mult_below_axis,
@@ -307,9 +303,11 @@ def read_field_circ( series, iteration, field_name, component_name,
             # Extract mode 0
             F = get_data( series, component, 0, 0 )
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = F[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = F[:, ::-1]
             else:
@@ -322,9 +320,11 @@ def read_field_circ( series, iteration, field_name, component_name,
             F_sin = get_data( series, component, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = (-1) ** m * F[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = (-1) ** m * F[:, ::-1]
             else:
