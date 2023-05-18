@@ -532,7 +532,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(min_z + len_z / bins / 2,), position=(0,))
+            global_offset=(min_z + len_z / bins / 2,), position=(0,),
+            t=t, iteration=iteration)
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -783,7 +784,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         T = (info.zmax - info.zmin) / const.c
         spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
             grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
-            global_offset=(0,), position=(0,))
+            global_offset=(0,), position=(0,),
+            t=t, iteration=iteration)
 
         # Plot the field if required
         if plot:
@@ -1048,7 +1050,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         tmin = -(T - T / spectrogram.shape[1] * maxj)
         info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
             grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
-            global_offset=(0, tmin), position=(0, 0))
+            global_offset=(0, tmin), position=(0, 0)),
+            t=t, iteration=iteration)
 
         # Plot the result if needed
         if plot:

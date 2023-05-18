@@ -57,10 +57,16 @@ class FieldMetaInformation(object):
         than ymin, ymax, xmin, xmax: these values are shifted by half a cell.
         The reason for this is that imshow plots a finite-width square for each
         value of the field array.)
+
+    - t, iteration: double
+        The simulation time and the corresponding iteration
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, thetaMode=False):
+                 global_offset, grid_unitSI, position, thetaMode=False,
+                 t, iteration):
         """
         Create a FieldMetaInformation object
 
@@ -87,6 +93,16 @@ class FieldMetaInformation(object):
             setattr(self, 'd' + axis_name, step)
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
+
+        # Find the output that corresponds to the requested time/iteration
+        # (Modifies self._current_i, self.current_iteration and self.current_t)
+        self._find_output(t,iteration)
+        # Get the corresponding time or iteration
+        time = self.t[self._current_i]
+        iter = self.iterations[self._current_i]
+        # Register the results in the object
+        setattr(self, t, time)
+        setattr(self, iteration, iter)
 
         self._generate_imshow_extent()
 
