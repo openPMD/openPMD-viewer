@@ -12,6 +12,9 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 
+class OpenPMDException(Exception):
+    "Exception raised for invalid use of the openPMD-viewer API"
+    pass
 
 class FieldMetaInformation(object):
     """
@@ -203,3 +206,48 @@ class FieldMetaInformation(object):
 
         # Change axes
         self.axes = {0:'x', 1:'y', 2:'z'}
+
+    def _find_output(self, t, iteration):
+        """
+        Find the output that correspond to the requested `t` or `iteration`
+        Modify self._current_i accordingly.
+
+        Parameter
+        ---------
+        t : float (in seconds)
+            Time requested
+
+        iteration : int
+            Iteration requested
+        """
+        # Check the arguments
+        if (t is not None) and (iteration is not None):
+            raise OpenPMDException(
+                "Please pass either a time (`t`) \nor an "
+                "iteration (`iteration`), but not both.")
+        # If a time is requested
+        elif (t is not None):
+            # Make sure the time requested does not exceed the allowed bounds
+            if t < self.tmin:
+                self._current_i = 0
+            elif t > self.tmax:
+                self._current_i = len(self.t) - 1
+            # Find the closest existing iteration
+            else:
+                self._current_i = abs(self.t - t).argmin()
+        # If an iteration is requested
+        elif (iteration is not None):
+            if (iteration in self.iterations):
+                # Get the index that corresponds to this iteration
+                self._current_i = abs(iteration - self.iterations).argmin()
+            else:
+                iter_list = '\n - '.join([str(it) for it in self.iterations])
+                raise OpenPMDException(
+                    "The requested iteration '%s' is not available.\nThe "
+                    "available iterations are: \n - %s\n" % (iteration, iter_list))
+        else:
+            pass  # self._current_i retains its previous value
+
+        # Register the value in the object
+        self.current_t = self.t[self._current_i]
+        self.current_iteration = self.iterations[self._current_i]
