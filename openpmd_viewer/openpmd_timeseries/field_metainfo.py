@@ -58,15 +58,23 @@ class FieldMetaInformation(object):
         The reason for this is that imshow plots a finite-width square for each
         value of the field array.)
 
-    - t, iteration: double
-        The simulation time and the corresponding iteration
+    - t: float (in seconds), optional
+        The simulation time of the data
         It allows the user to get the simulation time when calling the
         get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
+    - iteration: int
+        The iteration of the data
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
+    - thetaMode: bool
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, thetaMode=False,
-                 t, iteration):
+                 global_offset, grid_unitSI, position, t, iteration, thetaMode=False):
         """
         Create a FieldMetaInformation object
 

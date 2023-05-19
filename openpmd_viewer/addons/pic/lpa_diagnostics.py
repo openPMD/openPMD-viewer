@@ -1050,7 +1050,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         tmin = -(T - T / spectrogram.shape[1] * maxj)
         info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
             grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
-            global_offset=(0, tmin), position=(0, 0)),
+            global_offset=(0, tmin), position=(0, 0),
             t=t, iteration=iteration)
 
         # Plot the result if needed
