@@ -38,7 +38,7 @@ def test_tutorials():
         os.system('jupyter nbconvert --to=python %s' % notebook_name)
         clean_ipython_features(script_name)
         try:
-            response = os.system('python ' + script_name)
+            response = os.system('python3 ' + script_name)
             assert response == 0
         except:
             # now we might want to know the script that was executed
