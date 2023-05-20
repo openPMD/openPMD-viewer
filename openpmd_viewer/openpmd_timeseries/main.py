@@ -501,7 +501,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
             F, info = self.data_reader.read_field_cartesian(
-                iteration, field, coord, axis_labels,
+                iteration, self.iterations, field, coord, axis_labels,
                 slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
@@ -509,15 +509,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
                 Fr, info = self.data_reader.read_field_circ(
-                    iteration, field, 'r', slice_relative_position,
+                    iteration, self.iterations, field, 'r', slice_relative_position,
                     slice_across, m, theta)
                 Ft, info = self.data_reader.read_field_circ(
-                    iteration, field, 't', slice_relative_position,
+                    iteration, self.iterations, field, 't', slice_relative_position,
                     slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = self.data_reader.read_field_circ(iteration,
+                F, info = self.data_reader.read_field_circ(iteration, self.iterations,
                     field, coord, slice_relative_position,
                     slice_across, m, theta)
 

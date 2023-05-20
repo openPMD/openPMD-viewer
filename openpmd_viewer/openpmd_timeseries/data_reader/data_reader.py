@@ -149,7 +149,7 @@ class DataReader( object ):
             return io_reader.read_openPMD_params(
                     self.series, iteration, extract_parameters)
 
-    def read_field_cartesian( self, iteration, field, coord, axis_labels,
+    def read_field_cartesian( self, iteration, iterations, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
         """
         Extract a given field from an openPMD file in the openPMD format,
@@ -159,6 +159,10 @@ class DataReader( object ):
         ----------
         iteration : int
            The iteration at which to extract the fields
+
+        iterations : array
+            An array of integers which correspond to the iteration of each file
+            (in sorted order)
 
         field : string, optional
            Which field to extract
@@ -194,14 +198,14 @@ class DataReader( object ):
         if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_cartesian(
-                filename, iteration, field, coord, axis_labels,
+                filename, iteration, iterations, field, coord, axis_labels,
                 slice_relative_position, slice_across )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_cartesian(
-                self.series, iteration, field, coord, axis_labels,
+                self.series, iteration, iterations, field, coord, axis_labels,
                 slice_relative_position, slice_across )
 
-    def read_field_circ( self, iteration, field, coord, slice_relative_position,
+    def read_field_circ( self, iteration, iterations, field, coord, slice_relative_position,
                         slice_across, m=0, theta=0., max_resolution_3d=None ):
         """
         Extract a given field from an openPMD file in the openPMD format,
@@ -211,6 +215,10 @@ class DataReader( object ):
         ----------
         iteration : int
            The iteration at which to extract the fields
+
+        iterations : array
+            An array of integers which correspond to the iteration of each file
+            (in sorted order)
 
         field : string, optional
            Which field to extract
@@ -259,11 +267,11 @@ class DataReader( object ):
         if self.backend == 'h5py':
             filename = self.iteration_to_file[iteration]
             return h5py_reader.read_field_circ(
-                filename, iteration, field, coord, slice_relative_position,
+                filename, iteration, iterations, field, coord, slice_relative_position,
                 slice_across, m, theta, max_resolution_3d )
         elif self.backend == 'openpmd-api':
             return io_reader.read_field_circ(
-                self.series, iteration, field, coord, slice_relative_position,
+                self.series, iteration, iterations, field, coord, slice_relative_position,
                 slice_across, m, theta, max_resolution_3d )
 
     def read_species_data( self, iteration, species, record_comp, extensions):

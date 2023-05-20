@@ -11,6 +11,7 @@ License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
+from .data_reader import DataReader, available_backends
 
 class OpenPMDException(Exception):
     "Exception raised for invalid use of the openPMD-viewer API"
@@ -73,11 +74,10 @@ class FieldMetaInformation(object):
         get_particle method for a given iteration and vice versa.
         Either `t` or `iteration` should be given.
 
-    - thetaMode: bool
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, t, iteration, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration, iterations, thetaMode=False):
         """
         Create a FieldMetaInformation object
 
@@ -107,7 +107,7 @@ class FieldMetaInformation(object):
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
-        self._find_output(t,iteration)
+        self._find_output(t, iteration, iterations)
         # Get the corresponding time or iteration
         time = self.t[self._current_i]
         iter = self.iterations[self._current_i]
@@ -207,7 +207,7 @@ class FieldMetaInformation(object):
         # Change axes
         self.axes = {0:'x', 1:'y', 2:'z'}
 
-    def _find_output(self, t, iteration):
+    def _find_output(self, t, iteration, iterations):
         """
         Find the output that correspond to the requested `t` or `iteration`
         Modify self._current_i accordingly.
@@ -237,11 +237,11 @@ class FieldMetaInformation(object):
                 self._current_i = abs(self.t - t).argmin()
         # If an iteration is requested
         elif (iteration is not None):
-            if (iteration in self.iterations):
+            if (iteration in iterations):
                 # Get the index that corresponds to this iteration
-                self._current_i = abs(iteration - self.iterations).argmin()
+                self._current_i = abs(iteration - iterations).argmin()
             else:
-                iter_list = '\n - '.join([str(it) for it in self.iterations])
+                iter_list = '\n - '.join([str(it) for it in iterations])
                 raise OpenPMDException(
                     "The requested iteration '%s' is not available.\nThe "
                     "available iterations are: \n - %s\n" % (iteration, iter_list))
@@ -250,4 +250,4 @@ class FieldMetaInformation(object):
 
         # Register the value in the object
         self.current_t = self.t[self._current_i]
-        self.current_iteration = self.iterations[self._current_i]
+        self.current_iteration = iterations[self._current_i]

@@ -16,7 +16,7 @@ from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformatio
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
-def read_field_cartesian( filename, iteration, field, coord, axis_labels,
+def read_field_cartesian( filename, iteration, iterations, field, coord, axis_labels,
                           slice_relative_position, slice_across ):
     """
     Extract a given field from an HDF5 file in the openPMD format,
@@ -29,6 +29,10 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
 
     iteration : int
         The iteration at which to obtain the data
+
+    iterations : array
+        An array of integers which correspond to the iteration of each file
+        (in sorted order)
 
     field : string, optional
        Which field to extract
@@ -107,21 +111,21 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
         F = get_data( dset, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 group.attrs['gridUnitSI'], dset.attrs['position'],
-                t=None, iteration=iteration )
+                t=None, iteration=iteration, iterations=iterations )
     else:
         F = get_data( dset )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
             group.attrs['gridUnitSI'], dset.attrs['position'],
-            t=None, iteration=iteration )
+            t=None, iteration=iteration, iterations=iterations )
 
     # Close the file
     dfile.close()
     return( F, info )
 
 
-def read_field_circ( filename, iteration, field, coord,
+def read_field_circ( filename, iteration, iterations, field, coord,
                      slice_relative_position, slice_across, m=0, theta=0.,
                      max_resolution_3d=None ):
     """
@@ -135,6 +139,10 @@ def read_field_circ( filename, iteration, field, coord,
 
     iteration : int
         The iteration at which to obtain the data
+
+    iterations : array
+        An array of integers which correspond to the iteration of each file
+        (in sorted order)
 
     field : string, optional
        Which field to extract
@@ -205,7 +213,7 @@ def read_field_circ( filename, iteration, field, coord,
     info = FieldMetaInformation( coord_labels, N_pair,
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
         group.attrs['gridUnitSI'], dset.attrs['position'], t=None, iteration=iteration,
-        thetaMode=True )
+        iterations=iterations, thetaMode=True )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
