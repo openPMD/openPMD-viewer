@@ -77,7 +77,7 @@ class FieldMetaInformation(object):
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, t, iteration, iterations, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration, iterations, backend, thetaMode=False):
         """
         Create a FieldMetaInformation object
 
@@ -107,7 +107,7 @@ class FieldMetaInformation(object):
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
-        self._find_output(t, iteration, iterations)
+        self._find_output(t, iteration, iterations, backend)
         # Get the corresponding time or iteration
         time = self.t[self._current_i]
         iter = self.iterations[self._current_i]
@@ -207,7 +207,7 @@ class FieldMetaInformation(object):
         # Change axes
         self.axes = {0:'x', 1:'y', 2:'z'}
 
-    def _find_output(self, t, iteration, iterations):
+    def _find_output(self, t, iteration, iterations, backend):
         """
         Find the output that correspond to the requested `t` or `iteration`
         Modify self._current_i accordingly.
@@ -220,6 +220,35 @@ class FieldMetaInformation(object):
         iteration : int
             Iteration requested
         """
+        # Go through the files of the series, extract the time
+        # and a few parameters.
+        N_iterations = len(iterations)
+        self.t = np.zeros(N_iterations)
+
+        # Check backend
+        if backend is None:
+            backend = available_backends[0] #Pick openpmd-api first if available
+        elif backend not in available_backends:
+            raise RuntimeError("Invalid backend requested: {0}\n"
+                               "The available backends are: {1}"
+                               .format(backend, available_backends) )
+
+        # Initialize data reader
+        self.data_reader = DataReader(backend)
+
+        # - Extract the time for each file
+        for k in range(0, N_iterations):
+            t, params = self.data_reader.read_openPMD_params(iterations[k])
+            self.t[k] = t
+
+        # - Set the current iteration and time
+        self._current_i = 0
+        self.current_iteration = iterations[0]
+        self.current_t = self.t[0]
+        # - Find the min and the max of the time
+        self.tmin = self.t.min()
+        self.tmax = self.t.max()
+
         # Check the arguments
         if (t is not None) and (iteration is not None):
             raise OpenPMDException(

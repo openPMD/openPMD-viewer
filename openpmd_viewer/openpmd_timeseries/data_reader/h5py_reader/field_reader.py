@@ -111,14 +111,14 @@ def read_field_cartesian( filename, iteration, iterations, field, coord, axis_la
         F = get_data( dset, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 group.attrs['gridUnitSI'], dset.attrs['position'],
-                t=None, iteration=iteration, iterations=iterations )
+                t=None, iteration=iteration, iterations=iterations, backend='h5py' )
     else:
         F = get_data( dset )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
             group.attrs['gridUnitSI'], dset.attrs['position'],
-            t=None, iteration=iteration, iterations=iterations )
+            t=None, iteration=iteration, iterations=iterations, backend='h5py' )
 
     # Close the file
     dfile.close()
@@ -213,7 +213,7 @@ def read_field_circ( filename, iteration, iterations, field, coord,
     info = FieldMetaInformation( coord_labels, N_pair,
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
         group.attrs['gridUnitSI'], dset.attrs['position'], t=None, iteration=iteration,
-        iterations=iterations, thetaMode=True )
+        iterations=iterations, backend='h5py', thetaMode=True )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:

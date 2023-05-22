@@ -533,7 +533,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
             global_offset=(min_z + len_z / bins / 2,), position=(0,),
-            t=t, iteration=iteration, iterations=self.iterations)
+            t=t, iteration=iteration, iterations=self.iterations, backend=None)
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -785,7 +785,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
             grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
             global_offset=(0,), position=(0,),
-            t=t, iteration=iteration, iterations=self.iterations )
+            t=t, iteration=iteration, iterations=self.iterations, backend=None )
 
         # Plot the field if required
         if plot:
@@ -1051,7 +1051,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
             grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
             global_offset=(0, tmin), position=(0, 0),
-            t=t, iteration=iteration, iterations=self.iterations)
+            t=t, iteration=iteration, iterations=self.iterations, backend=None)
 
         # Plot the result if needed
         if plot:
