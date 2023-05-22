@@ -63,7 +63,10 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
-    # Extract the dataset and and corresponding group
+    # Extract the iteration
+    it = dfile["/data/" + str(iteration)]
+
+    # Extract the dataset and corresponding group
     if coord is None:
         field_path = field
     else:
@@ -74,6 +77,9 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
     shape = list( get_shape( dset ) )
     grid_spacing = list( group.attrs['gridSpacing'] )
     global_offset = list( group.attrs['gridGlobalOffset'] )
+
+    # Current simulation time
+    time = (it.attrs['time'] + group.attrs['timeOffset']) * it.attrs['timeUnitSI']
 
     # Slice selection
     if slice_across is not None:
@@ -107,14 +113,14 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
         F = get_data( dset, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 group.attrs['gridUnitSI'], dset.attrs['position'],
-                t=group.attrs['time'], iteration=iteration )
+                time, iteration )
     else:
         F = get_data( dset )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
             group.attrs['gridUnitSI'], dset.attrs['position'],
-            t=group.attrs['time'], iteration=iteration )
+            time, iteration )
 
     # Close the file
     dfile.close()
@@ -180,7 +186,10 @@ def read_field_circ( filename, iteration, field, coord,
     """
     # Open the HDF5 file
     dfile = h5py.File( filename, 'r' )
-    # Extract the dataset and and corresponding group
+    # Extract the iteration
+    it = dfile["/data/" + str(iteration)]
+
+    # Extract the dataset and corresponding group
     if coord is None:
         field_path = field
     else:
@@ -194,6 +203,9 @@ def read_field_circ( filename, iteration, field, coord,
     coord_label_str = 'm' + coord_label_str
     coord_order = RZorder[coord_label_str]
 
+    # Current simulation time
+    time = (it.attrs['time'] + group.attrs['timeOffset']) * it.attrs['timeUnitSI']
+
     if coord_order == RZorder.mrz:
         Nm, Nr, Nz = get_shape( dset )
         N_pair = (Nr, Nz)
@@ -204,8 +216,8 @@ def read_field_circ( filename, iteration, field, coord,
         raise Exception(order_error_msg)
     info = FieldMetaInformation( coord_labels, N_pair,
         group.attrs['gridSpacing'], group.attrs['gridGlobalOffset'],
-        group.attrs['gridUnitSI'], dset.attrs['position'], t=group.attrs['time'],
-        iteration=iteration, thetaMode=True )
+        group.attrs['gridUnitSI'], dset.attrs['position'], time,
+        iteration, thetaMode=True )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
