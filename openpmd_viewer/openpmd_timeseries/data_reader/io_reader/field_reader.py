@@ -16,7 +16,7 @@ from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformatio
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
 
-def read_field_cartesian( series, iteration, iterations, field_name, component_name,
+def read_field_cartesian( series, iteration, field_name, component_name,
                           axis_labels, slice_relative_position, slice_across ):
     """
     Extract a given field from a file in the openPMD format,
@@ -67,7 +67,7 @@ def read_field_cartesian( series, iteration, iterations, field_name, component_n
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -115,19 +115,19 @@ def read_field_cartesian( series, iteration, iterations, field_name, component_n
         F = get_data( series, component, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
                 grid_unit_SI, grid_position,
-                t=None, iteration=iteration, iterations=iterations, backend='openpmd-api' )
+                t=it.time, iteration=iteration )
     else:
         F = get_data( series, component )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             grid_spacing, global_offset,
             grid_unit_SI, grid_position,
-            t=None, iteration=iteration, iterations=iterations, backend='openpmd-api' )
+            t=it.time, iteration=iteration )
 
     return F, info
 
 
-def read_field_circ( series, iteration, iterations, field_name, component_name,
+def read_field_circ( series, iteration, field_name, component_name,
                      slice_relative_position, slice_across, m=0, theta=0.,
                      max_resolution_3d=None ):
     """
@@ -141,10 +141,6 @@ def read_field_circ( series, iteration, iterations, field_name, component_name,
 
     iteration: integer
         Iteration from which parameters should be extracted
-
-    iterations : array
-        An array of integers which correspond to the iteration of each file
-        (in sorted order)
 
     field_name : string, optional
        Which field to extract
@@ -190,7 +186,7 @@ def read_field_circ( series, iteration, iterations, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -218,7 +214,7 @@ def read_field_circ( series, iteration, iterations, field_name, component_name,
     info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
         field.grid_unit_SI, component.position, thetaMode=True,
-        t=None, iteration=iteration, iterations=iterations, backend='openpmd-api' )
+        t=it.time, iteration=iteration )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:

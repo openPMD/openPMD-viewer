@@ -11,7 +11,6 @@ License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
-from .data_reader import DataReader, available_backends
 
 class OpenPMDException(Exception):
     "Exception raised for invalid use of the openPMD-viewer API"
@@ -77,7 +76,7 @@ class FieldMetaInformation(object):
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, t, iteration, iterations, backend, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration, thetaMode=False):
         """
         Create a FieldMetaInformation object
 
@@ -105,15 +104,9 @@ class FieldMetaInformation(object):
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
 
-        # Find the output that corresponds to the requested time/iteration
-        # (Modifies self._current_i, self.current_iteration and self.current_t)
-        self._find_output(t, iteration, iterations, backend)
-        # Get the corresponding time or iteration
-        time = self.t[self._current_i]
-        iter = self.iterations[self._current_i]
-        # Register the results in the object
-        setattr(self, t, time)
-        setattr(self, iteration, iter)
+        # Register current simulation time and iteration in the object
+        setattr(self, 'time', t)
+        setattr(self, 'iteration', iteration)
 
         self._generate_imshow_extent()
 
@@ -206,77 +199,3 @@ class FieldMetaInformation(object):
 
         # Change axes
         self.axes = {0:'x', 1:'y', 2:'z'}
-
-    def _find_output(self, t, iteration, iterations, backend):
-        """
-        Find the output that correspond to the requested `t` or `iteration`
-        Modify self._current_i accordingly.
-
-        Parameter
-        ---------
-        t : float (in seconds)
-            Time requested
-
-        iteration : int
-            Iteration requested
-        """
-        # Go through the files of the series, extract the time
-        # and a few parameters.
-        N_iterations = len(iterations)
-        self.t = np.zeros(N_iterations)
-
-        # Check backend
-        if backend is None:
-            backend = available_backends[0] #Pick openpmd-api first if available
-        elif backend not in available_backends:
-            raise RuntimeError("Invalid backend requested: {0}\n"
-                               "The available backends are: {1}"
-                               .format(backend, available_backends) )
-
-        # Initialize data reader
-        self.data_reader = DataReader(backend)
-
-        # - Extract the time for each file
-        for k in range(0, N_iterations):
-            t, params = self.data_reader.read_openPMD_params(iterations[k])
-            self.t[k] = t
-
-        # - Set the current iteration and time
-        self._current_i = 0
-        self.current_iteration = iterations[0]
-        self.current_t = self.t[0]
-        # - Find the min and the max of the time
-        self.tmin = self.t.min()
-        self.tmax = self.t.max()
-
-        # Check the arguments
-        if (t is not None) and (iteration is not None):
-            raise OpenPMDException(
-                "Please pass either a time (`t`) \nor an "
-                "iteration (`iteration`), but not both.")
-        # If a time is requested
-        elif (t is not None):
-            # Make sure the time requested does not exceed the allowed bounds
-            if t < self.tmin:
-                self._current_i = 0
-            elif t > self.tmax:
-                self._current_i = len(self.t) - 1
-            # Find the closest existing iteration
-            else:
-                self._current_i = abs(self.t - t).argmin()
-        # If an iteration is requested
-        elif (iteration is not None):
-            if (iteration in iterations):
-                # Get the index that corresponds to this iteration
-                self._current_i = abs(iteration - iterations).argmin()
-            else:
-                iter_list = '\n - '.join([str(it) for it in iterations])
-                raise OpenPMDException(
-                    "The requested iteration '%s' is not available.\nThe "
-                    "available iterations are: \n - %s\n" % (iteration, iter_list))
-        else:
-            pass  # self._current_i retains its previous value
-
-        # Register the value in the object
-        self.current_t = self.t[self._current_i]
-        self.current_iteration = iterations[self._current_i]
