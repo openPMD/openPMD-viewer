@@ -30,10 +30,6 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     iteration: integer
         Iteration from which parameters should be extracted
 
-    iterations : array
-            An array of integers which correspond to the iteration of each file
-            (in sorted order)
-
     field_name : string, optional
        Which field to extract
 
