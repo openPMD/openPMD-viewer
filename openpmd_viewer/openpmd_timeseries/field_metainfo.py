@@ -12,9 +12,6 @@ License: 3-Clause-BSD-LBNL
 
 import numpy as np
 
-class OpenPMDException(Exception):
-    "Exception raised for invalid use of the openPMD-viewer API"
-    pass
 
 class FieldMetaInformation(object):
     """
