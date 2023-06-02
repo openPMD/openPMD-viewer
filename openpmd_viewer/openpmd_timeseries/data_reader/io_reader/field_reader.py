@@ -63,7 +63,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -77,6 +77,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     global_offset = field.grid_global_offset
     grid_unit_SI = field.grid_unit_SI
     grid_position = component.position
+    time = (it.time + field.time_offset) * it.time_unit_SI
 
     # Slice selection
     #   TODO put in general utilities
@@ -110,13 +111,15 @@ def read_field_cartesian( series, iteration, field_name, component_name,
         # Extract data
         F = get_data( series, component, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
-                grid_unit_SI, grid_position )
+                grid_unit_SI, grid_position,
+                time, iteration )
     else:
         F = get_data( series, component )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             grid_spacing, global_offset,
-            grid_unit_SI, grid_position )
+            grid_unit_SI, grid_position,
+            time, iteration )
 
     return F, info
 
@@ -180,7 +183,7 @@ def read_field_circ( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -203,11 +206,12 @@ def read_field_circ( series, iteration, field_name, component_name,
         N_pair = (Nz, Nr)
     else:
         raise Exception(order_error_msg)
+    time = (it.time + field.time_offset) * it.time_unit_SI
 
     # Nm, Nr, Nz = component.shape
     info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
-        field.grid_unit_SI, component.position, thetaMode=True )
+        field.grid_unit_SI, component.position, time, iteration, thetaMode=True )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
