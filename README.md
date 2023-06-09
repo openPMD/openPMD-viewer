@@ -24,10 +24,10 @@ visualize the data.
 
 The notebooks in the folder `tutorials/` demonstrate how to use both
 the API and the interactive GUI. You can view these notebooks online
-[here](https://github.com/openPMD/openPMD-viewer/tree/master/tutorials).
+[here](https://github.com/openPMD/openPMD-viewer/tree/dev/docs/source/tutorials).
 
 Alternatively, you can even
-[*run* our tutorials online](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/master?filepath=tutorials%2F)!
+[*run* our tutorials online](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/dev?filepath=docs/source/tutorials%2F)!
 
 You can also download and run these notebooks on your local computer
 (when viewing the notebooks with the above link, click on `Raw` to be able to

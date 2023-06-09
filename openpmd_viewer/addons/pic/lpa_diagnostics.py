@@ -31,8 +31,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Initialize an OpenPMD time series with various methods to diagnose the
         data
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         path_to_dir : string
             The path to the directory where the openPMD files are.
             For the moment, only HDF5 files are supported. There should be
