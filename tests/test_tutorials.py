@@ -23,7 +23,7 @@ def test_tutorials():
     """Test all the tutorial notebooks"""
 
     # Go to the relative path where all tutorial notebooks are
-    os.chdir('tutorials')
+    os.chdir('docs/source/tutorials')
     tutorial_notebooks = [filename for filename in os.listdir('./')
                           if filename[-6:] == '.ipynb']
 
