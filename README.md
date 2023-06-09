@@ -1,7 +1,7 @@
 # openPMD-viewer
 
 [![pypi version](https://img.shields.io/pypi/v/openPMD-viewer.svg)](https://pypi.python.org/pypi/openPMD-viewer)
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/main?filepath=tutorials%2F)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/openPMD/openPMD-viewer/dev?filepath=docs/source/tutorials%2F)
 [![License](https://img.shields.io/pypi/l/openPMD-viewer.svg)](LICENSE.txt)
 
 ## Overview
@@ -93,5 +93,5 @@ notebooks is provided when logging to
 
 ## Contributing to the openPMD-viewer
 
-We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/master/CONTRIBUTING.md) for
+We welcome contributions to the code! Please read [this page](https://github.com/openPMD/openPMD-viewer/blob/dev/CONTRIBUTING.md) for
 guidelines on how to contribute.
