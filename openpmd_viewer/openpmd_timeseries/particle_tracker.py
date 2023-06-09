@@ -8,7 +8,6 @@ Authors: Remi Lehe
 License: 3-Clause-BSD-LBNL
 """
 import numpy as np
-from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
 
 class ParticleTracker( object ):
@@ -57,19 +56,21 @@ class ParticleTracker( object ):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
             The iteration at which to obtain the data
             Either `t` or `iteration` should be given by the user.
 
-        select: dict, optional
+        select: dict or 1darray of int, optional
             Either None or a dictionary of rules
             to select the particles, of the form
             'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
-            'uz' : [5., None]  (Particles with uz above 5 mc)
+            'uz' : [5., None]  (Particles with uz above 5 mc).
+            Can also be a 1d array of interegers corresponding to the
+            selected particles `id`
 
         preserve_particle_index: bool, optional
             When retrieving particles at a several iterations,
@@ -88,9 +89,14 @@ class ParticleTracker( object ):
             returned array is simply smaller when particles are absent) but
             then it is not garanteed that a given particle keeps the same index
         """
-        # Extract the particle id and sort them
-        self.selected_pid, = ts.get_particle(['id'], species=species,
-                                select=select, t=t, iteration=iteration)
+
+        # Extract or load the particle id and sort them
+        if (type(select) is dict) or (select is None):
+            self.selected_pid, = ts.get_particle(['id'], species=species,
+                                    select=select, t=t, iteration=iteration)
+        elif (type(select) is np.ndarray):
+            self.selected_pid = select
+
         self.selected_pid.sort()
 
         # Register a few metadata
@@ -99,7 +105,7 @@ class ParticleTracker( object ):
         self.preserve_particle_index = preserve_particle_index
 
 
-    def extract_tracked_particles( self, file_handle, data_list,
+    def extract_tracked_particles( self, iteration, data_reader, data_list,
                                     species, extensions ):
         """
         Select the elements of each particle quantities in data_list,
@@ -107,8 +113,11 @@ class ParticleTracker( object ):
 
         Parameters
         ----------
-        file_handle: h5py.File object
-            The HDF5 file from which to extract data
+        iteration: int
+            The iteration at which to extract the particles
+
+        data_reader: a DataReader object
+            Used in order to extract the macroparticle IDs
 
         data_list: list of 1darrays
             A list of arrays with one element per macroparticle, that represent
@@ -128,7 +137,7 @@ class ParticleTracker( object ):
         initialization)
         """
         # Extract the particle id, and get the extraction indices
-        pid = read_species_data(file_handle, species, 'id', extensions)
+        pid = data_reader.read_species_data(iteration, species, 'id', extensions)
         selected_indices = self.get_extraction_indices( pid )
 
         # For each particle quantity, select only the tracked particles

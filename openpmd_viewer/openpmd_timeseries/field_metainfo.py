@@ -57,10 +57,23 @@ class FieldMetaInformation(object):
         than ymin, ymax, xmin, xmax: these values are shifted by half a cell.
         The reason for this is that imshow plots a finite-width square for each
         value of the field array.)
+
+    - t: float (in seconds), optional
+        The simulation time of the data
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
+    - iteration: int
+        The iteration of the data
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration, thetaMode=False):
         """
         Create a FieldMetaInformation object
 
@@ -87,6 +100,10 @@ class FieldMetaInformation(object):
             setattr(self, 'd' + axis_name, step)
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
+
+        # Register current simulation time and iteration in the object
+        setattr(self, 'time', t)
+        setattr(self, 'iteration', iteration)
 
         self._generate_imshow_extent()
 
@@ -154,8 +171,7 @@ class FieldMetaInformation(object):
         """
 
         try:
-            assert self.axes[0] == 'r'
-            assert self.axes[1] == 'z'
+            assert (self.axes[0] == 'r' and self.axes[1] == 'z') or (self.axes[0] == 'z' and self.axes[1] == 'r')
         except (KeyError, AssertionError):
             raise ValueError('_convert_cylindrical_to_3Dcartesian'
                 ' can only be applied to a timeseries in thetaMode geometry')

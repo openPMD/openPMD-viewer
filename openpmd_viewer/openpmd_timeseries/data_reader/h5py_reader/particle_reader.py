@@ -9,19 +9,23 @@ Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
 
+import h5py
 import numpy as np
 from scipy import constants
-from .utilities import get_data, get_bpath, join_infile_path
+from .utilities import get_data, join_infile_path
 
 
-def read_species_data(file_handle, species, record_comp, extensions):
+def read_species_data(filename, iteration, species, record_comp, extensions):
     """
     Extract a given species' record_comp
 
     Parameters
     ----------
-    file_handle: h5py.File object
-        The HDF5 file from which to extract data
+    filename : string
+       The absolute path to the HDF5 file
+
+    iteration : int
+        The iteration at which to obtain the data
 
     species: string
         The name of the species to extract (in the openPMD file)
@@ -33,6 +37,8 @@ def read_species_data(file_handle, species, record_comp, extensions):
     extensions: list of strings
         The extensions that the current OpenPMDTimeSeries complies with
     """
+    # Open the HDF5 file
+    dfile = h5py.File( filename, 'r' )
     # Translate the record component to the openPMD format
     dict_record_comp = {'x': 'position/x',
                         'y': 'position/y',
@@ -47,11 +53,11 @@ def read_species_data(file_handle, species, record_comp, extensions):
         opmd_record_comp = record_comp
 
     # Open the HDF5 file
-    base_path = get_bpath(file_handle)
-    particles_path = file_handle.attrs['particlesPath'].decode()
+    base_path = '/data/{0}'.format( iteration )
+    particles_path = dfile.attrs['particlesPath'].decode()
 
     # Extract the right dataset
-    species_grp = file_handle[
+    species_grp = dfile[
         join_infile_path(base_path, particles_path, species) ]
     if opmd_record_comp == 'id':
         output_type = np.uint64
@@ -83,5 +89,7 @@ def read_species_data(file_handle, species, record_comp, extensions):
             norm_factor = 1. / (m * constants.c)
             data *= norm_factor
 
+    # Close the file
+    dfile.close()
     # Return the data
     return(data)

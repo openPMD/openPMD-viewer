@@ -1,0 +1,20 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  win_pip:
+    name: Windows
+    strategy:
+      matrix:
+        python-version: [3.10]
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install dependencies
+      run: |
+        python -m pip install cython numpy scipy h5py openpmd-api matplotlib jupyter pytest pyflakes wget
+    - name: Test
+      run: python setup.py test

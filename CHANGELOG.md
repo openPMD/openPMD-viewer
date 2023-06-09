@@ -1,6 +1,93 @@
 # Change Log / Release Log for openPMD-viewer
 
-## 1.0
+## 1.6.0
+
+This release adds a few features:
+
+- `openPMD-viewer` can now read complex datasets (See [#353](https://github.com/openPMD/openPMD-viewer/pull/353))
+
+- Avoid errors in LPA diagnostics in the absence of selected particles (See [#358](https://github.com/openPMD/openPMD-viewer/pull/358))
+
+## 1.5.0
+
+This release fixes a few miscellaneous bugs:
+
+- Better 3D reconstruction for `theta=None` (See [#344](https://github.com/openPMD/openPMD-viewer/pull/344))
+
+- Better support for ADIOS data (See [#355](https://github.com/openPMD/openPMD-viewer/pull/355))
+
+- Support for group-based encoding (See [#346](https://github.com/openPMD/openPMD-viewer/pull/346))
+
+## 1.4.0
+
+This new release introduces several improvements:
+
+- The changes introduced in 1.3.0 caused a major slowdown when reading certain
+types of data. This has been fixed in this new release. (See [#340](https://github.com/openPMD/openPMD-viewer/pull/340) for more details.)
+
+- `openPMD-viewer` now supports `thetaMode` geometry with data written using
+`r` as the fastest index (as written by e.g. [WarpX](https://github.com/ECP-WarpX/WarpX))
+in addition to the previously supported data format which used `z` as the fastest index
+(as written by e.g. [fbpic](https://github.com/fbpic/fbpic)). (See
+[337](https://github.com/openPMD/openPMD-viewer/pull/337))
+
+- `openPMD-viewer` will raise an exception if the user asks for an iteration
+that is  not part of the dataset (instead of printing a message and reverting
+to the first iteration, which can be confusing) (See [336](https://github.com/openPMD/openPMD-viewer/pull/336))
+
+## 1.3.0
+
+This new release introduces preliminary support for MR datasets
+(see [#332](https://github.com/openPMD/openPMD-viewer/pull/332)).
+
+## 1.2.0
+
+This new release introduces several bug-fixes and miscellaneous features:
+
+- There is a new function `get_energy_spread` that returns the energy
+  spread of the beam. This is partially redundant with `get_mean_gamma`,
+  which is kept for backward compatibility.
+  (see [#304](https://github.com/openPMD/openPMD-viewer/pull/304)
+  and [#317](https://github.com/openPMD/openPMD-viewer/pull/317))
+
+- The 3D field reconstruction from `ThetaMode` data now has an option
+  `max_resolution_3d` that limits the resolution of the final 3D array.
+  This is added in order to limit the memory footprint of this array.
+  (see [#307](https://github.com/openPMD/openPMD-viewer/pull/307))
+  The 3D reconstruction is now also more accurate, thanks to the implementation
+  of linear interpolation.
+  (see [#311](https://github.com/openPMD/openPMD-viewer/pull/311))
+
+- A bug that affected reading `ThetaMode` data with the `openpmd-api` backend
+  has been fixed. (see [#313](https://github.com/openPMD/openPMD-viewer/pull/313))
+
+- A bug that affected `get_laser_waist` has been fixed:
+  (see [#320](https://github.com/openPMD/openPMD-viewer/pull/320))
+
+## 1.1.0
+
+This new release introduces the option to read `openPMD` files with different backends. In addition to the legacy `h5py` backend (which can read only HDF5 openPMD file), `openPMD-viewer` now has the option to use the `openpmd-api` backend (which can read both HDF5 and ADIOS openPMD files). Because the `openpmd-api` backend is thus more general, it is selected by default if available (i.e. if installed locally).
+The user can override the default choice, by passing the `backend` argument when creating an `OpenPMDTimeSeries` object, and check which backend has been chosen by inspecting the `.backend` attribute of this object.
+
+In addition, several smaller changes were introduced in this PR:
+- The method `get_laser_envelope` can now take the argument `laser_propagation` in order to support lasers that do not propagates along the `z` axis.
+- `openPMD-viewer` can now properly read `groupBased` openPMD  files (i.e. files that contain several iterations) [#301](https://github.com/openPMD/openPMD-viewer/pull/301).
+- Users can now pass arrays of ID to the `ParticleTracker` [#283](https://github.com/openPMD/openPMD-viewer/pull/283)
+
+## 1.0.1
+
+This is a bug-fix release.
+
+- Unreadable files are now skipped (instead of crashing the whole timeseries) ; see [#262](https://github.com/openPMD/openPMD-viewer/pull/262).
+
+- A bug related to units (microns vs meters) was fixed in `get_emittance` and `get_current` (see [#276](https://github.com/openPMD/openPMD-viewer/pull/276))
+
+- The quick-start notebook (`openPMD-visualization`) raised a warning saying
+`Notebook validation failed` in some cases. This was fixed (see [#274](https://github.com/openPMD/openPMD-viewer/pull/274))
+
+- When using the option `plot=True` with Python 2, openPMD-viewer crashed. This is now fixed (see [#271](https://github.com/openPMD/openPMD-viewer/pull/271)).
+
+## 1.0.0
 
 This version introduces major changes and breaks backward compatibility.
 
@@ -15,15 +102,24 @@ meters
 ```
 x, y, z = ts.get_particle(['x', 'y', 'z'], iteration=1000)
 ```
-- In `ts.get_field`, slicing can now be done in several directions
-(by passing a list as the argument `slicing_dir`), and for
+- In `ts.get_field`, slicing can now be done in several directions, and for
 1d, 2d, 3d, and circ geometries. As a consequence, this breaks backward
 compatibility for 3d field:
 ```get_field(field=field, coord=coord, iteration=iteration)```
 used to return the central slice along `y` while it now returns the full 3d field.
+In addition, the name of the argument of `get_field` that triggers slicing
+has been changed from `slicing_dir` to `slice_across` (and `slicing` has been
+changed to `slice_relative_position`).
+- `openPMD-viewer` does not rely on Cython anymore. Instead, it uses `numba`
+for functions that perform a substantial amount of computation.
 - A new function (`ts.iterate`) was introduced in order to quickly apply a
 given function to all iterations of a time series. See the docstring of
 `ts.iterate` for more information.
+- The function `get_laser_envelope` does not support the argument `index` anymore
+(which was effectively used in order to perform slicing). Instead, users should use
+the argument `slicing_dir`. In addition, `get_laser_envelope` now supports the
+argument `plot_range`.
+- The function `get_laser_waist` does not support the agument `slicing_dir` anymore.
 
 ## 0.9.0
 

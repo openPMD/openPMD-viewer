@@ -14,6 +14,7 @@ from openpmd_viewer import OpenPMDTimeSeries, FieldMetaInformation
 import numpy as np
 import scipy.constants as const
 from scipy.optimize import curve_fit
+from openpmd_viewer.openpmd_timeseries.utilities import sanitize_slicing
 from openpmd_viewer.openpmd_timeseries.plotter import check_matplotlib
 from scipy.signal import hilbert
 try:
@@ -25,7 +26,7 @@ except ImportError:
 
 class LpaDiagnostics( OpenPMDTimeSeries ):
 
-    def __init__( self, path_to_dir, check_all_files=True ):
+    def __init__( self, path_to_dir, check_all_files=True, backend=None ):
         """
         Initialize an OpenPMD time series with various methods to diagnose the
         data
@@ -43,9 +44,102 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
+
+        backend: string
+            Backend to be used for data reading. Can be `openpmd-api`
+            or `h5py`. If not provided will use `openpmd-api` if available
+            and `h5py` otherwise.
         """
         OpenPMDTimeSeries.__init__( self, path_to_dir,
-                                    check_all_files=check_all_files )
+                                    check_all_files=check_all_files, backend=backend )
+
+    def get_energy_spread( self, t=None, iteration=None, species=None,
+                        select=None, center='mean', width='std', property='energy' ):
+        """
+        Calculate the central energy and energy spread according to the
+        particle weights
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an existing iteration, the closest existing iteration will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        species : str
+            Particle species to use for calculations
+
+        select : dict, optional
+            Either None or a dictionary of rules
+            to select the particles, of the form
+            'x' : [-4., 10.]   (Particles having x between -4 and 10 meters)
+            'z' : [0, 100] (Particles having z between 0 and 100 meters)
+
+        center : str
+            Method to find the central energy of the particle distribution
+            Should be one of
+
+            - 'mean'
+            - 'median'
+
+        width : str
+            Method to find the energy spread of the particle distribution
+            Should be one of
+
+            - 'std'
+            - 'mad'
+
+        property : str
+            Unit of energy. Should be one of
+
+            - 'energy' returns energy in MeV
+            - 'gamma' returns Lorentz factor
+
+        Returns
+        -------
+        A tuple of floats with:
+        - central energy
+        - energy spread
+        Returns NaN if particle selection is empty
+        """
+        # Get particle data
+        ux, uy, uz, w, m = self.get_particle(
+            var_list=['ux', 'uy', 'uz', 'w', 'mass'], select=select,
+            species=species, t=t, iteration=iteration)
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
+        # Calculate Lorentz factor and energy for all particles
+        gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
+        if property == 'energy':
+            prop = (gamma - 1) * m * const.c ** 2 / const.e * 1e-6
+
+        elif property == 'gamma':
+            prop = gamma
+        else:
+            raise ValueError('Invalid output property: %s'%property)
+
+        # Calculate weighted center
+        if center == 'mean':
+            p_center = w_ave(prop, w)
+        elif center == 'median':
+            p_center = w_median(prop, w)
+        else:
+            raise ValueError('Invalid center property: %s' % center)
+
+        # Calculate weighted width
+        if width == 'std':
+            p_width = w_std(prop, w)
+        elif width == 'mad':
+            p_width = w_mad(prop, w)
+        else:
+            raise ValueError('Invalid width property: %s' % width)
+
+        return p_center, p_width
 
     def get_mean_gamma( self, t=None, iteration=None, species=None,
                         select=None ):
@@ -57,7 +151,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -78,11 +172,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple of floats with:
         - mean weighted gamma
         - weighted standard deviation of gamma
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle(
             var_list=['ux', 'uy', 'uz', 'w'], select=select,
             species=species, t=t, iteration=iteration )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate weighted mean and average
@@ -95,7 +193,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             mean_gamma = np.nan
         std_gamma = w_std(gamma, w)
         # Return the result
-        return( mean_gamma, std_gamma )
+        return mean_gamma, std_gamma
 
     def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
                               select=None, plot=False, **kw):
@@ -110,7 +208,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -178,7 +276,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -215,7 +313,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -236,16 +334,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple with:
         - divergence in x plane in rad
         - divergence in y plane in rad
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
                                            species=species, select=select )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate divergence
         div_x = w_std( np.arctan2(ux, uz), w )
         div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
-        return( div_x, div_y )
+        return div_x, div_y
 
     def get_emittance(self, t=None, iteration=None, species=None,
                       select=None, kind='normalized', description='projected',
@@ -258,7 +360,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -319,8 +421,6 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         x, y, z, ux, uy, uz, w = self.get_particle(
             var_list=['x', 'y', 'z', 'ux', 'uy', 'uz', 'w'], t=t,
             iteration=iteration, species=species, select=select )
-        x *= 1.e-6
-        y *= 1.e-6
         # Normalized or trace-space emittance
         if kind == 'normalized':
             ux = ux
@@ -374,7 +474,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
          t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user
 
         iteration : int
@@ -412,8 +512,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             t=t, iteration=iteration,
             species=species, select=select )
         # Length to be seperated in bins
-        len_z = np.max(z) - np.min(z)
+
         if w.size > 0:
+            min_z = np.min(z)
+            len_z = np.max(z) - min_z
             # Calculate Lorentz factor for all particles
             gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
             # Calculate particle velocities
@@ -422,13 +524,16 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             len_z = np.max(z) - np.min(z)
             vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
             # Calculate the current in each bin
-            current = np.abs(vzq_sum * bins / (len_z * 1.e-6))
+            current = np.abs(vzq_sum * bins / (len_z))
         else:
             current = np.zeros(bins)
+            len_z = 0
+            min_z = 0
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(np.min(z) + len_z / bins / 2,), position=(0,))
+            global_offset=(min_z + len_z / bins / 2,), position=(0,),
+            t=self.current_t, iteration=self.current_iteration)
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -442,9 +547,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the current and bin centers
         return(current, info)
 
-    def get_laser_envelope( self, t=None, iteration=None, pol=None, m='all',
-                            index='center', theta=0, slicing=0,
-                            slicing_dir=None, plot=False, **kw ):
+    def get_laser_envelope( self, t=None, iteration=None, pol=None,
+                            laser_propagation='z',
+                            m='all', theta=0, slice_across=None,
+                            slice_relative_position=None, plot=False,
+                            plot_range=[[None, None], [None, None]], **kw ):
         """
         Calculate a laser field by filtering out high frequencies. Can either
         return the envelope slice-wise or a full 2D envelope.
@@ -453,7 +560,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -461,43 +568,48 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             Either `t` or `iteration` should be given by the user.
 
         pol : string
-            Polarization of the field. Options are 'x', 'y'
+            Polarization of the field. Options are 'x', 'y', 'z'
+
+        laser_propagation : string, optional
+            Coordinate along which laser field propagates.
+            Default is 'z'.
 
         m : int or str, optional
            Only used for thetaMode geometry
            Either 'all' (for the sum of all the modes)
            or an integer (for the selection of a particular mode)
 
-        index : int or str, optional
-            Transversal index of the slice from which to calculate the envelope
-            Default is 'center', using the center slice.
-            Use 'all' to calculate a full 2D envelope
-
         theta : float, optional
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           Default is 0.
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
+        slice_across : str or list of str, optional
+           Direction(s) across which the data should be sliced
            + In cartesian geometry, elements can be:
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
                - 3d: 'x' and/or 'y' and/or 'z'
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
-           If slicing_dir is None, the full grid is returned.
+           If slice_across is None, the full grid is returned.
            Default is None.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default is 0.
 
         plot : bool, optional
            Whether to plot the requested quantity
+
+        plot_range : list of lists
+           A list containing 2 lists of 2 elements each
+           Indicates the values between which to clip the plot,
+           along the 1st axis (first list) and 2nd axis (second list)
+           Default: plots the full extent of the simulation box
 
         **kw : dict, otional
            Additional options to be passed to matplotlib's `plot`(1D) or
@@ -510,47 +622,56 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - A FieldMetaInformation object
         """
         # Check if polarization has been entered
-        if pol is None:
+        if pol not in ['x', 'y', 'z']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        # Get field data
-        field = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=pol, theta=theta, m=m,
-                                slicing=slicing, slicing_dir=slicing_dir )
-        info = field[1]
-        if index == 'all':
-            # Filter the full 2D array
-            e_complx = hilbert(field[0], axis=1)
-        elif index == 'center':
-            # Filter the central slice (1D array)
-            field_slice = field[0][int( field[0].shape[0] / 2), :]
-            e_complx = hilbert(field_slice)
-        else:
-            # Filter the requested slice (2D array)
-            field_slice = field[0][index, :]
-            e_complx = hilbert(field_slice)
+
+        # Prevent slicing across `laser_propagation`, when extracting the raw electric field
+        # (`laser_propagation` axis is needed for calculation of envelope)
+        # but record whether the user asked for slicing across `laser_propagation`,
+        # and whether a corresponding `slice_relative_position` coordinate
+        # along `laser_propagation` was given, so as to perform this slicing later in this function.
+        slicing_coord_laser = None
+        if slice_across is not None:
+            slice_across, slice_relative_position = \
+                sanitize_slicing(slice_across, slice_relative_position)
+            if laser_propagation in slice_across:
+                index_slicing_coord_laser = slice_across.index(laser_propagation)
+                slice_across.pop(index_slicing_coord_laser)
+                slicing_coord_laser = slice_relative_position.pop(index_slicing_coord_laser)
+        # Get field data, and perform Hilbert transform
+        field, info = self.get_field( t=t, iteration=iteration, field='E',
+                              coord=pol, theta=theta, m=m,
+                              slice_across=slice_across,
+                              slice_relative_position=slice_relative_position )
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        e_complx = hilbert(field, axis=inverted_axes_dict[laser_propagation])
         envelope = np.abs(e_complx)
-        # Restrict the metainformation to 1d if needed
-        if index != 'all':
-            info.restrict_to_1Daxis( info.axes[1] )
+        # If the user asked for slicing along `laser_propagation`, do it now
+        if slicing_coord_laser is not None:
+            slicing_index = inverted_axes_dict[laser_propagation]
+            coord_array = getattr( info, laser_propagation )
+            # Number of cells along the slicing direction
+            n_cells = len(coord_array)
+            # Index of the slice (prevent stepping out of the array)
+            i_cell = int( 0.5 * (slicing_coord_laser + 1.) * n_cells )
+            i_cell = max( i_cell, 0 )
+            i_cell = min( i_cell, n_cells - 1)
+            envelope = np.take( envelope, [i_cell], axis=slicing_index )
+            envelope = np.squeeze(envelope)
+            # Remove the sliced labels from the FieldMetaInformation
+            info._remove_axis(laser_propagation)
 
         # Plot the result if needed
         if plot:
-            check_matplotlib()
-            iteration = self.iterations[ self._current_i ]
-            time_s = self.t[ self._current_i ]
-            if index != 'all':
-                plt.plot( info.z, envelope, **kw)
-                plt.ylabel('$E_%s \;(V/m)$' % pol,
-                           fontsize=self.plotter.fontsize)
-            else:
-                plt.imshow( envelope, extent=info.imshow_extent,
-                            aspect='auto', **kw)
-                plt.colorbar()
-                plt.ylabel('$%s \;(m)$' % pol,
-                            fontsize=self.plotter.fontsize)
-            plt.title("Laser envelope at %.2e s   (iteration %d)"
-                % (time_s, iteration ), fontsize=self.plotter.fontsize)
-            plt.xlabel('$z \;(m)$', fontsize=self.plotter.fontsize)
+            geometry = self.fields_metadata['E']['geometry']
+            field_label = 'E%s (envelope)' %pol
+            if envelope.ndim == 1:
+                self.plotter.show_field_1d(envelope, info, field_label,
+                self._current_i, plot_range=plot_range, **kw)
+            elif envelope.ndim == 2:
+                self.plotter.show_field_2d(envelope, info, slice_across, m,
+                    field_label, geometry, self._current_i,
+                    plot_range=plot_range, **kw)
         # Return the result
         return( envelope, info )
 
@@ -563,7 +684,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -618,7 +739,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -648,26 +769,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Check if polarization has been entered
         if pol not in ['x', 'y']:
             raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        if "3dcartesian" in self.avail_geom:
-            slicing = 0.
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
-            slicing = None
+        # Get a lineout along the 'z' axis,
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get field data
-        field, info = self.get_field( t=t, iteration=iteration, field='E',
-                                coord=pol, theta=theta, m=m,
-                                slicing=slicing, slicing_dir=slicing_dir )
-        # Get central field lineout
-        field1d = field[ int( field.shape[0] / 2 ), :]
+        field1d, info = self.get_field( t=t, iteration=iteration, field='E',
+                                coord=pol, m=m, slice_across=slice_across )
         # FFT of 1d data
         dt = (info.z[1] - info.z[0]) / const.c  # Integration step for the FFT
         fft_field = np.fft.fft(field1d) * dt
@@ -677,7 +784,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         T = (info.zmax - info.zmin) / const.c
         spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
             grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
-            global_offset=(0,), position=(0,))
+            global_offset=(0,), position=(0,),
+            t=self.current_t, iteration=self.current_iteration )
 
         # Plot the field if required
         if plot:
@@ -700,7 +808,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -714,26 +822,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with normalized vector potential a0
         """
-        if pol not in ['x', 'y']:
-            raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
+        # Get a lineout along the 'z' axis,
+        slice_across = self._get_slicing_for_longitudinal_lineout()
 
         # Get the peak field from field envelope
         Emax = np.amax(self.get_laser_envelope(t=t, iteration=iteration,
-                                               pol=pol, theta=theta,
-                                               slicing=slicing,
-                                               slicing_dir=slicing_dir)[0])
+                                       pol=pol, slice_across=slice_across)[0])
         # Get mean frequency
         omega = self.get_main_frequency(t=t, iteration=iteration, pol=pol)
         # Calculate a0
@@ -749,7 +843,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -769,25 +863,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with ctau in meters
         """
-        if pol not in ['x', 'y']:
-            raise ValueError('The `pol` argument is missing or erroneous.')
-        if pol == 'x':
-            theta = 0
-        else:
-            theta = np.pi / 2.
-        slicing = 0.
-        if "3dcartesian" in self.avail_geom:
-            if pol == 'x':
-                slicing_dir = 'y'
-            else:
-                slicing_dir = 'x'
-        else:
-            slicing_dir = None
+        # Get a lineout along the 'z' axis,
+        slice_across = self._get_slicing_for_longitudinal_lineout()
+
         # Get the field envelope
         E, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                            pol=pol, theta=theta,
-                                            slicing=slicing,
-                                            slicing_dir=slicing_dir)
+                                            pol=pol, slice_across=slice_across)
         # Calculate ctau with RMS value
         ctau = np.sqrt(2) * w_std(info.z, E)
         if method == 'rms':
@@ -807,15 +888,18 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         slicing=None, slicing_dir=None, method='fit' ):
+                         laser_propagation='z', method='fit' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
+
+        In 3D, this function takes a slice across `y`, and thus computes the
+        waist in the `x-z` plane.
 
         Parameters
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -829,24 +913,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           If slicing is None, the full grid is returned.
-           Default is None
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
-           + In cartesian geometry, elements can be:
-               - 1d: 'z'
-               - 2d: 'x' and/or 'z'
-               - 3d: 'x' and/or 'y' and/or 'z'
-           + In cylindrical geometry, elements can be 'r' and/or 'z'
-           Returned array is reduced by 1 dimension per slicing.
-           Default is None.
+        laser_propagation : string, optional
+            Coordinate along which laser field propagates.
+            Default is 'z'.
 
         method : str, optional
            The method which is used to compute the waist
@@ -858,19 +927,29 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         -------
         Float with laser waist in meters
         """
-        # Get the field envelope
+        # In 3D, slice across 'y' by default
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == '3dcartesian':
+            slice_across = 'y'
+        else:
+            slice_across = None
+
+        # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
-                                                pol=pol, index='all',
-                                                slicing=slicing,
-                                                slicing_dir=slicing_dir,
-                                                theta=theta)
-        # Find the indices of the maximum field, and
-        # pick the corresponding transverse slice
-        itrans_max, iz_max = np.unravel_index(
-            np.argmax( field ), dims=field.shape )
-        trans_slice = field[ :, iz_max ]
-        # Get transverse positons
-        trans_pos = getattr(info, info.axes[0])
+                         pol=pol, laser_propagation=laser_propagation,
+                         slice_across=slice_across, theta=theta)
+        assert field.ndim == 2
+
+        # Detect direction of laser propagation
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        slicing_index = inverted_axes_dict[laser_propagation]
+        # Find the indices of the maximum field
+        i_max = np.unravel_index( np.argmax( field ), field.shape )
+        # Pick the corresponding transverse slice
+        # (Transverse to laser propagation)
+        trans_slice = np.take( field, [i_max[slicing_index]], axis=slicing_index ).flatten()
+        # Get transverse positions
+        trans_pos = getattr(info, info.axes[(slicing_index+1)%2])
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
@@ -881,7 +960,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Compute waist with Gaussian fit
         elif method == 'fit':
             # Get initial guess for the amplitude
-            E0 = field[ itrans_max, iz_max ]
+            E0 = trans_pos.max()
             # Assume that the pulse is centered
             x0 = 0
             # Perform the fit
@@ -892,8 +971,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         else:
             raise ValueError('Unknown method: {:s}'.format(method))
 
-    def get_spectrogram( self, t=None, iteration=None, pol=None, theta=0,
-                          slicing_dir=None, slicing=0., plot=False, **kw ):
+    def get_spectrogram( self, t=None, iteration=None, pol=None,
+                          plot=False, **kw ):
         """
         Calculates the spectrogram of a laserpulse, by the FROG method.
 
@@ -909,7 +988,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -931,15 +1010,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - info : a FieldMetaInformation object
            (see the corresponding docstring)
         """
+        # Get a lineout along the 'z' axis
+        slice_across = self._get_slicing_for_longitudinal_lineout()
+
         # Get the field envelope
-        env, _ = self.get_laser_envelope(t=t, iteration=iteration, pol=pol)
+        env, _ = self.get_laser_envelope(t=t, iteration=iteration,
+                                    pol=pol, slice_across=slice_across)
         # Get the field
         E, info = self.get_field( t=t, iteration=iteration, field='E',
-                                    coord=pol, theta=theta,
-                                    slicing_dir=slicing_dir,
-                                    slicing=slicing)
-        # Get central slice
-        E = E[ int(E.shape[0] / 2), :]
+                                    coord=pol, slice_across=slice_across)
         Nz = len(E)
         # Get time domain of the data
         tmin = info.zmin / const.c
@@ -971,7 +1050,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         tmin = -(T - T / spectrogram.shape[1] * maxj)
         info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
             grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
-            global_offset=(0, tmin), position=(0, 0))
+            global_offset=(0, tmin), position=(0, 0),
+            t=self.current_t, iteration=self.current_iteration )
 
         # Plot the result if needed
         if plot:
@@ -986,6 +1066,22 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             plt.ylabel('$\omega \;(rad.s^{-1})$',
                        fontsize=self.plotter.fontsize )
         return( spectrogram, info )
+
+
+    def _get_slicing_for_longitudinal_lineout(self):
+        """
+        Return the `slice_across` argument which results in a 1D slice
+        along `z`, for the current geometry.
+        """
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == "2dcartesian":
+            return 'x'
+        elif geometry == "3dcartesian":
+            return ['x', 'y']
+        elif geometry == "thetaMode":
+            return 'r'
+        else:
+            raise ValueError('Unknown geometry: %s' %geometry)
 
 
 def w_ave( a, weights ):
@@ -1042,6 +1138,54 @@ def w_std( a, weights ):
         variance = np.average((a - average) ** 2, weights=weights)
         return( np.sqrt(variance) )
 
+def w_median(a, weights):
+    """
+    Compute the weighted median of a 1D numpy array.
+    Parameters
+    ----------
+    a : ndarray
+        Input array (one dimension).
+    weights : ndarray
+        Array with the weights of the same size of `data`.
+    Returns
+    -------
+    median : float
+        The output value.
+    """
+    quantile = .5
+    if not isinstance(a, np.matrix):
+        a = np.asarray(a)
+    if not isinstance(weights, np.matrix):
+        weights = np.asarray(weights)
+    if a.shape != weights.shape:
+        raise TypeError("the length of data and weights must be the same")
+    ind_sorted = np.argsort(a)
+    sorted_data = a[ind_sorted]
+    sorted_weights = weights[ind_sorted]
+
+    Sn = np.cumsum(sorted_weights)
+    # Center and normalize the cumsum (i.e. divide by the total sum)
+    Pn = (Sn - 0.5 * sorted_weights) / Sn[-1]
+    # Get the value of the weighted median
+    return np.interp(quantile, Pn, sorted_data)
+
+def w_mad(a, w):
+    """
+    Compute the weighted median absolute deviation of a 1D numpy array.
+    Parameters
+    ----------
+    a : ndarray
+        Input array (one dimension).
+    weights : ndarray
+        Array with the weights of the same size of `data`.
+    Returns
+    -------
+    mad : float
+        The output value.
+    """
+    med = w_median(a, w)
+    mad = w_median(np.abs(a - med), w)
+    return mad
 
 def gaussian_profile( x, x0, E0, w0 ):
     """

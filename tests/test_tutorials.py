@@ -38,7 +38,7 @@ def test_tutorials():
         os.system('jupyter nbconvert --to=python %s' % notebook_name)
         clean_ipython_features(script_name)
         try:
-            response = os.system('python ' + script_name)
+            response = os.system('python3 ' + script_name)
             assert response == 0
         except:
             # now we might want to know the script that was executed
@@ -68,20 +68,20 @@ def clean_ipython_features(script_name):
 
         # Replace the lines that activate matplotlib in a notebook
         # by a line that selects the PS backend
-        if re.search("get_ipython.*matplotlib", lines[i]) is not None:
+        if re.search(r"get_ipython.*matplotlib", lines[i]) is not None:
             lines[i] = "import matplotlib; matplotlib.use('ps')\n"
 
         # Discard the lines that use in-notebook documentation
-        if re.search("get_ipython.*pinfo", lines[i]) is not None:
+        if re.search(r"get_ipython.*pinfo", lines[i]) is not None:
             lines[i] = ''
 
         # Discard the lines that use the GUI
-        if re.match("[\w]*\.slider", lines[i]) is not None:
+        if re.match(r"[\w]*\.slider", lines[i]) is not None:
             lines[i] = ''
 
         # Replace the lines that call the OS by proper lines
-        if re.match("[ ]*get_ipython\(\)\.system", lines[i]) is not None:
-            matched = re.match("([ ]*)get_ipython\(\)\.system(.*)", lines[i])
+        if re.match(r"[ ]*get_ipython\(\)\.system", lines[i]) is not None:
+            matched = re.match(r"([ ]*)get_ipython\(\)\.system(.*)", lines[i])
             spaces = matched.groups()[0]
             command_line = matched.groups()[1]
             lines[i] = '%simport os; os.system%s\n' % (spaces, command_line)

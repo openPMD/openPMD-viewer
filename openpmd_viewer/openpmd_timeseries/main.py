@@ -9,17 +9,12 @@ License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
-import h5py as h5
 from tqdm import tqdm
-from .utilities import list_h5_files, apply_selection, fit_bins_to_grid, \
-                        combine_cylindrical_components, try_array
+from .utilities import apply_selection, fit_bins_to_grid, try_array, \
+                        sanitize_slicing, combine_cylindrical_components
 from .plotter import Plotter
 from .particle_tracker import ParticleTracker
-from .data_reader.params_reader import read_openPMD_params
-from .data_reader.particle_reader import read_species_data
-from .data_reader.field_reader import read_field_cartesian, \
-    read_field_circ, get_grid_parameters
-from .data_reader.utilities import join_infile_path
+from .data_reader import DataReader, available_backends
 from .interactive import InteractiveViewer
 
 
@@ -39,7 +34,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
     - slider
     """
 
-    def __init__(self, path_to_dir, check_all_files=True):
+    def __init__(self, path_to_dir, check_all_files=True, backend=None):
         """
         Initialize an openPMD time series
 
@@ -50,32 +45,46 @@ class OpenPMDTimeSeries(InteractiveViewer):
         ----------
         path_to_dir: string
             The path to the directory where the openPMD files are.
-            For the moment, only HDF5 files are supported. There should be
-            one file per iteration, and the name of the files should end
-            with the iteration number, followed by '.h5' (e.g. data0005000.h5)
 
         check_all_files: bool, optional
             Check that all the files in the timeseries are consistent
             (i.e. that they contain the same fields and particles,
             with the same metadata)
             For fast access to the files, this can be changed to False.
-        """
-        # Extract the files and the iterations
-        self.h5_files, self.iterations = list_h5_files(path_to_dir)
 
-        # Check that there are HDF5 files in this directory
-        if len(self.h5_files) == 0:
-            print("Error: Found no HDF5 files in the specified directory.\n"
-                  "Please check that this is the path to the HDF5 files.")
+        backend: string
+            Backend to be used for data reading. Can be `openpmd-api`
+            or `h5py`. If not provided will use `openpmd-api` if available
+            and `h5py` otherwise.
+        """
+        # Check backend
+        if backend is None:
+            backend = available_backends[0] #Pick openpmd-api first if available
+        elif backend not in available_backends:
+            raise RuntimeError("Invalid backend requested: {0}\n"
+                    "The available backends are: {1}"
+                    .format(backend, available_backends) )
+        self.backend = backend
+
+        # Initialize data reader
+        self.data_reader = DataReader(backend)
+
+        # Extract the iterations available in this timeseries
+        self.iterations = self.data_reader.list_iterations(path_to_dir)
+
+        # Check that there are files in this directory
+        if len(self.iterations) == 0:
+            print("Error: Found no valid files in the specified directory.\n"
+                  "Please check that this is the path to the openPMD files.")
             return(None)
 
         # Go through the files of the series, extract the time
         # and a few parameters.
-        N_files = len(self.h5_files)
-        self.t = np.zeros(N_files)
+        N_iterations = len(self.iterations)
+        self.t = np.zeros(N_iterations)
 
         # - Extract parameters from the first file
-        t, params0 = read_openPMD_params(self.h5_files[0])
+        t, params0 = self.data_reader.read_openPMD_params(self.iterations[0])
         self.t[0] = t
         self.extensions = params0['extensions']
         self.avail_fields = params0['avail_fields']
@@ -90,15 +99,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # - Extract the time for each file and, if requested, check
         #   that the other files have the same parameters
-        for k in range(1, N_files):
-            t, params = read_openPMD_params(self.h5_files[k], check_all_files)
+        for k in range(1, N_iterations):
+            t, params = self.data_reader.read_openPMD_params(
+                self.iterations[k], check_all_files)
             self.t[k] = t
             if check_all_files:
                 for key in params0.keys():
                     if params != params0:
                         print("Warning: File %s has different openPMD "
                               "parameters than the rest of the time series."
-                              % self.h5_files[k])
+                              % self.iterations[k])
                         break
 
         # - Set the current iteration and time
@@ -117,8 +127,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             plot_range=[[None, None], [None, None]],
             use_field_mesh=True, histogram_deposition='cic', **kw):
         """
-        Extract a list of particle variables
-        from an HDF5 file in the openPMD format.
+        Extract a list of particle variables an openPMD file.
 
         Plot the histogram of the returned quantity.
         If two quantities are requested by the user, this plots
@@ -140,7 +149,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -256,36 +265,35 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
-        # Get the corresponding file name & open the file
-        file_name = self.h5_files[self._current_i]
-        file_handle = h5.File(file_name, 'r')
+        # Get the corresponding iteration
+        iteration = self.iterations[self._current_i]
 
         # Extract the list of particle quantities
         data_list = []
         for quantity in var_list:
-            data_list.append(read_species_data(
-                file_handle, species, quantity, self.extensions))
+            data_list.append( self.data_reader.read_species_data(
+                iteration, species, quantity, self.extensions))
         # Apply selection if needed
         if isinstance( select, dict ):
-            data_list = apply_selection(
-                file_handle, data_list, select, species, self.extensions)
+            data_list = apply_selection( iteration, self.data_reader,
+                data_list, select, species, self.extensions)
         elif isinstance( select, ParticleTracker ):
-            data_list = select.extract_tracked_particles(
-                file_handle, data_list, species, self.extensions )
+            data_list = select.extract_tracked_particles( iteration,
+                self.data_reader, data_list, species, self.extensions )
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
 
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
-                w = read_species_data(
-                    file_handle, species, 'w', self.extensions)
+                w = self.data_reader.read_species_data(
+                    iteration, species, 'w', self.extensions)
                 if isinstance( select, dict ):
-                    w, = apply_selection(
-                        file_handle, [w], select, species, self.extensions)
+                    w, = apply_selection( iteration, self.data_reader,
+                        [w], select, species, self.extensions)
                 elif isinstance( select, ParticleTracker ):
-                    w, = select.extract_tracked_particles(
-                        file_handle, [w], species, self.extensions )
+                    w, = select.extract_tracked_particles( iteration,
+                        self.data_reader, [w], species, self.extensions )
             # Otherwise consider that all particles have a weight of 1
             else:
                 w = np.ones_like(data_list[0])
@@ -319,8 +327,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
             #   fitting them to the spatial grid
             if use_field_mesh and self.avail_fields is not None:
                 # Extract the grid resolution
-                grid_size_dict, grid_range_dict = get_grid_parameters(
-                    file_handle, self.avail_fields, self.fields_metadata )
+                grid_size_dict, grid_range_dict = \
+                    self.data_reader.get_grid_parameters( iteration,
+                        self.avail_fields, self.fields_metadata )
                 # For each direction, modify the number of bins, so that
                 # the resolution is a multiple of the grid resolution
                 for i_var in range(len(var_list)):
@@ -347,29 +356,25 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     var_list[0], var_list[1], species,
                     self._current_i, hist_bins, hist_range,
                     deposition=histogram_deposition, **kw)
-        # Close the file
-        file_handle.close()
 
         # Output the data
         return(data_list)
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
-                  m='all', theta=0., slicing=None, slicing_dir=None,
-                  plot=False,
+                  m='all', theta=0., slice_across=None,
+                  slice_relative_position=None, plot=False,
                   plot_range=[[None, None], [None, None]], **kw):
         """
-        Extract a given field from an HDF5 file in the openPMD format.
+        Extract a given field from a file in the openPMD format.
 
         Parameters
         ----------
 
         field : string, optional
            Which field to extract
-           Either 'rho', 'E', 'B' or 'J'
 
         coord : string, optional
            Which component of the field to extract
-           Either 'r', 't' or 'z'
 
         m : int or str, optional
            Only used for thetaMode geometry
@@ -378,7 +383,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -392,17 +397,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
            corresponding to the plane of observation given by `theta` ;
            otherwise it returns a full 3D Cartesian array
 
-        slicing : float or list of float, optional
-           Number(s) between -1 and 1 that indicate where to slice the data,
-           along the directions in `slicing_dir`
-           -1 : lower edge of the simulation box
-           0 : middle of the simulation box
-           1 : upper edge of the simulation box
-           Default: None, which results in slicing at 0 in all direction
-           of `slicing_dir`.
-
-        slicing_dir : str or list of str, optional
-           Direction(s) along which to slice the data
+        slice_across : str or list of str, optional
+           Direction(s) across which the data should be sliced
            + In cartesian geometry, elements can be:
                - 1d: 'z'
                - 2d: 'x' and/or 'z'
@@ -410,6 +406,15 @@ class OpenPMDTimeSeries(InteractiveViewer):
            + In cylindrical geometry, elements can be 'r' and/or 'z'
            Returned array is reduced by 1 dimension per slicing.
            If slicing is None, the full grid is returned.
+
+        slice_relative_position : float or list of float, optional
+           Number(s) between -1 and 1 that indicate where to slice the data,
+           along the directions in `slice_across`
+           -1 : lower edge of the simulation box
+           0 : middle of the simulation box
+           1 : upper edge of the simulation box
+           Default: None, which results in slicing at 0 in all direction
+           of `slice_across`.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -441,27 +446,19 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "The available fields are: \n - %s\nPlease set the `field` "
                 "argument accordingly." % field_list)
         # Check slicing
-        if slicing_dir is not None:
-            # Convert to lists
-            if not isinstance(slicing_dir, list):
-                slicing_dir = [slicing_dir]
-            if slicing is None:
-                slicing = [0]*len(slicing_dir)
-            if not isinstance(slicing, list):
-                slicing = [slicing]
+        slice_across, slice_relative_position = \
+            sanitize_slicing(slice_across, slice_relative_position)
+        if slice_across is not None:
             # Check that the elements are valid
             axis_labels = self.fields_metadata[field]['axis_labels']
-            for axis in slicing_dir:
+            for axis in slice_across:
                 if axis not in axis_labels:
                     axes_list = '\n - '.join(axis_labels)
                     raise OpenPMDException(
-                    'The `slicing_dir` argument is erroneous: contains %s\n'
+                    'The `slice_across` argument is erroneous: contains %s\n'
                     'The available axes are: \n - %s' % (axis, axes_list) )
-            if len(slicing_dir) != len(slicing):
-                raise OpenPMDException(
-                    'The `slicing_dir` argument is erroneous: \nIt should have'
-                    'the same number of elements as `slicing_dir`.')
-        # Check the coordinate (for vector fields)
+
+        # Check the coordinate, for vector fields
         if self.fields_metadata[field]['type'] == 'vector':
             available_coord = ['x', 'y', 'z']
             if self.fields_metadata[field]['geometry'] == 'thetaMode':
@@ -473,6 +470,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     "argument is missing or erroneous.\nThe available "
                     "coordinates are: \n - %s\nPlease set the `coord` "
                     "argument accordingly." % (field, coord_list))
+        # Automatically set the coordinate to None, for scalar fields
+        else:
+            coord = None
+
         # Check the mode (for thetaMode)
         if self.fields_metadata[field]['geometry'] == "thetaMode":
             avail_circ_modes = self.fields_metadata[field]['avail_circ_modes']
@@ -485,15 +486,13 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
         self._find_output(t, iteration)
-        # Get the corresponding filename
-        filename = self.h5_files[self._current_i]
+        # Get the corresponding iteration
+        iteration = self.iterations[self._current_i]
 
         # Find the proper path for vector or scalar fields
         if self.fields_metadata[field]['type'] == 'scalar':
-            field_path = field
             field_label = field
         elif self.fields_metadata[field]['type'] == 'vector':
-            field_path = join_infile_path(field, coord)
             field_label = field + coord
 
         # Get the field data
@@ -501,22 +500,26 @@ class OpenPMDTimeSeries(InteractiveViewer):
         axis_labels = self.fields_metadata[field]['axis_labels']
         # - For cartesian
         if geometry in ["1dcartesian", "2dcartesian", "3dcartesian"]:
-            F, info = read_field_cartesian(
-                filename, field_path, axis_labels, slicing, slicing_dir)
+            F, info = self.data_reader.read_field_cartesian(
+                iteration, field, coord, axis_labels,
+                slice_relative_position, slice_across)
         # - For thetaMode
         elif geometry == "thetaMode":
             if (coord in ['x', 'y']) and \
                     (self.fields_metadata[field]['type'] == 'vector'):
                 # For Cartesian components, combine r and t components
-                Fr, info = read_field_circ(filename, field + '/r', slicing,
-                                           slicing_dir, m, theta)
-                Ft, info = read_field_circ(filename, field + '/t', slicing,
-                                           slicing_dir, m, theta)
+                Fr, info = self.data_reader.read_field_circ(
+                    iteration, field, 'r', slice_relative_position,
+                    slice_across, m, theta)
+                Ft, info = self.data_reader.read_field_circ(
+                    iteration, field, 't', slice_relative_position,
+                    slice_across, m, theta)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
-                F, info = read_field_circ(filename, field_path, slicing,
-                                          slicing_dir, m, theta)
+                F, info = self.data_reader.read_field_circ(iteration,
+                    field, coord, slice_relative_position,
+                    slice_across, m, theta)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
@@ -525,12 +528,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)
             elif F.ndim == 2:
-                self.plotter.show_field_2d(F, info, slicing_dir, m,
+                self.plotter.show_field_2d(F, info, slice_across, m,
                     field_label, geometry, self._current_i,
                     plot_range=plot_range, **kw)
             else:
                 raise OpenPMDException('Cannot plot %d-dimensional data.\n'
-                    'Use slicing, or set `plot=False`' % F.ndim)
+                    'Use the argument `slice_across`, or set `plot=False`' % F.ndim)
 
         # Return the result
         return(F, info)
@@ -608,14 +611,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "iteration (`iteration`), but not both.")
         # If a time is requested
         elif (t is not None):
-            # Make sur the time requested does not exceed the allowed bounds
+            # Make sure the time requested does not exceed the allowed bounds
             if t < self.tmin:
                 self._current_i = 0
             elif t > self.tmax:
                 self._current_i = len(self.t) - 1
-            # Find the last existing output
+            # Find the closest existing iteration
             else:
-                self._current_i = self.t[self.t <= t].argmax()
+                self._current_i = abs(self.t - t).argmin()
         # If an iteration is requested
         elif (iteration is not None):
             if (iteration in self.iterations):
@@ -623,10 +626,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self._current_i = abs(iteration - self.iterations).argmin()
             else:
                 iter_list = '\n - '.join([str(it) for it in self.iterations])
-                print("The requested iteration '%s' is not available.\nThe "
-                      "available iterations are: \n - %s\nThe first iteration "
-                      "is used instead." % (iteration, iter_list))
-                self._current_i = 0
+                raise OpenPMDException(
+                      "The requested iteration '%s' is not available.\nThe "
+                      "available iterations are: \n - %s\n" % (iteration, iter_list))
         else:
             pass  # self._current_i retains its previous value
 

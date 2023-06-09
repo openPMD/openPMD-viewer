@@ -1,5 +1,5 @@
-numpy
+numpy~=1.15
 scipy
-h5py
+h5py>=2.8.0
 tqdm
 

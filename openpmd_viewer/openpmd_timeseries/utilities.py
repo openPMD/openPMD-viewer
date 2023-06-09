@@ -8,66 +8,63 @@ Authors: Remi Lehe, Richard Pausch
 License: 3-Clause-BSD-LBNL
 """
 
-import os
+import copy
 import math
 import numpy as np
-import h5py
-from .data_reader.particle_reader import read_species_data
 from .numba_wrapper import jit
+from .data_order import RZorder, order_error_msg
 
-def list_h5_files(path_to_dir):
+def sanitize_slicing(slice_across, slice_relative_position):
     """
-    Return a list of the hdf5 files in this directory,
-    and a list of the corresponding iterations
+    Return standardized format for `slice_across` and `slice_relative_position`:
+    - either `slice_across` and `slice_relative_position` are both `None` (no slicing)
+    - or `slice_across` and `slice_relative_position` are both lists,
+    with the same number of elements
 
-    Parameter
-    ---------
-    path_to_dir : string
-        The path to the directory where the hdf5 files are.
+    Parameters
+    ----------
+    slice_relative_position : float, or list of float, or None
 
-    Returns
-    -------
-    A tuple with:
-    - a list of strings which correspond to the absolute path of each file
-    - an array of integers which correspond to the iteration of each file
+    slice_across : str, or list of str, or None
+       Direction(s) across which the data should be sliced
     """
-    # Find all the files in the provided directory
-    all_files = os.listdir(path_to_dir)
+    # Skip None and empty lists
+    if slice_across is None or slice_across == []:
+        return None, None
 
-    # Select the hdf5 files
-    iters_and_names = []
-    for filename in all_files:
-        # Use only the name that end with .h5 or .hdf5
-        if filename[-3:] == '.h5' or filename[-5:] == '.hdf5':
-            full_name = os.path.join(
-                os.path.abspath(path_to_dir), filename)
-            # extract all iterations from hdf5 file
-            f = h5py.File(full_name, 'r')
-            iterations = list(f['/data'].keys())
-            f.close()
-            # for each found iteration create list of tuples
-            # (which can be sorted together)
-            for key_iteration in iterations:
-                iters_and_names.append((int(key_iteration), full_name))
+    # Convert to lists
+    if not isinstance(slice_across, list):
+        slice_across = [slice_across]
+    if slice_relative_position is None:
+        slice_relative_position = [0]*len(slice_across)
+    if not isinstance(slice_relative_position, list):
+        slice_relative_position = [slice_relative_position]
+    # Check that the length are matching
+    if len(slice_across) != len(slice_relative_position):
+        raise ValueError(
+            'The argument `slice_relative_position` is erroneous: \nIt should have'
+            'the same number of elements as `slice_across`.')
 
-    # Sort the list of tuples according to the iteration
-    iters_and_names.sort()
-    # Extract the list of filenames and iterations
-    filenames = [name for (it, name) in iters_and_names]
-    iterations = np.array([it for (it, name) in iters_and_names])
+    # Return a copy. This is because the rest of the `openPMD-viewer` code
+    # sometimes modifies the objects returned by `sanitize_slicing`.
+    # Using a copy avoids directly modifying objects that the user may pass
+    # to this function (and live outside of openPMD-viewer, e.g. directly in
+    # a user's notebook)
+    return copy.copy(slice_across), copy.copy(slice_relative_position)
 
-    return(filenames, iterations)
-
-
-def apply_selection(file_handle, data_list, select, species, extensions):
+def apply_selection(iteration, data_reader, data_list,
+                    select, species, extensions):
     """
     Select the elements of each particle quantities in data_list,
     based on the selection rules in `select`
 
     Parameters
     ----------
-    file_handle: h5py.File object
-        The HDF5 file from which to extract data
+    iteration: int
+        The iteration at which to apply the selection
+
+    data_reader: a DataReader object
+        Contains the method that read particle data
 
     data_list: list of 1darrays
         A list of arrays with one element per macroparticle, that represent
@@ -97,7 +94,8 @@ def apply_selection(file_handle, data_list, select, species, extensions):
 
     # Loop through the selection rules, and aggregate results in select_array
     for quantity in select.keys():
-        q = read_species_data(file_handle, species, quantity, extensions)
+        q = data_reader.read_species_data(
+            iteration, species, quantity, extensions)
         # Check lower bound
         if select[quantity][0] is not None:
             select_array = np.logical_and(
@@ -302,7 +300,7 @@ def histogram_cic_2d( q1, q2, w,
 
 @jit
 def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
-    nx, ny, nz, nr, nmodes, inv_dr, rmax ):
+    nx, ny, nz, nr, nmodes, inv_dr, rmax, coord_order): 
     """
     Reconstruct the field from a quasi-cylindrical simulation (`Fcirc`), as
     a 3D cartesian array (`F3d`).
@@ -313,22 +311,43 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
             y = y_array[iy]
             r = np.sqrt( x**2 + y**2 )
             ir = nr - 1 - int( (rmax - r) * inv_dr + 0.5 )
+
             # Handle out-of-bounds
             if ir < 0:
                 ir = 0
             if ir >= nr:
                 ir = nr-1
+
+            # Calculate linear projection from ir and ir-1
+            if ir>0:
+                s0 = ir + 0.5 - r* inv_dr
+                s1 = 1. - s0
+                if coord_order is RZorder.mrz:
+                    Fcirc_proj = s1*Fcirc[:, ir, :] + s0*Fcirc[:, ir-1, :]
+                elif coord_order is RZorder.mzr:
+                    Fcirc_proj = s1*Fcirc[:, :, ir] + s0*Fcirc[:, :, ir-1]
+                else:
+                    raise Exception(order_error_msg)
+            else:
+                if coord_order is RZorder.mrz:
+                    Fcirc_proj = Fcirc[:, ir, :]
+                elif coord_order is RZorder.mzr:
+                    Fcirc_proj = Fcirc[:, :, ir]
+                else:
+                    raise Exception(order_error_msg)
+
             # Loop over all modes and recontruct data
             if r == 0:
                 expItheta = 1. + 0.j
             else:
                 expItheta = (x+1.j*y)/r
+
             for im in range(nmodes):
                 mode = modes[im]
                 if mode==0:
-                    F3d[ix, iy, :] += Fcirc[0, ir, :]
+                    F3d[ix, iy, :] += Fcirc_proj[0, :]
                 else:
                     cos = (expItheta**mode).real
                     sin = (expItheta**mode).imag
-                    F3d[ix, iy, :] += Fcirc[2*mode-1, ir, :]*cos \
-                                    + Fcirc[2*mode, ir, :]*sin
+                    F3d[ix, iy, :] += Fcirc_proj[2*mode-1,:]*cos + \
+                        Fcirc_proj[2*mode,:]*sin

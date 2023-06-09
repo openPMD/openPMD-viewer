@@ -8,24 +8,59 @@ Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
 License: 3-Clause-BSD-LBNL
 """
+import os
 import h5py
 import numpy as np
 
 
-def get_bpath(f):
+def list_files(path_to_dir):
     """
-    Return a string that corresponds to the base path of the data.
+    Return a list of the hdf5 files in this directory,
+    and a list of the corresponding iterations
 
-    NB: For openPMD 1.0.0, the basePath is always of the form
-    '/data/%T' where %T is replaced by the actual iteration which
-    is present in the file.
+    Parameter
+    ---------
+    path_to_dir : string
+        The path to the directory where the hdf5 files are.
 
-    Parameters:
-    -----------
-    f: am h5py.File object
+    Returns
+    -------
+    A tuple with:
+    - an array of integers which correspond to the iteration of each file
+    - a dictionary that matches iterations to the corresponding filename
     """
-    iteration = list(f['/data'].keys())[0]
-    return('/data/%s' % iteration)
+    # group based encoding?
+    is_single_file = os.path.isfile(path_to_dir)
+
+    if is_single_file:
+        all_files = [path_to_dir]
+    else:
+        # Find all the files in the provided directory
+        all_files = os.listdir(path_to_dir)
+
+    # Select the hdf5 files, and fill dictionary of correspondence
+    # between iterations and files
+    iteration_to_file = {}
+    for filename in all_files:
+        # Use only the name that end with .h5 or .hdf5
+        if filename.endswith('.h5') or filename.endswith('.hdf5'):
+            if is_single_file:
+                full_name = filename
+            else:
+                full_name = os.path.join(
+                    os.path.abspath(path_to_dir), filename)
+            # extract all iterations from hdf5 file
+            f = h5py.File(full_name, 'r')
+            iterations = list(f['/data'].keys())
+            f.close()
+            # Add iterations to dictionary
+            for key_iteration in iterations:
+                iteration_to_file[ int(key_iteration) ] = full_name
+
+    # Extract iterations and sort them
+    iterations = np.array( sorted( list( iteration_to_file.keys() ) ) )
+
+    return iterations, iteration_to_file
 
 
 def is_scalar_record(record):
@@ -49,7 +84,7 @@ def is_scalar_record(record):
     return(scalar)
 
 
-def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
+def get_data(dset, i_slice=None, pos_slice=None, output_type=None):
     """
     Extract the data from a (possibly constant) dataset
     Slice the data according to the parameters i_slice and pos_slice
@@ -110,10 +145,11 @@ def get_data(dset, i_slice=None, pos_slice=None, output_type=np.float64):
             data = dset[tuple_index]
 
     # Convert to the right type
-    if data.dtype != output_type:
+    if (output_type is not None) and (data.dtype != output_type):
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if output_type in [ np.float64, np.float32, np.float16 ]:
+    if np.issubdtype(data.dtype, np.floating) or \
+        np.issubdtype(data.dtype, np.complexfloating):
         if dset.attrs['unitSI'] != 1.0:
             data *= dset.attrs['unitSI']
 

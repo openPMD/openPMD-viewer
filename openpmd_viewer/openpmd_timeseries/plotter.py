@@ -60,7 +60,7 @@ if matplotlib_installed:
             # Calculate the exponent (power of 3)
             xp = (x - self.offset)
             if xp != 0:
-                exponent = 3 * math.floor( math.log10(abs(xp)) / 3 )
+                exponent = int(3 * math.floor( math.log10(abs(xp)) / 3 ))
             else:
                 exponent = 0
             # Show 3 digits at most after decimal point
@@ -294,16 +294,23 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time = self.t[current_i]
 
-        # Get the title and labels
-        plt.title("%s at %.2e s   (iteration %d)" % (field_label,
-                    time, iteration), fontsize=self.fontsize)
-
-        # Add the name of the axes
-        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
         # Get the x axis
         xaxis = getattr( info, info.axes[0] )
         # Plot the data
-        plt.plot( xaxis, F )
+        if np.issubdtype(F.dtype, np.complexfloating):
+            plot_data = abs(F) # For complex numbers, plot the absolute value
+            title = "|%s|" %field_label
+        else:
+            plot_data = F
+            title = "%s" %field_label
+
+        # Get the title and labels
+        title += " at %.2e s   (iteration %d)" % (time, iteration)
+        plt.title(title, fontsize=self.fontsize)
+        # Add the name of the axes
+        plt.xlabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
+
+        plt.plot( xaxis, plot_data )
         # Get the limits of the plot
         # - Along the first dimension
         if (plot_range[0][0] is not None) and (plot_range[0][1] is not None):
@@ -318,7 +325,7 @@ class Plotter(object):
         ax.get_xaxis().set_major_formatter( tick_formatter )
         ax.get_yaxis().set_major_formatter( tick_formatter )
 
-    def show_field_2d(self, F, info, slicing_dir, m, field_label, geometry,
+    def show_field_2d(self, F, info, slice_across, m, field_label, geometry,
                         current_i, plot_range, **kw):
         """
         Plot the given field in 2D
@@ -331,9 +338,9 @@ class Plotter(object):
         info: a FieldMetaInformation object
             Contains the information about the plotted field
 
-        slicing_dir : str, optional
+        slice_across : str, optional
            Only used for 3dcartesian geometry
-           The direction along which the data is sliced
+           The direction across which the data is sliced
 
         m: int
            Only used for thetaMode geometry
@@ -356,27 +363,31 @@ class Plotter(object):
         iteration = self.iterations[current_i]
         time = self.t[current_i]
 
+        # Plot the data
+        if np.issubdtype(F.dtype, np.complexfloating):
+            plot_data = abs(F)
+            title = "|%s|" %field_label
+        else:
+            plot_data = F
+            title = "%s" %field_label
+        plt.imshow(plot_data, extent=info.imshow_extent, origin='lower',
+                   interpolation='nearest', aspect='auto', **kw)
+        plt.colorbar()
+
         # Get the title and labels
         # Cylindrical geometry
         if geometry == "thetaMode":
             mode = str(m)
-            plt.title("%s in the mode %s at %.2e s   (iteration %d)"
-                      % (field_label, mode, time, iteration),
-                      fontsize=self.fontsize)
+            title += " in the mode %s at %.2e s   (iteration %d)" \
+                      % (mode, time, iteration)
         # 2D Cartesian geometry
         else:
-            plt.title("%s at %.2e s   (iteration %d)"
-                      % (field_label, time, iteration),
-                      fontsize=self.fontsize)
+            title += " at %.2e s   (iteration %d)" % (time, iteration)
+        plt.title(title, fontsize=self.fontsize)
 
         # Add the name of the axes
         plt.xlabel('$%s \;(m)$' % info.axes[1], fontsize=self.fontsize)
         plt.ylabel('$%s \;(m)$' % info.axes[0], fontsize=self.fontsize)
-
-        # Plot the data
-        plt.imshow(F, extent=info.imshow_extent, origin='lower',
-                   interpolation='nearest', aspect='auto', **kw)
-        plt.colorbar()
 
         # Get the limits of the plot
         # - Along the first dimension

@@ -20,7 +20,8 @@ from openpmd_viewer import OpenPMDTimeSeries
 Please have a look at the list of the changes introduced in version 1.X here:
 https://github.com/openPMD/openPMD-viewer/blob/upcoming-1.0/CHANGELOG.md#10
 In particular, note that `get_particle` now returns particle positions in
-meters (not in microns anymore).
+meters (not in microns anymore) and that the syntax for slicing fields has
+changed.
 
 * If you wish to go back to the old openPMD-viewer version 0.X, use:
 ```
