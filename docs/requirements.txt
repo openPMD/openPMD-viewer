@@ -5,6 +5,7 @@ nbsphinx
 wget
 numba
 numpy
+matplotlib
 scipy
 h5py
 tqdm
