@@ -1,5 +1,6 @@
 sphinx
 sphinx_rtd_theme
+jupyter
 wget
 numba
 numpy
