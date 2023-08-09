@@ -631,7 +631,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                       "available iterations are: \n - %s\n" % (iteration, iter_list))
         else:
             raise OpenPMDException(
-                "Please pass either a time (`t`) \nor an "
+                "Please pass either a time (`t`) or an "
                 "iteration (`iteration`).")
 
         # Register the value in the object
