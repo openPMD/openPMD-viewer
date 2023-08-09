@@ -1,5 +1,16 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.7.0
+
+This release includes a few improvements:
+
+- The function `get_laser_waist` is more robust: it does not automatically
+assume that the `z` axis is the last axis of the data. In addition, the user
+can now  specify the laser propagation direction. (The default is `z`.)
+(See [#345](https://github.com/openPMD/openPMD-viewer/pull/345))
+
+- The handling of `unitSI` is now more robust. (See [#363](https://github.com/openPMD/openPMD-viewer/pull/363))
+
 ## 1.6.0
 
 This release adds a few features:
