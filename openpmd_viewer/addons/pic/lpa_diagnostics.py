@@ -947,14 +947,14 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
         propagation_axis_index = inverted_axes_dict[laser_propagation]
         # Get transverse positions
-        trans_pos = getattr(info, info.axes[(slicing_index+1)%2])
+        trans_pos = getattr(info, info.axes[(propagation_axis_index+1)%2])
 
         if profile_method == 'peak':
             # Find the indices of the maximum field
             i_max = np.unravel_index( np.argmax( field ), field.shape )
             # Pick the corresponding transverse slice
             # (Transverse to laser propagation)
-            trans_profile = np.take( field, [i_max[slicing_index]],
+            trans_profile = np.take( field, [i_max[propagation_axis_index]],
                                     axis=propagation_axis_index ).flatten()
         elif profile_method == 'projection':
             # Project field along the propagation direction
