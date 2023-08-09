@@ -9,7 +9,9 @@ License: 3-Clause-BSD-LBNL
 """
 
 import numpy as np
+
 from .utilities import get_data
+from ...data_order import RZorder, order_error_msg
 from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
 
@@ -61,7 +63,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -75,6 +77,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     global_offset = field.grid_global_offset
     grid_unit_SI = field.grid_unit_SI
     grid_position = component.position
+    time = (it.time + field.time_offset) * it.time_unit_SI
 
     # Slice selection
     #   TODO put in general utilities
@@ -108,13 +111,15 @@ def read_field_cartesian( series, iteration, field_name, component_name,
         # Extract data
         F = get_data( series, component, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
-                grid_unit_SI, grid_position )
+                grid_unit_SI, grid_position,
+                time, iteration )
     else:
         F = get_data( series, component )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             grid_spacing, global_offset,
-            grid_unit_SI, grid_position )
+            grid_unit_SI, grid_position,
+            time, iteration )
 
     return F, info
 
@@ -178,7 +183,7 @@ def read_field_circ( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -190,19 +195,23 @@ def read_field_circ( series, iteration, field_name, component_name,
     #         grid spacing/offset/position
 
     coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
-    if coord_labels[0] == 'r':
-        rz_switch = False
+    coord_label_str = ''.join(coord_labels.values())
+    coord_label_str = 'm' + coord_label_str
+    coord_order = RZorder[coord_label_str]
+    if coord_order is RZorder.mrz:
         Nm, Nr, Nz = component.shape
         N_pair = (Nr, Nz)
-    else:
-        rz_switch = True
+    elif coord_order is RZorder.mzr:
         Nm, Nz, Nr = component.shape
         N_pair = (Nz, Nr)
+    else:
+        raise Exception(order_error_msg)
+    time = (it.time + field.time_offset) * it.time_unit_SI
 
     # Nm, Nr, Nz = component.shape
     info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
-        field.grid_unit_SI, component.position, thetaMode=True )
+        field.grid_unit_SI, component.position, time, iteration, thetaMode=True )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
@@ -225,10 +234,12 @@ def read_field_circ( series, iteration, field_name, component_name,
                 # Calculate excess of elements along z
                 excess_z = int(np.round(Nz/max_res_lon))
                 # Preserve only one every excess_z elements
-                if not rz_switch:
+                if coord_order is RZorder.mrz:
                     Fcirc = Fcirc[:, :, ::excess_z]
-                else:
+                elif coord_order is RZorder.mzr:
                     Fcirc = Fcirc[:, ::excess_z, :]
+                else:
+                    raise Exception(order_error_msg)
                 # Update info accordingly
                 info.z = info.z[::excess_z]
                 info.dz = info.z[1] - info.z[0]
@@ -236,34 +247,40 @@ def read_field_circ( series, iteration, field_name, component_name,
                 # Calculate excess of elements along r
                 excess_r = int(np.round(Nr/(max_res_transv/2)))
                 # Preserve only one every excess_r elements
-                if not rz_switch:
+                if coord_order is RZorder.mrz:
                     Fcirc = Fcirc[:, ::excess_r, :]
-                else:
+                elif coord_order is RZorder.mzr:
                     Fcirc = Fcirc[:, :, ::excess_r]
+                else:
+                    raise Exception(order_error_msg)
                 # Update info and necessary parameters accordingly
                 info.r = info.r[::excess_r]
                 info.dr = info.r[1] - info.r[0]
                 inv_dr = 1./info.dr
                 # Update Nr after reducing radial resolution.
-                if not rz_switch:
+                if coord_order is RZorder.mrz:
                     Nr = Fcirc.shape[1]
-                else:
+                elif coord_order is RZorder.mzr:
                     Nr = Fcirc.shape[2]
+                else:
+                    raise Exception(order_error_msg)
 
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
         F_total = np.zeros( (nx, ny, nz) )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
-            nx, ny, nz, Nr, nmodes, inv_dr, rmax, rz_switch=rz_switch)
+            nx, ny, nz, Nr, nmodes, inv_dr, rmax, coord_order)
 
     else:
 
         # Extract the modes and recombine them properly
-        if not rz_switch:
+        if coord_order is RZorder.mrz:
             F_total = np.zeros( (2 * Nr, Nz ) )
-        else:
+        elif coord_order is RZorder.mzr:
             F_total = np.zeros( (Nz, 2 * Nr ) )
+        else:
+            raise Exception(order_error_msg)
         if m == 'all':
             # Sum of all the modes
             # - Prepare the multiplier arrays
@@ -278,25 +295,29 @@ def read_field_circ( series, iteration, field_name, component_name,
             mult_below_axis = np.array( mult_below_axis )
             # - Sum the modes
             F = get_data( series, component )  # (Extracts all modes)
-            if not rz_switch:
+            if coord_order is RZorder.mrz:
                 F_total[Nr:, :] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:Nr, :] = np.tensordot( mult_below_axis,
                                                 F, axes=(0, 0) )[::-1, :]
-            else:
+            elif coord_order is RZorder.mzr:
                 F_total[:, Nr:] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:, :Nr] = np.tensordot( mult_below_axis,
                                                 F, axes=(0, 0) )[:, ::-1]
+            else:
+                raise Exception(order_error_msg)
         elif m == 0:
             # Extract mode 0
             F = get_data( series, component, 0, 0 )
-            if not rz_switch:
+            if coord_order is RZorder.mrz:
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = F[::-1, :]
-            else:
+            elif coord_order is RZorder.mzr:
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = F[:, ::-1]
+            else:
+                raise Exception(order_error_msg)
         else:
             # Extract higher mode
             cos = np.cos( m * theta )
@@ -304,12 +325,14 @@ def read_field_circ( series, iteration, field_name, component_name,
             F_cos = get_data( series, component, 2 * m - 1, 0 )
             F_sin = get_data( series, component, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
-            if not rz_switch:
+            if coord_order is RZorder.mrz:
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = (-1) ** m * F[::-1, :]
-            else:
+            elif coord_order is RZorder.mzr:
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = (-1) ** m * F[:, ::-1]
+            else:
+                raise Exception(order_error_msg)
 
     # Perform slicing if needed
     if slice_across is not None:

@@ -149,7 +149,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available iteration, the last iteration before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -383,7 +383,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -611,14 +611,14 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 "iteration (`iteration`), but not both.")
         # If a time is requested
         elif (t is not None):
-            # Make sur the time requested does not exceed the allowed bounds
+            # Make sure the time requested does not exceed the allowed bounds
             if t < self.tmin:
                 self._current_i = 0
             elif t > self.tmax:
                 self._current_i = len(self.t) - 1
-            # Find the last existing output
+            # Find the closest existing iteration
             else:
-                self._current_i = self.t[self.t <= t].argmax()
+                self._current_i = abs(self.t - t).argmin()
         # If an iteration is requested
         elif (iteration is not None):
             if (iteration in self.iterations):
@@ -630,7 +630,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                       "The requested iteration '%s' is not available.\nThe "
                       "available iterations are: \n - %s\n" % (iteration, iter_list))
         else:
-            pass  # self._current_i retains its previous value
+            raise OpenPMDException(
+                "Please pass either a time (`t`) or an "
+                "iteration (`iteration`).")
 
         # Register the value in the object
         self.current_t = self.t[self._current_i]

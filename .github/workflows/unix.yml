@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
         os: [ubuntu-20.04]
         include:
           - python-version: 3.9
@@ -38,12 +38,15 @@ jobs:
         if [ "${{ matrix.python-version }}" != "3.8" ]; then
           conda install --yes cython numpy scipy h5py openpmd-api matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget
         else
-          conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget 
+          conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget
         fi
 
     - shell: bash -eo pipefail  -l {0}
       name: pyflakes
-      run: python -m pyflakes openpmd_viewer
+      run: |
+        if [ "${{ matrix.python-version }}" != "3.7" ]; then
+          python -m pyflakes openpmd_viewer
+        fi
     - shell: bash -eo pipefail -l {0}
       name: Test
       run: python setup.py test
