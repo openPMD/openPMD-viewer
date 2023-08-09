@@ -1,5 +1,23 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.8.0
+
+- The functions `get_field` and `get_particle` now require `iteration` or `t`
+  to be passed (instead of using a default iteration when none was provided).
+  (See [#383](https://github.com/openPMD/openPMD-viewer/pull/383))
+
+- The function `get_laser_waist` is more robust and does not crash when the
+  laser field is 0.
+  (See [#359](https://github.com/openPMD/openPMD-viewer/pull/359))
+
+- The `FieldMEtaInformation` object has new attributes `time` and `iteration`.
+  (See [#372](https://github.com/openPMD/openPMD-viewer/pull/372))
+
+- The docstring of `get_mean_gamma` has been updated
+  (See [#379](https://github.com/openPMD/openPMD-viewer/pull/379))
+  and the attributes `ts.t` and `ts.iterations` are now shown in the tutorials
+  (See [#382](https://github.com/openPMD/openPMD-viewer/pull/382))
+
 ## 1.7.0
 
 This release includes a few improvements:
