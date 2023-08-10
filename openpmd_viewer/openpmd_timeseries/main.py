@@ -362,8 +362,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slice_across=None,
-                  slice_relative_position=None, plot=False,
-                  plot_range=[[None, None], [None, None]], **kw):
+                  slice_relative_position=None, max_resolution_3d=None,
+                  plot=False, plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from a file in the openPMD format.
 
@@ -415,6 +415,13 @@ class OpenPMDTimeSeries(InteractiveViewer):
            1 : upper edge of the simulation box
            Default: None, which results in slicing at 0 in all direction
            of `slice_across`.
+
+        max_resolution_3d : list of int or None
+            Maximum resolution that the 3D reconstruction of the field (when
+            `theta` is None) can have. The list should contain two values,
+            e.g. `[200, 100]`, indicating the maximum longitudinal and
+            transverse resolution, respectively. This is useful for
+            performance reasons, particularly for 3D visualization.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -510,16 +517,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # For Cartesian components, combine r and t components
                 Fr, info = self.data_reader.read_field_circ(
                     iteration, field, 'r', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution_3d)
                 Ft, info = self.data_reader.read_field_circ(
                     iteration, field, 't', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution_3d)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = self.data_reader.read_field_circ(iteration,
                     field, coord, slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution_3d)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
