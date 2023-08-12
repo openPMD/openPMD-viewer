@@ -80,36 +80,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Go through the files of the series, extract the time
         # and a few parameters.
-        N_iterations = len(self.iterations)
-        self.t = np.zeros(N_iterations)
-
-        # - Extract parameters from the first file
-        t, params0 = self.data_reader.read_openPMD_params(self.iterations[0])
-        self.t[0] = t
-        self.extensions = params0['extensions']
-        self.avail_fields = params0['avail_fields']
-        if self.avail_fields is not None:
-            self.fields_metadata = params0['fields_metadata']
-            self.avail_geom = set( self.fields_metadata[field]['geometry']
-                                for field in self.avail_fields )
-        # Extract information of the particles
-        self.avail_species = params0['avail_species']
-        self.avail_record_components = \
-            params0['avail_record_components']
-
-        # - Extract the time for each file and, if requested, check
-        #   that the other files have the same parameters
-        for k in range(1, N_iterations):
-            t, params = self.data_reader.read_openPMD_params(
-                self.iterations[k], check_all_files)
-            self.t[k] = t
-            if check_all_files:
-                for key in params0.keys():
-                    if params != params0:
-                        print("Warning: File %s has different openPMD "
-                              "parameters than the rest of the time series."
-                              % self.iterations[k])
-                        break
+        self.determine_available_data()
 
         # - Set the current iteration and time
         self._current_i = 0
@@ -121,6 +92,87 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter(self.t, self.iterations)
+
+    def determine_available_data(self, check_all_files=True):
+        """Find the available fields and species and their metadata.
+
+        Parameters
+        ----------
+        check_all_files : bool, optional
+            Whether to look for fields and species in every file. If `False`,
+            it assumes that all iterations have the same data (i.e., the fields
+            and species available in the first iteration). By default True.
+        """
+        N_iterations = len(self.iterations)
+        self.t = np.zeros(N_iterations)
+        self.avail_fields = []
+        self.avail_species = []
+        self.avail_record_components = {}
+        self.fields_metadata = {}
+        self.fields_t = {}
+        self.species_t = {}
+        self.fields_iterations = {}
+        self.species_iterations = {}
+        self.extensions = []
+        for i, it in enumerate(self.iterations):
+            check_file = (i == 0) or check_all_files
+            t, params = self.data_reader.read_openPMD_params(it, check_file)
+            self.t[it] = t
+            if check_file:
+                avail_fields_it = params['avail_fields']
+                avail_species_it = params['avail_species']
+                avail_record_components_it = params['avail_record_components']
+                extensions_it = params['extensions']
+                self.extensions.extend([ex for ex in extensions_it
+                                        if ex not in self.extensions])
+                if avail_fields_it:
+                    fields_metadata_it = params['fields_metadata']
+                    new_fields = [fld for fld in avail_fields_it
+                                  if fld not in self.avail_fields]
+                    self.avail_fields.extend(new_fields)
+                    for fld in new_fields:
+                        self.fields_t[fld] = []
+                        self.fields_iterations[fld] = []
+                        self.fields_metadata[fld] = fields_metadata_it[fld]
+                    for fld in avail_fields_it:
+                        self.fields_t[fld].append(t)
+                        self.fields_iterations[fld].append(it)
+                if avail_species_it:
+                    new_species = [sp for sp in avail_species_it
+                                   if sp not in self.avail_species]
+                    self.avail_species.extend(new_species)
+                    for sp in new_species:
+                        self.species_t[sp] = []
+                        self.species_iterations[sp] = []
+                        self.avail_record_components[sp] = avail_record_components_it[sp]
+                    for sp in avail_species_it:
+                        self.species_t[sp].append(t)
+                        self.species_iterations[sp].append(it)
+
+        if self.avail_fields:
+            self.avail_geom = set(self.fields_metadata[fld]['geometry']
+                                  for fld in self.avail_fields)
+            
+        if check_all_files:
+            for fld in self.avail_fields:
+                self.fields_t[fld] = np.array(self.fields_t[fld])
+                self.fields_iterations[fld] = np.array(self.fields_iterations[fld])
+            for sp in self.avail_species:
+                self.species_t[sp] = np.array(self.species_t[sp])
+                self.species_iterations[sp] = np.array(self.species_iterations[sp])
+
+        else:
+            for fld in self.avail_fields:
+                self.fields_t[fld] = self.t
+                self.fields_iterations[fld] = self.iterations
+            for sp in self.avail_species:
+                self.species_t[sp] = self.t
+                self.species_iterations[sp] = self.iterations
+        
+
+        # For backwards compatibility
+        if not self.avail_fields:
+            self.avail_fields = None
 
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
             select=None, plot=False, nbins=150,
@@ -264,7 +316,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
-        self._find_output(t, iteration)
+        self._find_output(t, iteration, self.species_t[species],
+                          self.species_iterations[species])
         # Get the corresponding iteration
         iteration = self.iterations[self._current_i]
 
@@ -492,7 +545,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Find the output that corresponds to the requested time/iteration
         # (Modifies self._current_i, self.current_iteration and self.current_t)
-        self._find_output(t, iteration)
+        self._find_output(t, iteration, self.fields_t[field],
+                          self.fields_iterations[field])
         # Get the corresponding iteration
         iteration = self.iterations[self._current_i]
 
@@ -598,7 +652,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             accumulated_result = try_array( accumulated_result )
             return accumulated_result
 
-    def _find_output(self, t, iteration):
+    def _find_output(self, t, iteration, record_t, record_iterations):
         """
         Find the output that correspond to the requested `t` or `iteration`
         Modify self._current_i accordingly.
@@ -610,6 +664,12 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         iteration : int
             Iteration requested
+
+        record_t : ndarray
+            The time steps at which the record (species/field) is available.
+
+        record_iterations : ndarray
+            The iterations at which the record (species/field) is available.
         """
         # Check the arguments
         if (t is not None) and (iteration is not None):
@@ -619,20 +679,21 @@ class OpenPMDTimeSeries(InteractiveViewer):
         # If a time is requested
         elif (t is not None):
             # Make sure the time requested does not exceed the allowed bounds
-            if t < self.tmin:
-                self._current_i = 0
-            elif t > self.tmax:
-                self._current_i = len(self.t) - 1
+            if t < np.min(record_t):
+                self._current_i = abs(record_iterations[0] - self.iterations).argmin()
+            elif t > np.max(record_t):
+                self._current_i = abs(record_iterations[-1] - self.iterations).argmin()
             # Find the closest existing iteration
             else:
-                self._current_i = abs(self.t - t).argmin()
+                closest_record_iteration = record_iterations[abs(record_t - t).argmin()]
+                self._current_i = abs(closest_record_iteration - self.iterations).argmin()
         # If an iteration is requested
         elif (iteration is not None):
-            if (iteration in self.iterations):
+            if (iteration in record_iterations):
                 # Get the index that corresponds to this iteration
                 self._current_i = abs(iteration - self.iterations).argmin()
             else:
-                iter_list = '\n - '.join([str(it) for it in self.iterations])
+                iter_list = '\n - '.join([str(it) for it in record_iterations])
                 raise OpenPMDException(
                       "The requested iteration '%s' is not available.\nThe "
                       "available iterations are: \n - %s\n" % (iteration, iter_list))
