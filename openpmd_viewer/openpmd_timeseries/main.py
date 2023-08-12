@@ -80,7 +80,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # Go through the files of the series, extract the time
         # and a few parameters.
-        self.determine_available_data()
+        self.determine_available_data(check_all_files)
 
         # - Set the current iteration and time
         self._current_i = 0
