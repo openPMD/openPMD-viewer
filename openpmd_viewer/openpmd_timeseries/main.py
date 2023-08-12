@@ -117,7 +117,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
         for i, it in enumerate(self.iterations):
             check_file = (i == 0) or check_all_files
             t, params = self.data_reader.read_openPMD_params(it, check_file)
-            self.t[it] = t
+            self.t[i] = t
             if check_file:
                 avail_fields_it = params['avail_fields']
                 avail_species_it = params['avail_species']
