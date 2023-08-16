@@ -277,7 +277,7 @@ def read_field_circ( filename, iteration, field, coord,
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
-        F_total = np.zeros( (nx, ny, nz) )
+        F_total = np.zeros( (nx, ny, nz), dtype=dset.dtype )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
             nx, ny, nz, Nr, nmodes, inv_dr, rmax, coord_order )
 
@@ -285,9 +285,9 @@ def read_field_circ( filename, iteration, field, coord,
 
         # Extract the modes and recombine them properly
         if coord_order is RZorder.mrz:
-            F_total = np.zeros( (2 * Nr, Nz ) )
+            F_total = np.zeros( (2 * Nr, Nz ), dtype=dset.dtype )
         elif coord_order is RZorder.mzr:
-            F_total = np.zeros( (Nz, 2 * Nr ) )
+            F_total = np.zeros( (Nz, 2 * Nr ), dtype=dset.dtype )
         else:
             raise Exception(order_error_msg)
         if m == 'all':
