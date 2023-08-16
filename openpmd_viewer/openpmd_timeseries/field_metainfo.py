@@ -73,7 +73,8 @@ class FieldMetaInformation(object):
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, t, iteration, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration,
+                 thetaMode=False, field_attrs=None, component_attrs=None):
         """
         Create a FieldMetaInformation object
 
@@ -105,6 +106,8 @@ class FieldMetaInformation(object):
         setattr(self, 'time', t)
         setattr(self, 'iteration', iteration)
 
+        self.field_attrs = field_attrs
+        self.component_attrs = component_attrs
         self._generate_imshow_extent()
 
 
