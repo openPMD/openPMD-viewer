@@ -169,7 +169,6 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 self.species_t[sp] = self.t
                 self.species_iterations[sp] = self.iterations
         
-
         # For backwards compatibility
         if not self.avail_fields:
             self.avail_fields = None
