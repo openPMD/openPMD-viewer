@@ -39,7 +39,7 @@ class FieldMetaInformation(object):
         the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
         then these variables will be called dx and dy.
 
-     - x, z: 1darrays of double
+    - x, z: 1darrays of double
         The position of all the gridpoints, along each axis
         Notice that the name of these variables change according to
         the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
@@ -69,6 +69,12 @@ class FieldMetaInformation(object):
         It allows the user to get the simulation time when calling the
         get_particle method for a given iteration and vice versa.
         Either `t` or `iteration` should be given.
+
+    - field_attrs: dict
+        All the attributes of the field record in the openPMD file.
+
+    - component_attrs: dict
+        All the attributes of the field component record in the openPMD file.
 
     """
 
