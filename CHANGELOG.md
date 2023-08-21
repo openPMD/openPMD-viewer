@@ -1,5 +1,52 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.8.0
+
+- The functions `get_field` and `get_particle` now require `iteration` or `t`
+  to be passed (instead of using a default iteration when none was provided).
+  (See [#383](https://github.com/openPMD/openPMD-viewer/pull/383))
+
+- The function `get_laser_waist` is more robust and does not crash when the
+  laser field is 0.
+  (See [#359](https://github.com/openPMD/openPMD-viewer/pull/359))
+
+- The `FieldMEtaInformation` object has new attributes `time` and `iteration`.
+  (See [#372](https://github.com/openPMD/openPMD-viewer/pull/372))
+
+- The docstring of `get_mean_gamma` has been updated
+  (See [#379](https://github.com/openPMD/openPMD-viewer/pull/379))
+  and the attributes `ts.t` and `ts.iterations` are now shown in the tutorials
+  (See [#382](https://github.com/openPMD/openPMD-viewer/pull/382))
+
+## 1.7.0
+
+This release includes a few improvements:
+
+- The function `get_laser_waist` is more robust: it does not automatically
+assume that the `z` axis is the last axis of the data. In addition, the user
+can now  specify the laser propagation direction. (The default is `z`.)
+(See [#345](https://github.com/openPMD/openPMD-viewer/pull/345))
+
+- The handling of `unitSI` is now more robust. (See [#363](https://github.com/openPMD/openPMD-viewer/pull/363))
+
+## 1.6.0
+
+This release adds a few features:
+
+- `openPMD-viewer` can now read complex datasets (See [#353](https://github.com/openPMD/openPMD-viewer/pull/353))
+
+- Avoid errors in LPA diagnostics in the absence of selected particles (See [#358](https://github.com/openPMD/openPMD-viewer/pull/358))
+
+## 1.5.0
+
+This release fixes a few miscellaneous bugs:
+
+- Better 3D reconstruction for `theta=None` (See [#344](https://github.com/openPMD/openPMD-viewer/pull/344))
+
+- Better support for ADIOS data (See [#355](https://github.com/openPMD/openPMD-viewer/pull/355))
+
+- Support for group-based encoding (See [#346](https://github.com/openPMD/openPMD-viewer/pull/346))
+
 ## 1.4.0
 
 This new release introduces several improvements:

@@ -47,8 +47,8 @@ class InteractiveViewer(object):
         """
         Navigate the simulation using a slider
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         figsize: tuple
             Size of the figures
 

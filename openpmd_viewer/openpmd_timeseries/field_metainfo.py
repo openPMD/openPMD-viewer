@@ -39,7 +39,7 @@ class FieldMetaInformation(object):
         the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
         then these variables will be called dx and dy.
 
-     - x, z: 1darrays of double
+    - x, z: 1darrays of double
         The position of all the gridpoints, along each axis
         Notice that the name of these variables change according to
         the values in `axes`. For instance, if `axes` is {0: 'x', 1: 'y'},
@@ -57,10 +57,30 @@ class FieldMetaInformation(object):
         than ymin, ymax, xmin, xmax: these values are shifted by half a cell.
         The reason for this is that imshow plots a finite-width square for each
         value of the field array.)
+
+    - t: float (in seconds), optional
+        The simulation time of the data
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
+    - iteration: int
+        The iteration of the data
+        It allows the user to get the simulation time when calling the
+        get_particle method for a given iteration and vice versa.
+        Either `t` or `iteration` should be given.
+
+    - field_attrs: dict
+        All the attributes of the field record in the openPMD file.
+
+    - component_attrs: dict
+        All the attributes of the field component record in the openPMD file.
+
     """
 
     def __init__(self, axes, shape, grid_spacing,
-                 global_offset, grid_unitSI, position, thetaMode=False):
+                 global_offset, grid_unitSI, position, t, iteration,
+                 thetaMode=False, field_attrs=None, component_attrs=None):
         """
         Create a FieldMetaInformation object
 
@@ -88,6 +108,12 @@ class FieldMetaInformation(object):
             setattr(self, axis_name + 'min', axis_points[0])
             setattr(self, axis_name + 'max', axis_points[-1])
 
+        # Register current simulation time and iteration in the object
+        setattr(self, 'time', t)
+        setattr(self, 'iteration', iteration)
+
+        self.field_attrs = field_attrs
+        self.component_attrs = component_attrs
         self._generate_imshow_extent()
 
 

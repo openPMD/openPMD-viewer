@@ -22,7 +22,7 @@ def chunk_to_slice(chunk):
 
 
 def get_data(series, record_component, i_slice=None, pos_slice=None,
-             output_type=np.float64):
+             output_type=None):
     """
     Extract the data from a (possibly constant) dataset
     Slice the data according to the parameters i_slice and pos_slice
@@ -90,7 +90,7 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
             del slice_shape[dir_index]
 
         # mask invalid regions with NaN
-        data = np.full(slice_shape, np.nan, dtype=output_type)
+        data = np.full(slice_shape, np.nan, dtype=record_component.dtype)
 
         # build requested ND slice with respect to full data
         s = []
@@ -143,12 +143,15 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
                 data[s_target] = x
 
     # Convert to the right type
-    if data.dtype != output_type:
+    if (output_type is not None) and (data.dtype != output_type):
         data = data.astype( output_type )
     # Scale by the conversion factor
-    if output_type in [ np.float64, np.float32, np.float16 ]:
-        if record_component.unit_SI != 1.0:
+    if record_component.unit_SI != 1.0:
+        if np.issubdtype(data.dtype, np.floating) or \
+            np.issubdtype(data.dtype, np.complexfloating):
             data *= record_component.unit_SI
+        else:
+            data = data * record_component.unit_SI
 
     return data
 

@@ -31,8 +31,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Initialize an OpenPMD time series with various methods to diagnose the
         data
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         path_to_dir : string
             The path to the directory where the openPMD files are.
             For the moment, only HDF5 files are supported. There should be
@@ -63,7 +63,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -104,11 +104,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple of floats with:
         - central energy
         - energy spread
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w, m = self.get_particle(
             var_list=['ux', 'uy', 'uz', 'w', 'mass'], select=select,
             species=species, t=t, iteration=iteration)
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate Lorentz factor and energy for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         if property == 'energy':
@@ -147,7 +151,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -168,11 +172,15 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple of floats with:
         - mean weighted gamma
         - weighted standard deviation of gamma
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle(
             var_list=['ux', 'uy', 'uz', 'w'], select=select,
             species=species, t=t, iteration=iteration )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate Lorentz factor for all particles
         gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
         # Calculate weighted mean and average
@@ -185,7 +193,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             mean_gamma = np.nan
         std_gamma = w_std(gamma, w)
         # Return the result
-        return( mean_gamma, std_gamma )
+        return mean_gamma, std_gamma
 
     def get_sigma_gamma_slice(self, dz, t=None, iteration=None, species=None,
                               select=None, plot=False, **kw):
@@ -200,7 +208,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -268,7 +276,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -305,7 +313,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -326,16 +334,20 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         A tuple with:
         - divergence in x plane in rad
         - divergence in y plane in rad
+        Returns NaN if particle selection is empty
         """
         # Get particle data
         ux, uy, uz, w = self.get_particle( var_list=['ux', 'uy', 'uz', 'w'],
                                            t=t, iteration=iteration,
                                            species=species, select=select )
+        if len(w) == 0:
+            # Return NaN if no particles are found
+            return np.nan, np.nan
         # Calculate divergence
         div_x = w_std( np.arctan2(ux, uz), w )
         div_y = w_std( np.arctan2(uy, uz), w )
         # Return the result
-        return( div_x, div_y )
+        return div_x, div_y
 
     def get_emittance(self, t=None, iteration=None, species=None,
                       select=None, kind='normalized', description='projected',
@@ -348,7 +360,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -462,7 +474,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
          t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user
 
         iteration : int
@@ -520,7 +532,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Info object with central position of the bins
         info = FieldMetaInformation( {0: 'z'}, current.shape,
             grid_spacing=(len_z / bins, ), grid_unitSI=1,
-            global_offset=(min_z + len_z / bins / 2,), position=(0,))
+            global_offset=(min_z + len_z / bins / 2,), position=(0,),
+            t=self.current_t, iteration=self.current_iteration)
         # Plot the result if needed
         if plot:
             check_matplotlib()
@@ -547,7 +560,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -671,7 +684,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -726,7 +739,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -771,7 +784,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         T = (info.zmax - info.zmin) / const.c
         spect_info = FieldMetaInformation( {0: 'omega'}, spectrum.shape,
             grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
-            global_offset=(0,), position=(0,))
+            global_offset=(0,), position=(0,),
+            t=self.current_t, iteration=self.current_iteration )
 
         # Plot the field if required
         if plot:
@@ -794,7 +808,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -829,7 +843,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -874,7 +888,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Unknown method: {:s}'.format(method))
 
     def get_laser_waist( self, t=None, iteration=None, pol=None, theta=0,
-                         method='fit' ):
+        laser_propagation='z', method='fit', profile_method='peak' ):
         """
         Calculate the waist of a (gaussian) laser pulse. ( sqrt(2) * sigma_r)
 
@@ -885,7 +899,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -899,11 +913,18 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            Only used for thetaMode geometry
            The angle of the plane of observation, with respect to the x axis
 
+        laser_propagation : string, optional
+            Coordinate along which laser field propagates.
+            Default is 'z'.
+
         method : str, optional
            The method which is used to compute the waist
            'fit': Gaussian fit of the transverse profile
            'rms': RMS radius, weighted by the transverse profile
            ('rms' tends to give more weight to the "wings" of the pulse)
+
+        profile_method : str, optional, default 'peak'
+            Method used to obtain the transverse profile. Options are: 'peak','projection'
 
         Returns
         -------
@@ -918,31 +939,48 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Get the field envelope (as 2D array)
         field, info = self.get_laser_envelope(t=t, iteration=iteration,
-                         pol=pol, slice_across=slice_across, theta=theta)
+                         pol=pol, laser_propagation=laser_propagation,
+                         slice_across=slice_across, theta=theta)
         assert field.ndim == 2
-        # Find the indices of the maximum field, and
-        # pick the corresponding transverse slice
-        itrans_max, iz_max = np.unravel_index(
-            np.argmax( field ), field.shape )
-        trans_slice = field[ :, iz_max ]
-        # Get transverse positons
-        trans_pos = getattr(info, info.axes[0])
+
+        # Detect direction of laser propagation
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        propagation_axis_index = inverted_axes_dict[laser_propagation]
+        # Get transverse positions
+        trans_pos = getattr(info, info.axes[(propagation_axis_index+1)%2])
+
+        if profile_method == 'peak':
+            # Find the indices of the maximum field
+            i_max = np.unravel_index( np.argmax( field ), field.shape )
+            # Pick the corresponding transverse slice
+            # (Transverse to laser propagation)
+            trans_profile = np.take( field, [i_max[propagation_axis_index]],
+                                    axis=propagation_axis_index ).flatten()
+        elif profile_method == 'projection':
+            # Project field along the propagation direction
+            trans_profile = np.sum( field, axis=propagation_axis_index )
+        else:
+            raise ValueError('Unknown profile_method: {:s}'.format(profile_method))
+
+        if trans_profile.sum() == 0:
+            # No laser
+            return( np.nan )
 
         # Compute waist with RMS value
         # (serves as initial guess when method=='fit')
-        w0 = np.sqrt(2) * w_std(trans_pos, trans_slice)
+        w0 = np.sqrt(2) * w_std(trans_pos, trans_profile)
         if method == 'rms':
             return( w0 )
 
         # Compute waist with Gaussian fit
         elif method == 'fit':
             # Get initial guess for the amplitude
-            E0 = field[ itrans_max, iz_max ]
+            E0 = trans_profile.max()
             # Assume that the pulse is centered
             x0 = 0
             # Perform the fit
             params, _ = curve_fit( gaussian_profile, trans_pos,
-                                   trans_slice, p0=[x0, E0, w0 ])
+                                   trans_profile, p0=[x0, E0, w0 ])
             return( params[2] )
 
         else:
@@ -965,7 +1003,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         ----------
         t : float (in seconds), optional
             Time at which to obtain the data (if this does not correspond to
-            an available file, the last file before `t` will be used)
+            an existing iteration, the closest existing iteration will be used)
             Either `t` or `iteration` should be given by the user.
 
         iteration : int
@@ -1027,7 +1065,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         tmin = -(T - T / spectrogram.shape[1] * maxj)
         info = FieldMetaInformation( {0: 'omega', 1: 't'}, spectrogram.shape,
             grid_spacing=( 2 * np.pi / T, dt / 2. ), grid_unitSI=1,
-            global_offset=(0, tmin), position=(0, 0))
+            global_offset=(0, tmin), position=(0, 0),
+            t=self.current_t, iteration=self.current_iteration )
 
         # Plot the result if needed
         if plot:
