@@ -611,7 +611,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         - A FieldMetaInformation object
         """
         # Check whether the laser envelope is present, in this case return it
-        if 'laserEnvelope' in self.avail_fields:
+        if 'envelopeField' in self.avail_fields:
             envelope, info = self.get_field( 'laserEnvelope', t=t, m=m,
                 iteration=iteration, theta=theta, slice_across=slice_across,
                 slice_relative_position=slice_relative_position,
