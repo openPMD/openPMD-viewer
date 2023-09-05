@@ -80,7 +80,7 @@ def read_species_data(series, iteration, species_name, component_name,
         weighting_power = record.get_attribute('weightingPower')
         if (macro_weighted == 1) and (weighting_power != 0):
             w_component = next(species['weighting'].items())[1]
-            w = get_data( w_component )
+            w = get_data( series, w_component )
             data *= w ** (-weighting_power)
 
     # - Return positions, with an offset
