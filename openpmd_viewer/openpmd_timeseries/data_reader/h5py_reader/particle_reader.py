@@ -32,7 +32,7 @@ def read_species_data(filename, iteration, species, record_comp, extensions):
 
     record_comp: string
         The record component to extract
-        Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
+        Either 'x', 'y', 'z', 'r', 'ux', 'uy', 'uz', 'ur', or 'w'
 
     extensions: list of strings
         The extensions that the current OpenPMDTimeSeries complies with
@@ -43,9 +43,11 @@ def read_species_data(filename, iteration, species, record_comp, extensions):
     dict_record_comp = {'x': 'position/x',
                         'y': 'position/y',
                         'z': 'position/z',
+                        'r': 'position/r',
                         'ux': 'momentum/x',
                         'uy': 'momentum/y',
                         'uz': 'momentum/z',
+                        'ur': 'momentum/r',
                         'w': 'weighting'}
     if record_comp in dict_record_comp:
         opmd_record_comp = dict_record_comp[record_comp]
@@ -78,11 +80,11 @@ def read_species_data(filename, iteration, species, record_comp, extensions):
             data *= w ** (-weighting_power)
 
     # - Return positions, with an offset
-    if record_comp in ['x', 'y', 'z']:
+    if record_comp in ['x', 'y', 'z', 'r']:
         offset = get_data(species_grp['positionOffset/%s' % record_comp])
         data += offset
     # - Return momentum in normalized units
-    elif record_comp in ['ux', 'uy', 'uz' ]:
+    elif record_comp in ['ux', 'uy', 'uz', 'ur']:
         m = get_data(species_grp['mass'])
         # Normalize only if the particle mass is non-zero
         if np.all( m != 0 ):

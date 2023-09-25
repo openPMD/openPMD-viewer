@@ -207,6 +207,10 @@ def simplify_record(record_comps):
         record_comps.remove('position/z')
         record_comps.remove('positionOffset/z')
         record_comps.append('z')
+    if ('position/r' in record_comps) and ('positionOffset/r' in record_comps):
+        record_comps.remove('position/r')
+        record_comps.remove('positionOffset/r')
+        record_comps.append('r')
 
     # Replace the names of the momenta
     if 'momentum/x' in record_comps:
@@ -218,6 +222,9 @@ def simplify_record(record_comps):
     if 'momentum/z' in record_comps:
         record_comps.remove('momentum/z')
         record_comps.append('uz')
+    if 'momentum/r' in record_comps:
+        record_comps.remove('momentum/r')
+        record_comps.append('ur')
 
     # Replace the name for 'weights'
     if 'weighting' in record_comps:

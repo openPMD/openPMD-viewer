@@ -32,7 +32,7 @@ def read_species_data(series, iteration, species_name, component_name,
 
     component_name: string
         The record component to extract
-        Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
+        Either 'x', 'y', 'z', 'r', 'ux', 'uy', 'uz', 'ur', or 'w'
 
     extensions: list of strings
         The extensions that the current OpenPMDTimeSeries complies with
@@ -43,9 +43,11 @@ def read_species_data(series, iteration, species_name, component_name,
     dict_record_comp = {'x': ['position', 'x'],
                         'y': ['position', 'y'],
                         'z': ['position', 'z'],
+                        'r': ['position', 'r'],
                         'ux': ['momentum', 'x'],
                         'uy': ['momentum', 'y'],
                         'uz': ['momentum', 'z'],
+                        'ur': ['momentum', 'r'],
                         'w': ['weighting', None]}
     
     if component_name in dict_record_comp:
@@ -84,11 +86,11 @@ def read_species_data(series, iteration, species_name, component_name,
             data *= w ** (-weighting_power)
 
     # - Return positions, with an offset
-    if component_name in ['x', 'y', 'z']:
+    if component_name in ['x', 'y', 'z', 'r']:
         offset = get_data(series, species['positionOffset'][component_name])
         data += offset
     # - Return momentum in normalized units
-    elif component_name in ['ux', 'uy', 'uz' ]:
+    elif component_name in ['ux', 'uy', 'uz', 'ur']:
         mass_component = next(species['mass'].items())[1]
         m = get_data(series, mass_component)
         # Normalize only if the particle mass is non-zero
