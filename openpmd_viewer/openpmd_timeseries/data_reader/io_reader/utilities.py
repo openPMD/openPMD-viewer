@@ -63,7 +63,14 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
     if pos_slice is None:
         # mask invalid regions with NaN
         #   note: full_like triggers a full read, thus we avoid it #340
-        data = np.full(record_component.shape, np.nan, record_component.dtype)
+        # (only for floating-point types)
+        if np.issubdtype(record_component.dtype, np.floating) or \
+            np.issubdtype(record_component.dtype, np.complexfloating):
+            data = np.full(record_component.shape, np.nan, record_component.dtype)
+        else:
+            # Other types do not support NaN
+            data = np.full(record_component.shape, 0, record_component.dtype)
+
         for chunk in chunks:
             chunk_slice = chunk_to_slice(chunk)
 
@@ -90,7 +97,13 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
             del slice_shape[dir_index]
 
         # mask invalid regions with NaN
-        data = np.full(slice_shape, np.nan, dtype=record_component.dtype)
+        # (only for floating-point types)
+        if np.issubdtype(record_component.dtype, np.floating) or \
+            np.issubdtype(record_component.dtype, np.complexfloating):
+            data = np.full(slice_shape, np.nan, dtype=record_component.dtype)
+        else:
+            # Other types do not support NaN
+            data = np.full(slice_shape, 0, dtype=record_component.dtype)
 
         # build requested ND slice with respect to full data
         s = []
