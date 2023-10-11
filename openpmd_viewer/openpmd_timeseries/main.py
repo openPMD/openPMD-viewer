@@ -630,7 +630,9 @@ class OpenPMDTimeSeries(InteractiveViewer):
                       "The requested iteration '%s' is not available.\nThe "
                       "available iterations are: \n - %s\n" % (iteration, iter_list))
         else:
-            pass  # self._current_i retains its previous value
+            raise OpenPMDException(
+                "Please pass either a time (`t`) or an "
+                "iteration (`iteration`).")
 
         # Register the value in the object
         self.current_t = self.t[self._current_i]

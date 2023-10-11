@@ -280,7 +280,7 @@ class DataReader( object ):
 
         record_comp: string
             The record component to extract
-            Either 'x', 'y', 'z', 'ux', 'uy', 'uz', or 'w'
+            Either 'x', 'y', 'z', 'r', 'ux', 'uy', 'uz', 'ur', or 'w'
 
         extensions: list of strings
             The extensions that the current OpenPMDTimeSeries complies with

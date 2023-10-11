@@ -1,0 +1,14 @@
+sphinx
+sphinx-design
+sphinx_rtd_theme
+jupyter
+nbsphinx
+wget
+numba
+numpy
+matplotlib
+pygments
+scipy
+h5py
+tqdm
+openpmd_viewer

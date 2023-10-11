@@ -36,14 +36,6 @@ username = <yourPypiUsername>
   correspond to the new release, and that
   the corresponding changes have been documented in `CHANGELOG.md`.
 
-- If everything works fine, then merge the `dev` version into `main`
-and upload it to Github:
-```
-git checkout main
-git merge dev
-git push
-```
-
 - Create a new release through the graphical interface on Github
 
 ## Uploading the package to PyPI

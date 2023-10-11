@@ -23,7 +23,7 @@ def test_tutorials():
     """Test all the tutorial notebooks"""
 
     # Go to the relative path where all tutorial notebooks are
-    os.chdir('tutorials')
+    os.chdir('docs/source/tutorials')
     tutorial_notebooks = [filename for filename in os.listdir('./')
                           if filename[-6:] == '.ipynb']
 
@@ -38,7 +38,7 @@ def test_tutorials():
         os.system('jupyter nbconvert --to=python %s' % notebook_name)
         clean_ipython_features(script_name)
         try:
-            response = os.system('python ' + script_name)
+            response = os.system('python3 ' + script_name)
             assert response == 0
         except:
             # now we might want to know the script that was executed

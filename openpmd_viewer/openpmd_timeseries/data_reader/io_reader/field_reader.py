@@ -63,7 +63,7 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
@@ -77,6 +77,10 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     global_offset = field.grid_global_offset
     grid_unit_SI = field.grid_unit_SI
     grid_position = component.position
+    time = (it.time + field.time_offset) * it.time_unit_SI
+    
+    field_attrs = {a: field.get_attribute(a) for a in field.attributes}
+    component_attrs = {a: component.get_attribute(a) for a in component.attributes} 
 
     # Slice selection
     #   TODO put in general utilities
@@ -110,13 +114,17 @@ def read_field_cartesian( series, iteration, field_name, component_name,
         # Extract data
         F = get_data( series, component, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
-                grid_unit_SI, grid_position )
+                grid_unit_SI, grid_position,
+                time, iteration, field_attrs=field_attrs,
+                component_attrs=component_attrs )
     else:
         F = get_data( series, component )
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             grid_spacing, global_offset,
-            grid_unit_SI, grid_position )
+            grid_unit_SI, grid_position,
+            time, iteration, field_attrs=field_attrs,
+            component_attrs=component_attrs )
 
     return F, info
 
@@ -180,12 +188,15 @@ def read_field_circ( series, iteration, field_name, component_name,
     """
     it = series.iterations[iteration]
 
-    # Extract the dataset and and corresponding group
+    # Extract the dataset and corresponding group
     field = it.meshes[field_name]
     if field.scalar:
         component = next(field.items())[1]
     else:
         component = field[component_name]
+    
+    field_attrs = {a: field.get_attribute(a) for a in field.attributes}
+    component_attrs = {a: component.get_attribute(a) for a in component.attributes} 
 
     # Extract the metainformation
     #   FIXME here and in h5py reader, we need to invert the order on 'F' for
@@ -203,11 +214,14 @@ def read_field_circ( series, iteration, field_name, component_name,
         coord_order = RZorder.mzr
     else:
         raise Exception(order_error_msg)
+    time = (it.time + field.time_offset) * it.time_unit_SI
 
     # Nm, Nr, Nz = component.shape
     info = FieldMetaInformation( coord_labels, N_pair,
         field.grid_spacing, field.grid_global_offset,
-        field.grid_unit_SI, component.position, thetaMode=True )
+        field.grid_unit_SI, component.position, time, iteration,
+        thetaMode=True, field_attrs=field_attrs,
+        component_attrs=component_attrs )
 
     # Convert to a 3D Cartesian array if theta is None
     if theta is None:
@@ -264,7 +278,7 @@ def read_field_circ( series, iteration, field_name, component_name,
         # Convert cylindrical data to Cartesian data
         info._convert_cylindrical_to_3Dcartesian()
         nx, ny, nz = len(info.x), len(info.y), len(info.z)
-        F_total = np.zeros( (nx, ny, nz) )
+        F_total = np.zeros( (nx, ny, nz), dtype=component.dtype )
         construct_3d_from_circ( F_total, Fcirc, info.x, info.y, modes,
             nx, ny, nz, Nr, nmodes, inv_dr, rmax, coord_order)
 
