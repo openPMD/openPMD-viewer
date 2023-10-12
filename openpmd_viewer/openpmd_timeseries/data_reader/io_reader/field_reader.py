@@ -203,15 +203,15 @@ def read_field_circ( series, iteration, field_name, component_name,
     #         grid spacing/offset/position
 
     coord_labels = {ii: coord for (ii, coord) in enumerate(field.axis_labels)}
-    coord_label_str = ''.join(coord_labels.values())
-    coord_label_str = 'm' + coord_label_str
-    coord_order = RZorder[coord_label_str]
-    if coord_order is RZorder.mrz:
+
+    if coord_labels[0] == 'r':
+        coord_order = RZorder.mrz
         Nm, Nr, Nz = component.shape
         N_pair = (Nr, Nz)
-    elif coord_order is RZorder.mzr:
+    elif coord_labels[1] == 'r':
         Nm, Nz, Nr = component.shape
         N_pair = (Nz, Nr)
+        coord_order = RZorder.mzr
     else:
         raise Exception(order_error_msg)
     time = (it.time + field.time_offset) * it.time_unit_SI
@@ -285,12 +285,6 @@ def read_field_circ( series, iteration, field_name, component_name,
     else:
 
         # Extract the modes and recombine them properly
-        if coord_order is RZorder.mrz:
-            F_total = np.zeros( (2 * Nr, Nz ), dtype=component.dtype )
-        elif coord_order is RZorder.mzr:
-            F_total = np.zeros( (Nz, 2 * Nr ), dtype=component.dtype )
-        else:
-            raise Exception(order_error_msg)
         if m == 'all':
             # Sum of all the modes
             # - Prepare the multiplier arrays
@@ -306,11 +300,13 @@ def read_field_circ( series, iteration, field_name, component_name,
             # - Sum the modes
             F = get_data( series, component )  # (Extracts all modes)
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:Nr, :] = np.tensordot( mult_below_axis,
                                                 F, axes=(0, 0) )[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = np.tensordot( mult_above_axis,
                                                 F, axes=(0, 0) )[:, :]
                 F_total[:, :Nr] = np.tensordot( mult_below_axis,
@@ -321,9 +317,11 @@ def read_field_circ( series, iteration, field_name, component_name,
             # Extract mode 0
             F = get_data( series, component, 0, 0 )
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = F[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = F[:, ::-1]
             else:
@@ -336,9 +334,11 @@ def read_field_circ( series, iteration, field_name, component_name,
             F_sin = get_data( series, component, 2 * m, 0 )
             F = cos * F_cos + sin * F_sin
             if coord_order is RZorder.mrz:
+                F_total = np.zeros( (2 * Nr, Nz ), dtype=F.dtype )
                 F_total[Nr:, :] = F[:, :]
                 F_total[:Nr, :] = (-1) ** m * F[::-1, :]
             elif coord_order is RZorder.mzr:
+                F_total = np.zeros( (Nz, 2 * Nr ), dtype=F.dtype )
                 F_total[:, Nr:] = F[:, :]
                 F_total[:, :Nr] = (-1) ** m * F[:, ::-1]
             else:
