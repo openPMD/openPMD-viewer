@@ -72,8 +72,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
         for chunk in chunks:
             chunk_slice = chunk_to_slice(chunk)
 
-            # skip empty slices
-            # https://github.com/ornladios/ADIOS2
+            # skip empty slices: issue for BP4 only
+            # https://github.com/ornladios/ADIOS2/issues/3459
             volume = 1
             for csl in chunk_slice:
                 volume *= csl.stop - csl.start
@@ -113,8 +113,8 @@ def get_data(series, record_component, i_slice=None, pos_slice=None,
             s_target = []  # starts and stops in sliced array
             chunk_slice = chunk_to_slice(chunk)
 
-            # skip empty slices
-            # https://github.com/ornladios/ADIOS2
+            # skip empty slices: issue for BP4 only
+            # https://github.com/ornladios/ADIOS2/issues/3459
             volume = 1
             for csl in chunk_slice:
                 volume *= csl.stop - csl.start
