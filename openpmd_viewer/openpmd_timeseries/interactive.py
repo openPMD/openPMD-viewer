@@ -13,7 +13,7 @@ from functools import partial
 try:
     from ipywidgets import widgets, __version__
     ipywidgets_version = int(__version__[0])
-    from IPython.core.display import display, clear_output
+    from IPython.display import display, clear_output
     import matplotlib
     import matplotlib.pyplot as plt
     dependencies_installed = True
