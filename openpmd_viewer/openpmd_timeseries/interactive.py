@@ -324,7 +324,7 @@ class InteractiveViewer(object):
         button_m.on_click(step_bw)
 
         # Display the time widgets
-        container = widgets.HBox(children=[button_m, button_p, play, slider])
+        container = widgets.HBox(children=[play, button_m, button_p, slider])
         display(container)
 
         # Field widgets
