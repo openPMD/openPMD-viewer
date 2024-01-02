@@ -1,5 +1,37 @@
 # Change Log / Release Log for openPMD-viewer
 
+## 1.10.0
+
+* use `%matplotlib widget` by default by @BenWibking in https://github.com/openPMD/openPMD-viewer/pull/407
+* BP4 Empty Skip: Inline Comment by @ax3l in https://github.com/openPMD/openPMD-viewer/pull/403
+* Close #402 Fix deprecated ipython command by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/410
+
+**Full Changelog**: https://github.com/openPMD/openPMD-viewer/compare/1.9.0...1.10.0
+
+## 1.9.0
+
+* When passing `t`, choose the closest iteration by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/347
+* README: Remove Travis-CI Badges by @ax3l in https://github.com/openPMD/openPMD-viewer/pull/369
+* Adding attributes to the FieldMetaInformation object by @juliettepech in https://github.com/openPMD/openPMD-viewer/pull/372
+* Sphinx documentation by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/303
+* Add readthedoc configuration by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/375
+* setup.py: no upper version of openPMD-api by @ax3l in https://github.com/openPMD/openPMD-viewer/pull/378
+* Docs: correct 'get_mean_gamma' description in tutorials by @IlianCS in https://github.com/openPMD/openPMD-viewer/pull/379
+* Do not use pyflakes for version 3.7 by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/385
+* Impose that user always passes iteration or t by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/383
+* Docs: Improve tutorials by adding basic analysis functions by @IlianCS in https://github.com/openPMD/openPMD-viewer/pull/382
+* Improve get_laser_waist by @soerenjalas in https://github.com/openPMD/openPMD-viewer/pull/359
+* Python 3.8+ by @ax3l in https://github.com/openPMD/openPMD-viewer/pull/387
+* Update version number and CHANGELOG.md by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/386
+* Add all record attributes to `FieldMetaInformation` by @AngelFP in https://github.com/openPMD/openPMD-viewer/pull/390
+* Support complex data in `thetaMode` geometry by @AngelFP in https://github.com/openPMD/openPMD-viewer/pull/389
+* fix get_data for weighting in momentum reader by @PrometheusPi in https://github.com/openPMD/openPMD-viewer/pull/393
+* Simplify names of radial particle components by @AngelFP in https://github.com/openPMD/openPMD-viewer/pull/392
+* Close #396 warning when reading particle data by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/398
+* Support reading of 'rt' lasy files by @RemiLehe in https://github.com/openPMD/openPMD-viewer/pull/371
+
+**Full Changelog**: https://github.com/openPMD/openPMD-viewer/compare/1.7.0...1.9.0
+
 ## 1.8.0
 
 - The functions `get_field` and `get_particle` now require `iteration` or `t`
