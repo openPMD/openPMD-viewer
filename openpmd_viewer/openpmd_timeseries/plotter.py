@@ -421,4 +421,4 @@ def check_matplotlib():
         warnings.warn("\n\nIt seems that you are using the matplotlib MacOSX "
         "backend. \n(This typically obtained when typing `%matplotlib`.)\n"
         "With recent version of Jupyter, the plots might not appear.\nIn this "
-        "case, switch to `%matplotlib notebook` and restart the notebook.")
+        "case, switch to `%matplotlib widget` and restart the notebook.")
