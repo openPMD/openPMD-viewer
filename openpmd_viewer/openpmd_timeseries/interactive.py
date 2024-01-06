@@ -97,8 +97,8 @@ class InteractiveViewer(object):
                         "\n\nIt seems that you are using ipywidgets 7 and "
                         "`%matplotlib inline`. \nThis can cause issues when "
                         "using `slider`.\nIn order to avoid this, you "
-                        "can either:\n- use `%matplotlib notebook`\n- or "
-                        "downgrade to ipywidgets 6 (with `pip` or `conda`).",
+                        "can either:\n- use `%matplotlib widget`\n- or "
+                        "upgrade ipywidgets to version 8 (with `pip` or `conda`).",
                         UserWarning)
 
                 # Handle plotting options
