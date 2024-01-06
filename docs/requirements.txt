@@ -7,6 +7,7 @@ wget
 numba
 numpy
 matplotlib
+ipympl
 pygments
 scipy
 h5py
