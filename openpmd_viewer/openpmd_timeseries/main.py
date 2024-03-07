@@ -362,8 +362,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
     def get_field(self, field=None, coord=None, t=None, iteration=None,
                   m='all', theta=0., slice_across=None,
-                  slice_relative_position=None, plot=False,
-                  plot_range=[[None, None], [None, None]], **kw):
+                  slice_relative_position=None, max_resolution = None,
+                  plot=False, plot_range=[[None, None], [None, None]], **kw):
         """
         Extract a given field from a file in the openPMD format.
 
@@ -415,6 +415,10 @@ class OpenPMDTimeSeries(InteractiveViewer):
            1 : upper edge of the simulation box
            Default: None, which results in slicing at 0 in all direction
            of `slice_across`.
+
+        max_resolution : Tuple of int, optional
+           A tuple of 2 integers, indicating the maximum resolution of the
+           restructed 3d array. This is only used for thetaMode geometry.
 
         plot : bool, optional
            Whether to plot the requested quantity
@@ -510,16 +514,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                 # For Cartesian components, combine r and t components
                 Fr, info = self.data_reader.read_field_circ(
                     iteration, field, 'r', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution)
                 Ft, info = self.data_reader.read_field_circ(
                     iteration, field, 't', slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution)
                 F = combine_cylindrical_components(Fr, Ft, theta, coord, info)
             else:
                 # For cylindrical or scalar components, no special treatment
                 F, info = self.data_reader.read_field_circ(iteration,
                     field, coord, slice_relative_position,
-                    slice_across, m, theta)
+                    slice_across, m, theta, max_resolution)
 
         # Plot the resulting field
         # Deactivate plotting when there is no slice selection
