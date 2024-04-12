@@ -200,7 +200,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's
            hist or hist2d.
 
@@ -425,7 +425,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
            along the 1st axis (first list) and 2nd axis (second list)
            Default: plots the full extent of the simulation box
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's imshow.
 
         Returns
@@ -555,7 +555,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             Arguments that would normally be passed to `called_method` for
             a single iteration. Do not pass the argument `t` or `iteration`.
         """
-        # Add the iteration key in the keyword aguments
+        # Add the iteration key in the keyword arguments
         kwargs['iteration'] = self.iterations[0]
 
         # Check the shape of results

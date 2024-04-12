@@ -336,7 +336,7 @@ def construct_3d_from_circ( F3d, Fcirc, x_array, y_array, modes,
                 else:
                     raise Exception(order_error_msg)
 
-            # Loop over all modes and recontruct data
+            # Loop over all modes and reconstruct data
             if r == 0:
                 expItheta = 1. + 0.j
             else:

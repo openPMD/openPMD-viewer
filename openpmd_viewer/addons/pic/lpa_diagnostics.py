@@ -227,7 +227,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot : bool, optional
            Whether to plot the requested quantity
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's `plot` method
 
         Returns
@@ -270,7 +270,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_charge( self, t=None, iteration=None, species=None, select=None ):
         """
-        Calculate the charge of the selcted particles.
+        Calculate the charge of the selected particles.
 
         Parameters
         ----------
@@ -411,7 +411,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             raise ValueError('Argument `kind` not recognized.')
         if description not in ['projected', 'slice-averaged', 'all-slices']:
             raise ValueError('Argument `description` not recognized.')
-        # Wheter to compute slice emittance
+        # Whether to compute slice emittance
         do_slice_emittance = ( description in ['slice-averaged',
                                                'all-slices'] )
         if do_slice_emittance and not nslices > 0:
@@ -496,11 +496,11 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot : bool, optional
            Whether to plot the requested quantity
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's `plot` method
         Returns
         -------
-        A tuple of arrays containig
+        A tuple of arrays containing
         - The current in each bin in Ampere
         - A FieldMetaInformation object
           (see object's docstring for more details)
@@ -511,7 +511,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             var_list=['z', 'uz', 'uy', 'ux', 'w', 'charge'],
             t=t, iteration=iteration,
             species=species, select=select )
-        # Length to be seperated in bins
+        # Length to be separated in bins
 
         if w.size > 0:
             min_z = np.min(z)
@@ -520,7 +520,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             gamma = np.sqrt(1 + ux ** 2 + uy ** 2 + uz ** 2)
             # Calculate particle velocities
             vz = uz / gamma * const.c
-            # Length to be seperated in bins
+            # Length to be separated in bins
             len_z = np.max(z) - np.min(z)
             vzq_sum, _ = np.histogram(z, bins=bins, weights=(vz * w * q))
             # Calculate the current in each bin
@@ -611,7 +611,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
            along the 1st axis (first list) and 2nd axis (second list)
            Default: plots the full extent of the simulation box
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's `plot`(1D) or
            `imshow` (2D) method
 
@@ -757,7 +757,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot: bool, optional
            Whether to plot the data
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's `plot` method
 
         Returns
@@ -1016,7 +1016,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         plot: bool, optional
             Whether to plot the spectrogram
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's `imshow` method
 
         Returns

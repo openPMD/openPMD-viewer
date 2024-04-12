@@ -87,7 +87,8 @@ class ParticleTracker( object ):
             In this case, a NaN is returned at the index of this particle.
             When `preserve_particle_index=False`, no NaN is returned (the
             returned array is simply smaller when particles are absent) but
-            then it is not garanteed that a given particle keeps the same index
+            then it is not guaranteed that a given particle keeps the same
+            index
         """
 
         # Extract or load the particle id and sort them
@@ -220,7 +221,7 @@ class ParticleTracker( object ):
         sorted_pid = pid[ original_indices ]
 
         # Extract only the indices for which sorted_pid is one of pid
-        # in self.sselected_pid (i.e. which correpond to one
+        # in self.sselected_pid (i.e. which correspond to one
         # of the original particles)
         selected_indices = np.empty( self.N_selected, dtype=np.int64 )
         N_extracted = extract_indices(

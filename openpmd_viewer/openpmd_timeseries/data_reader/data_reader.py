@@ -59,7 +59,7 @@ class DataReader( object ):
     def list_iterations(self, path_to_dir):
         """
         Return a list of the iterations that correspond to the files
-        in this directory. (The correspondance between iterations and
+        in this directory. (The correspondence between iterations and
         files is stored internally.)
 
         Parameter
@@ -107,7 +107,8 @@ class DataReader( object ):
                 file_path = path_to_dir
                 series_name = file_path
             else:
-                # match last occurance of integers and replace with %T wildcards
+                # match last occurrence of integers and replace
+                # with %T wildcards
                 # examples: data00000100.h5 diag4_00000500.h5 io12.0.bp
                 #           te42st.1234.yolo.json scan7_run14_data123.h5
                 file_path = re.sub(r'(\d+)(\.(?!\d).+$)', r'%T\2', first_file_name)
