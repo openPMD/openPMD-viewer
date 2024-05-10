@@ -145,7 +145,7 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's bar function
         """
         # Check if matplotlib is available
@@ -222,7 +222,7 @@ class Plotter(object):
             particles affects neighboring bins.
             `cic` (which is the default) leads to smoother results than `ngp`.
 
-        **kw : dict, otional
+        **kw : dict, optional
            Additional options to be passed to matplotlib's imshow function
         """
         # Check if matplotlib is available
@@ -411,7 +411,7 @@ def print_cic_unavailable():
 
 def check_matplotlib():
     """Raise error messages or warnings when potential issues when
-    potenial issues with matplotlib are detected."""
+    potential issues with matplotlib are detected."""
 
     if not matplotlib_installed:
         raise RuntimeError( "Failed to import the openPMD-viewer plotter.\n"
