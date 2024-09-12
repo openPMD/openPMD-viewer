@@ -107,7 +107,7 @@ class ParticleTracker( object ):
 
 
     def extract_tracked_particles( self, iteration, data_reader, data_list,
-                                    species, extensions ):
+                                    var_list, species, extensions ):
         """
         Select the elements of each particle quantities in data_list,
         so as to only return those that correspond to the tracked particles
@@ -123,6 +123,9 @@ class ParticleTracker( object ):
         data_list: list of 1darrays
             A list of arrays with one element per macroparticle, that represent
             different particle quantities
+
+        var_list: list of string
+            The list of variable names that corresponds to `data_list`
 
         species: string
             Name of the species being requested
@@ -145,11 +148,11 @@ class ParticleTracker( object ):
         for i in range(len(data_list)):
             if len(data_list[i]) > 1:  # Do not apply selection on scalars
                 data_list[i] = self.extract_quantity(
-                    data_list[i], selected_indices )
+                    data_list[i], var_list[i], selected_indices )
 
         return( data_list )
 
-    def extract_quantity( self, q, selected_indices ):
+    def extract_quantity( self, q, name, selected_indices ):
         """
         Select the elements of the array `q`, so as to only return those
         that correspond to the tracked particles.
@@ -158,6 +161,9 @@ class ParticleTracker( object ):
         ----------
         q: 1d array of floats or ints
             A particle quantity (one element per particle)
+
+        name: string
+            Name of the particle quantity `q`
 
         selected_indices: 1d array of ints
             The indices (in array q) of the particles to be selected.
@@ -175,14 +181,12 @@ class ParticleTracker( object ):
 
         # Handle the absent particles
         if self.preserve_particle_index:
-            if q.dtype in [ np.float64, np.float32 ]:
+            if name == 'id':
+                selected_q = self.selected_pid
+            else:
                 # Fill the position of absent particles by NaNs
                 selected_q = np.where( selected_indices == -1,
                                         np.nan, selected_q)
-            else:
-                # The only non-float quantity in openPMD-viewer is particle id
-                selected_q = self.selected_pid
-
         return( selected_q )
 
     def get_extraction_indices( self, pid ):
