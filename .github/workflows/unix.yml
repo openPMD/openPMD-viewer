@@ -28,11 +28,12 @@ jobs:
           conda install --yes cython numpy scipy h5py openpmd-api matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget
         else
           conda install --yes cython numpy scipy h5py matplotlib jupyter pytest pyflakes python=${{ matrix.python-version }} python-wget
-        fi
+        fi;
+        python setup.py install
 
     - shell: bash -eo pipefail  -l {0}
       name: pyflakes
       run: python -m pyflakes openpmd_viewer
     - shell: bash -eo pipefail -l {0}
       name: Test
-      run: python setup.py test
+      run: python -m pytest tests
