@@ -1041,7 +1041,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         T = tmax - tmin
         dt = T / Nz
         # Normalize the Envelope
-        env /= np.sqrt(np.trapz(env ** 2, dx=dt))
+        env /= np.sqrt(np.trapezoid(env ** 2, dx=dt))
         # Allocate array for the gating function and the spectrogran
         E_shift = np.zeros_like(E)
         spectrogram = np.zeros((2 * Nz, Nz))
