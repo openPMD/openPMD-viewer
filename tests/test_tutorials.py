@@ -8,7 +8,7 @@ This file is meant to be run from the root directory of openPMD-viewer,
 by any of the following commands
 $ python tests/test_tutorials.py
 $ py.test
-$ python setup.py test
+$ python -m pytest tests
 
 Copyright 2015-2016, openPMD-viewer contributors
 Authors: Remi Lehe, Axel Huebl
