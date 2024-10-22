@@ -56,7 +56,7 @@ git pull git@github.com:openPMD/openPMD-viewer.git dev
   ```
   python -m pip wheel .
   python -m pip install *whl matplotlib jupyter
-  python setup.py test
+  python -m pytest tests
   ```
   (Be patient: the `test_tutorials.py` can take approx. 20 seconds if
   you already downloaded the example openPMD files that are required
