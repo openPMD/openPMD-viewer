@@ -77,11 +77,11 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
     shape = list( get_shape( dset ) )
     grid_spacing = list( group.attrs['gridSpacing'] )
     global_offset = list( group.attrs['gridGlobalOffset'] )
-    position = list( dset.attrs['position'] )
+    grid_position = list( dset.attrs['position'] )
     if group.attrs['dataOrder'].decode() == 'F':
         grid_spacing = grid_spacing[::-1]
         global_offset = global_offset[::-1]
-        position = position[::-1]
+        grid_position = grid_position[::-1]
 
     # Current simulation time
     time = (it.attrs['time'] + group.attrs['timeOffset']) * it.attrs['timeUnitSI']
@@ -117,7 +117,7 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
         # Extract data
         F = get_data( dset, list_i_cell, list_slicing_index )
         info = FieldMetaInformation( axes, shape, grid_spacing, global_offset,
-                group.attrs['gridUnitSI'], position,
+                group.attrs['gridUnitSI'], grid_position,
                 time, iteration, component_attrs=dict(dset.attrs),
                 field_attrs=dict(group.attrs) )
     else:
@@ -125,7 +125,7 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
         axes = { i: axis_labels[i] for i in range(len(axis_labels)) }
         info = FieldMetaInformation( axes, F.shape,
             grid_spacing, global_offset,
-            group.attrs['gridUnitSI'], position,
+            group.attrs['gridUnitSI'], grid_position,
             time, iteration, component_attrs=dict(dset.attrs),
             field_attrs=dict(group.attrs) )
 
