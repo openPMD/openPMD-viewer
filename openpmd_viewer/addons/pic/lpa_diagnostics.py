@@ -702,13 +702,21 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         --------
         A float with the total electromagnetic energy inside the box (in Joules)
         """
+        # Check that the required data is available
+        if 'E' not in self.avail_fields or 'B' not in self.avail_fields:
+            raise ValueError('The fields E and B are required to compute the electromagnetic energy.')
+        # Check that the fields have either the thetaMode or 3dcartesian geometry
+        if (self.fields_metadata['E']['geometry'] not in ['thetaMode', '3dcartesian']) or \
+              (self.fields_metadata['B']['geometry'] not in ['thetaMode', '3dcartesian']):
+            raise ValueError('The electromagnetic energy can only be computed for 3D Cartesian and cylindrical simulations.')
+
         # For RZ: use `theta=None` to get the full 3D field
         Ex, info = self.get_field('E', 'x', t=t, iteration=iteration, theta=None )
-        Ey, info = self.get_field('E', 'y', m=1, iteration=iteration, theta=None )
-        Ez, info = self.get_field('E', 'z', m=1, iteration=iteration, theta=None )
-        Bx, info = self.get_field('B', 'x', m=1, iteration=iteration, theta=None )
-        By, info = self.get_field('B', 'y', m=1, iteration=iteration, theta=None )
-        Bz, info = self.get_field('B', 'z', m=1, iteration=iteration, theta=None )
+        Ey, info = self.get_field('E', 'y', t=t, iteration=iteration, theta=None )
+        Ez, info = self.get_field('E', 'z', t=t, iteration=iteration, theta=None )
+        Bx, info = self.get_field('B', 'x', t=t, iteration=iteration, theta=None )
+        By, info = self.get_field('B', 'y', t=t, iteration=iteration, theta=None )
+        Bz, info = self.get_field('B', 'z', t=t, iteration=iteration, theta=None )
 
         # Compute the energy
         energy_density = const.epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*const.mu_0)*(Bx**2 + By**2 + Bz**2)
