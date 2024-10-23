@@ -78,9 +78,14 @@ def read_field_cartesian( series, iteration, field_name, component_name,
     grid_unit_SI = field.grid_unit_SI
     grid_position = component.position
     time = (it.time + field.time_offset) * it.time_unit_SI
-    
+
+    if field.get_attribute('dataOrder') == 'F':
+        grid_spacing = grid_spacing[::-1]
+        global_offset = global_offset[::-1]
+        grid_position = grid_position[::-1]
+
     field_attrs = {a: field.get_attribute(a) for a in field.attributes}
-    component_attrs = {a: component.get_attribute(a) for a in component.attributes} 
+    component_attrs = {a: component.get_attribute(a) for a in component.attributes}
 
     # Slice selection
     #   TODO put in general utilities
@@ -194,9 +199,9 @@ def read_field_circ( series, iteration, field_name, component_name,
         component = next(field.items())[1]
     else:
         component = field[component_name]
-    
+
     field_attrs = {a: field.get_attribute(a) for a in field.attributes}
-    component_attrs = {a: component.get_attribute(a) for a in component.attributes} 
+    component_attrs = {a: component.get_attribute(a) for a in component.attributes}
 
     # Extract the metainformation
     #   FIXME here and in h5py reader, we need to invert the order on 'F' for
