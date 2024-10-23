@@ -78,7 +78,7 @@ def read_field_cartesian( filename, iteration, field, coord, axis_labels,
     grid_spacing = list( group.attrs['gridSpacing'] )
     global_offset = list( group.attrs['gridGlobalOffset'] )
     position = list( dset.attrs['position'] )
-    if dset.attrs['dataOrder'].decode() == 'F':
+    if group.attrs['dataOrder'].decode() == 'F':
         grid_spacing = grid_spacing[::-1]
         global_offset = global_offset[::-1]
         position = position[::-1]
