@@ -678,7 +678,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
     def get_electromagnetic_energy( self, t=None, iteration=None ):
         """
-        Compute the total electromagnetic energy inside the box (in Joules), i.e.
+        Compute the total electromagnetic energy inside the box, i.e.
 
         .. math::
 
@@ -702,7 +702,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         --------
         A float with the total electromagnetic energy inside the box (in Joules)
         """
-        # Get field array in full 3D
+        # For RZ: use `theta=None` to get the full 3D field
         Ex, info = self.get_field('E', 'x', t=t, iteration=iteration, theta=None )
         Ey, info = self.get_field('E', 'y', m=1, iteration=iteration, theta=None )
         Ez, info = self.get_field('E', 'z', m=1, iteration=iteration, theta=None )
@@ -711,7 +711,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Bz, info = self.get_field('B', 'z', m=1, iteration=iteration, theta=None )
 
         # Compute the energy
-        energy_density = epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*mu_0)*(Bx**2 + By**2 + Bz**2)
+        energy_density = const.epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*const.mu_0)*(Bx**2 + By**2 + Bz**2)
         volume = info.dx*info.dy*info.dz # Cell volume
         E = (energy_density*volume).sum()
         return E
