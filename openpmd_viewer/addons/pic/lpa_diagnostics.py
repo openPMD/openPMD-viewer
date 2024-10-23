@@ -686,17 +686,34 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         For simulations of high-intensity lasers propagating in underdense plasmas,
         this is approximately equal to the laser energy (since the plasma fields are usually low)
-        """
-        Ex, info = self.get_field('E', 'x', m=1, iteration=iteration )
-        Ey, info = self.get_field('E', 'y', m=1, iteration=iteration )
-        Ez, info = self.get_field('E', 'z', m=1, iteration=iteration )
-        Bx, info = self.get_field('B', 'x', m=1, iteration=iteration )
-        By, info = self.get_field('B', 'y', m=1, iteration=iteration )
-        Bz, info = self.get_field('B', 'z', m=1, iteration=iteration )
 
+        Parameters:
+        -----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an existing iteration, the closest existing iteration will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        Returns:
+        --------
+        A float with the total electromagnetic energy inside the box (in Joules)
+        """
+        # Get field array in full 3D
+        Ex, info = self.get_field('E', 'x', t=t, iteration=iteration, theta=None )
+        Ey, info = self.get_field('E', 'y', m=1, iteration=iteration, theta=None )
+        Ez, info = self.get_field('E', 'z', m=1, iteration=iteration, theta=None )
+        Bx, info = self.get_field('B', 'x', m=1, iteration=iteration, theta=None )
+        By, info = self.get_field('B', 'y', m=1, iteration=iteration, theta=None )
+        Bz, info = self.get_field('B', 'z', m=1, iteration=iteration, theta=None )
+
+        # Compute the energy
         energy_density = epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*mu_0)*(Bx**2 + By**2 + Bz**2)
-        volume = np.pi*abs(info.r)*info.dr*info.dz
-        E = (energy_density*volume[:, np.newaxis]).sum()
+        volume = info.dx*info.dy*info.dz # Cell volume
+        E = (energy_density*volume).sum()
         return E
 
 
