@@ -675,6 +675,31 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope, info )
 
+
+    def get_electromagnetic_energy( self, t=None, iteration=None ):
+        """
+        Compute the total electromagnetic energy inside the box (in Joules), i.e.
+
+        .. math::
+
+            \\mathcal{E}_{tot} = \\int dV\,\\left[ \\frac{\\epsilon_0}{2}\\boldsymbol{E}^2 + \\frac{1}{2\mu_0}\\boldsymbol{B}^2 \\right]
+
+        For simulations of high-intensity lasers propagating in underdense plasmas,
+        this is approximately equal to the laser energy (since the plasma fields are usually low)
+        """
+        Ex, info = self.get_field('E', 'x', m=1, iteration=iteration )
+        Ey, info = self.get_field('E', 'y', m=1, iteration=iteration )
+        Ez, info = self.get_field('E', 'z', m=1, iteration=iteration )
+        Bx, info = self.get_field('B', 'x', m=1, iteration=iteration )
+        By, info = self.get_field('B', 'y', m=1, iteration=iteration )
+        Bz, info = self.get_field('B', 'z', m=1, iteration=iteration )
+
+        energy_density = epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*mu_0)*(Bx**2 + By**2 + Bz**2)
+        volume = np.pi*abs(info.r)*info.dr*info.dz
+        E = (energy_density*volume[:, np.newaxis]).sum()
+        return E
+
+
     def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
                             method='max'):
         """
