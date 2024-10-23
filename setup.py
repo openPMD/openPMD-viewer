@@ -1,6 +1,4 @@
-import sys
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
 
 # Get the long description
 with open('./README.md') as f:
@@ -13,14 +11,6 @@ with open('./requirements.txt') as f:
 # This defines the variable __version__
 with open('./openpmd_viewer/__version__.py') as f:
     exec( f.read() )
-
-# Define a custom class to run the py.test with `python setup.py test`
-class PyTest(TestCommand):
-
-    def run_tests(self):
-        import pytest
-        errcode = pytest.main([])
-        sys.exit(errcode)
 
 # Main setup command
 setup(name='openPMD-viewer',
@@ -35,7 +25,6 @@ setup(name='openPMD-viewer',
       packages=find_packages('.'),
       package_data={'openpmd_viewer': ['notebook_starter/*.ipynb']},
       scripts=['openpmd_viewer/notebook_starter/openPMD_notebook'],
-      tests_require=['pytest', 'jupyter'],
       install_requires=install_requires,
       extras_require = {
         'all': ["ipympl", "ipywidgets", "matplotlib", "numba", "openpmd-api", "wget"],
@@ -45,7 +34,6 @@ setup(name='openPMD-viewer',
         'numba': ["numba"],
         'openpmd-api': ["openpmd-api"]
         },
-      cmdclass={'test': PyTest},
       platforms='any',
       python_requires='>=3.8',
       classifiers=[
