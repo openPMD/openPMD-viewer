@@ -1041,7 +1041,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         T = tmax - tmin
         dt = T / Nz
         # Normalize the Envelope
-        env /= np.sqrt(np.trapezoid(env ** 2, dx=dt))
+        # Note that np.trapz has been deprecated and is replaced by np.trapezoid in numpy2
+        try:
+            trapezoid = np.trapezoid
+        except AttributeError:
+            trapezoid = np.trapz
+        env /= np.sqrt(trapezoid(env ** 2, dx=dt))
         # Allocate array for the gating function and the spectrogran
         E_shift = np.zeros_like(E)
         spectrogram = np.zeros((2 * Nz, Nz))
