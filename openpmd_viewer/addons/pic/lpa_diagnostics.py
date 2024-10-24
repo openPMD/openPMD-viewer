@@ -675,6 +675,56 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Return the result
         return( envelope, info )
 
+
+    def get_electromagnetic_energy( self, t=None, iteration=None ):
+        """
+        Compute the total electromagnetic energy inside the box, i.e.
+
+        .. math::
+
+            \\mathcal{E}_{tot} = \\int dV\,\\left[ \\frac{\\epsilon_0}{2}\\boldsymbol{E}^2 + \\frac{1}{2\mu_0}\\boldsymbol{B}^2 \\right]
+
+        For simulations of high-intensity lasers propagating in underdense plasmas,
+        this is approximately equal to the laser energy (since the plasma fields are usually low)
+
+        Parameters:
+        -----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an existing iteration, the closest existing iteration will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        Returns:
+        --------
+        A float with the total electromagnetic energy inside the box (in Joules)
+        """
+        # Check that the required data is available
+        if 'E' not in self.avail_fields or 'B' not in self.avail_fields:
+            raise ValueError('The fields E and B are required to compute the electromagnetic energy.')
+        # Check that the fields have either the thetaMode or 3dcartesian geometry
+        if (self.fields_metadata['E']['geometry'] not in ['thetaMode', '3dcartesian']) or \
+              (self.fields_metadata['B']['geometry'] not in ['thetaMode', '3dcartesian']):
+            raise ValueError('The electromagnetic energy can only be computed for 3D Cartesian and cylindrical simulations.')
+
+        # For RZ: use `theta=None` to get the full 3D field
+        Ex, info = self.get_field('E', 'x', t=t, iteration=iteration, theta=None )
+        Ey, info = self.get_field('E', 'y', t=t, iteration=iteration, theta=None )
+        Ez, info = self.get_field('E', 'z', t=t, iteration=iteration, theta=None )
+        Bx, info = self.get_field('B', 'x', t=t, iteration=iteration, theta=None )
+        By, info = self.get_field('B', 'y', t=t, iteration=iteration, theta=None )
+        Bz, info = self.get_field('B', 'z', t=t, iteration=iteration, theta=None )
+
+        # Compute the energy
+        energy_density = const.epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*const.mu_0)*(Bx**2 + By**2 + Bz**2)
+        volume = info.dx*info.dy*info.dz # Cell volume
+        E = (energy_density*volume).sum()
+        return E
+
+
     def get_main_frequency( self, t=None, iteration=None, pol=None, m='all',
                             method='max'):
         """
