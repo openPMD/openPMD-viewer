@@ -528,7 +528,7 @@ class InteractiveViewer(object):
             display(container_ptcl)
 
         # When using %matplotlib widget, display the figures at the end
-        if 'ipympl' in matplotlib.get_backend():
+        if matplotlib.get_backend() in ['ipympl', 'widget']:
             # Disable interactive mode
             # This prevents the notebook from showing the figure
             # when calling `plt.figure` (unreliable with `%matplotlib widget`)
