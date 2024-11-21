@@ -39,7 +39,7 @@ class ParticleTracker( object ):
     to be stored in the openPMD files.
     """
 
-    def __init__(self, ts, species=None, t=None,
+    def __init__(self, ts=None, species=None, t=None,
                 iteration=None, select=None, preserve_particle_index=False):
         """
         Initialize an instance of `ParticleTracker`: select particles at
@@ -69,8 +69,9 @@ class ParticleTracker( object ):
             'x' : [-4., 10.]  (Particles having x between -4 and 10)
             'ux' : [-0.1, 0.1] (Particles having ux between -0.1 and 0.1 mc)
             'uz' : [5., None]  (Particles with uz above 5 mc).
-            Can also be a 1d array of interegers corresponding to the
-            selected particles `id`
+            Can also be a 1d array of integers corresponding to the
+            selected particles `id`. In this case, the arguments `ts`, `t`
+            and `iteration` do not need to be passed.
 
         preserve_particle_index: bool, optional
             When retrieving particles at a several iterations,
@@ -105,6 +106,37 @@ class ParticleTracker( object ):
         self.species = species
         self.preserve_particle_index = preserve_particle_index
 
+    def __and__(self, other):
+        """
+        Define the intersection of two ParticleTracker instances.
+
+        This selects the particles that are present in both instances.
+        """
+        # Check that both instances are consistent
+        assert self.species == other.species
+        assert self.preserve_particle_index == other.preserve_particle_index
+
+        # Find the intersection of the selected particles
+        pid = np.intersect1d( self.selected_pid, other.selected_pid )
+        pt = ParticleTracker( species=self.species, select=pid,
+                             preserve_particle_index=self.preserve_particle_index )
+        return pt
+
+    def __or__(self, other):
+        """
+        Define the union of two ParticleTracker instances.
+
+        This selects the particles that are present in at least one of the instances.
+        """
+        # Check that both instances are consistent
+        assert self.species == other.species
+        assert self.preserve_particle_index == other.preserve_particle_index
+
+        # Find the union of the selected particles
+        pid = np.union1d( self.selected_pid, other.selected_pid )
+        pt = ParticleTracker( species=self.species, select=pid,
+                             preserve_particle_index=self.preserve_particle_index )
+        return pt
 
     def extract_tracked_particles( self, iteration, data_reader, data_list,
                                     species, extensions ):
