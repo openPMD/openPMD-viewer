@@ -20,6 +20,21 @@ try:
 except ImportError:
     dependencies_installed = False
 
+default_slider_options = {
+    'FieldColorbarMin': -5.e9,
+    'FieldColorbarMax': 5.e9,
+    'FieldColormap': 'viridis',
+    'FieldHRangeMax': 10.,
+    'FieldVRangeMax': 10.,
+    'FieldAlwaysRefresh': True,
+    'ParticlesColorbarMin': 0.e9,
+    'ParticlesColorbarMax': 5.e9,
+    'ParticlesColormap': 'Blues',
+    'ParticlesHRangeMax': 10.,
+    'ParticlesVRangeMax': 10.,
+    'ParticlesAlwaysRefresh': True,
+    'ParticlesBins': 100,
+}
 
 class InteractiveViewer(object):
 
@@ -27,7 +42,8 @@ class InteractiveViewer(object):
         pass
 
     def slider(self, figsize=(6, 5), fields_figure=0, particles_figure=1,
-               exclude_particle_records=['charge', 'mass'], **kw):
+               exclude_particle_records=['charge', 'mass'],
+               slider_options=None, **kw):
         """
         Navigate the simulation using a slider
 
@@ -45,6 +61,23 @@ class InteractiveViewer(object):
             List of particle quantities that should not be displayed
             in the slider (typically because they are less interesting)
 
+        slider_options: dict
+            A dictionary specifying the default plotting options for the slider.
+            Possible keys are:
+                FieldColorbarMin
+                FieldColorbarMax
+                FieldColormap
+                FieldHRangeMax
+                FieldVRangeMax
+                FieldAlwaysRefresh
+                ParticlesColorbarMin
+                ParticlesColorbarMax
+                ParticlesColormap
+                ParticlesHRangeMax
+                ParticlesVRangeMax
+                ParticlesAlwaysRefresh
+                ParticlesBins
+
         kw: dict
             Extra arguments to pass to matplotlib's imshow (e.g. cmap, etc.).
             This will be applied both to the particle plots and field plots.
@@ -55,6 +88,11 @@ class InteractiveViewer(object):
         if not dependencies_installed:
             raise RuntimeError("Failed to load the openPMD-viewer slider.\n"
                 "(Make sure that ipywidgets and matplotlib are installed.)")
+
+        if plot_profile is None:
+            self._slider_options = default_slider_options
+        else:
+            self._slider_options = slider_options
 
         # -----------------------
         # Define useful functions
@@ -374,17 +412,17 @@ class InteractiveViewer(object):
             set_widget_dimensions( fld_figure_button, width=50 )
             # Colormap button
             fld_color_button = ColorBarSelector( refresh_field,
-                default_cmap=kw.get('cmap', 'viridis'),
-                default_vmin=kw.get('vmin', -5.e9),
-                default_vmax=kw.get('vmax', 5.e9) )
+                default_cmap=kw.get('cmap', self._slider_options['FieldColormap']),
+                default_vmin=kw.get('vmin', self._slider_options['FieldColorbarMin']),
+                default_vmax=kw.get('vmax', self._slider_options['FieldColorbarMax']) )
             # Range buttons
             fld_hrange_button = RangeSelector( refresh_field,
-                default_value=10., title='Horizontal axis:')
+                default_value=self._slider_options['FieldHRangeMax'], title='Horizontal axis:')
             fld_vrange_button = RangeSelector( refresh_field,
-                default_value=10., title='Vertical axis:')
+                default_value=self._slider_options['FieldVRangeMax'], title='Vertical axis:')
             # Refresh buttons
             fld_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True)
+                description='Always refresh', value=self._slider_options['FieldAlwaysRefresh'])
             fld_refresh_button = widgets.Button(
                 description='Refresh now!')
             fld_refresh_button.on_click( partial(refresh_field, force=True) )
@@ -461,26 +499,26 @@ class InteractiveViewer(object):
             ptcl_figure_button = widgets.IntText( value=particles_figure )
             set_widget_dimensions( ptcl_figure_button, width=50 )
             # Number of bins
-            ptcl_bins_button = widgets.IntText( value=100 )
+            ptcl_bins_button = widgets.IntText( value=self._slider_options['ParticlesBins'] )
             set_widget_dimensions( ptcl_bins_button, width=60 )
             ptcl_bins_button.observe( refresh_ptcl, 'value', 'change')
             # Colormap button
             ptcl_color_button = ColorBarSelector( refresh_ptcl,
-                default_cmap=kw.get('cmap', 'Blues'),
-                default_vmin=kw.get('vmin', -5.e9),
-                default_vmax=kw.get('vmax', 5.e9) )
+                default_cmap=kw.get('cmap', self._slider_options['ParticlesColormap']),
+                default_vmin=kw.get('vmin', self._slider_options['ParticlesColorbarMin']),
+                default_vmax=kw.get('vmax', self._slider_options['ParticlesColorbarMax']) )
             # Range buttons
             ptcl_hrange_button = RangeSelector( refresh_ptcl,
-                default_value=10., title='Horizontal axis:')
+                default_value=self._slider_options['ParticlesHRangeMax'], title='Horizontal axis:')
             ptcl_vrange_button = RangeSelector( refresh_ptcl,
-                default_value=10., title='Vertical axis:')
+                default_value=self._slider_options['ParticlesVRangeMax'], title='Vertical axis:')
             # Use field mesh buttons
             ptcl_use_field_button = widgets.ToggleButton(
                 description=' Use field mesh', value=True )
             ptcl_use_field_button.observe( refresh_ptcl, 'value', 'change')
             # Resfresh buttons
             ptcl_refresh_toggle = widgets.ToggleButton(
-                description='Always refresh', value=True)
+                description='Always refresh', value=self._slider_options['ParticlesAlwaysRefresh'])
             ptcl_refresh_button = widgets.Button(
                 description='Refresh now!')
             ptcl_refresh_button.on_click( partial(refresh_ptcl, force=True) )
