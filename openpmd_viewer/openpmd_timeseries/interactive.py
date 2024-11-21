@@ -297,13 +297,20 @@ class InteractiveViewer(object):
         # Define widgets
         # ---------------
 
-        # Slider
+        # used for both VCR and Slider
         iteration_min = self.iterations.min()
         iteration_max = self.iterations.max()
         step = max( int( (iteration_max - iteration_min) / 20. ), 1 )
+
+        # "VCR" controls
+        play = widgets.Play( description="VCR player",
+            min=iteration_min, max=iteration_max + step, step=step )
+
+        # Slider
         slider = widgets.IntSlider( description="iteration",
             min=iteration_min, max=iteration_max + step, step=step )
         slider.observe( change_iteration, names='value', type='change' )
+        widgets.jslink((play, 'value'), (slider, 'value'))
         set_widget_dimensions( slider, width=500 )
 
         # Forward button
@@ -317,7 +324,7 @@ class InteractiveViewer(object):
         button_m.on_click(step_bw)
 
         # Display the time widgets
-        container = widgets.HBox(children=[button_m, button_p, slider])
+        container = widgets.HBox(children=[play, button_m, button_p, slider])
         display(container)
 
         # Field widgets
