@@ -10,6 +10,7 @@ License: 3-Clause-BSD-LBNL
 """
 import math
 from functools import partial
+import numpy as np
 try:
     from ipywidgets import widgets, __version__
     ipywidgets_version = int(__version__[0])
@@ -272,26 +273,40 @@ class InteractiveViewer(object):
         def change_iteration(change):
             "Plot the result at the required iteration"
             # Find the closest iteration
-            self._current_i = abs(self.iterations - change['new']).argmin()
-            self.current_iteration = self.iterations[ self._current_i ]
+            set_current_iteration(change['new'])
             refresh_field()
             refresh_ptcl()
 
         def step_fw(b):
             "Plot the result one iteration further"
             if self._current_i < len(self.t) - 1:
-                self.current_iteration = self.iterations[self._current_i + 1]
-            else:
-                self.current_iteration = self.iterations[self._current_i]
-            slider.value = self.current_iteration
+                slider.value += 1
 
         def step_bw(b):
             "Plot the result one iteration before"
             if self._current_i > 0:
-                self.current_iteration = self.iterations[self._current_i - 1]
-            else:
-                self.current_iteration = self.iterations[self._current_i]
-            slider.value = self.current_iteration
+                slider.value -= 1                
+
+        def set_current_iteration(requested_iteration):
+            "Set the current iteration to the requested value"
+            # Get iterations.
+            iterations = get_available_iterations()
+            # Find the closest available  iteration
+            closest_iteration = iterations[abs(iterations - requested_iteration).argmin()]
+            self._current_i = abs(self.iterations - closest_iteration).argmin()
+            self.current_iteration = self.iterations[ self._current_i ]
+
+        def get_available_iterations():
+            "Get iterations in which both the current field and species are available."
+            field_iterations = None
+            if self.avail_fields is not None:
+                current_field = fieldtype_button.value
+                field_iterations = self.fields_iterations[current_field]
+            species_iterations = None
+            if self.avail_species is not None:
+                current_species = ptcl_species_button.value
+                species_iterations = self.species_iterations[current_species]
+            return get_common_iterations(field_iterations, species_iterations)
 
         # ---------------
         # Define widgets
@@ -515,6 +530,12 @@ class InteractiveViewer(object):
             container_ptcl = widgets.VBox( children=[accord2, widgets.HBox(
                 children=[ptcl_refresh_toggle, ptcl_refresh_button])])
             set_widget_dimensions( container_ptcl, width=370 )
+
+        # Try to set the current iteration of the slider
+        # to the current iteration of the OpenPMDTimeSeries.
+        # If the displayed field/species are not available at this
+        # iteration, it will be set to the closest available one.
+        set_current_iteration(self.current_iteration)
 
         # Global container
         if (self.avail_fields is not None) and \
@@ -871,3 +892,26 @@ def create_checkbox( **kwargs ):
     else:
         c = widgets.Checkbox( **kwargs )
     return(c)
+
+
+def get_common_iterations(field_iterations, species_iterations):
+    """Get iterations in which both the field and the species are available.
+
+    Parameters
+    ----------
+    field_iterations : ndarray
+        The iterations at which the field is available.
+    species_iterations : ndarray
+        The iterations at which the species is available.
+
+    Returns
+    -------
+    ndarray
+        The iterations common to both.
+    """
+    if field_iterations is None:
+        return species_iterations
+    elif species_iterations is None:
+        return field_iterations
+    else:
+        return np.intersect1d(field_iterations, species_iterations)
