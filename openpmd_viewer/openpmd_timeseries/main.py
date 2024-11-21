@@ -139,7 +139,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         Parameters
         ----------
-        var_list : list of string, optional
+        var_list : list of string
             A list of the particle variables to extract. If var_list is not
             provided, the available particle quantities are printed
 
@@ -278,8 +278,8 @@ class OpenPMDTimeSeries(InteractiveViewer):
             data_list = apply_selection( iteration, self.data_reader,
                 data_list, select, species, self.extensions)
         elif isinstance( select, ParticleTracker ):
-            data_list = select.extract_tracked_particles( iteration,
-                self.data_reader, data_list, species, self.extensions )
+            data_list = select.extract_tracked_particles(iteration,
+                self.data_reader, data_list, var_list, species, self.extensions)
 
         # Plotting
         if plot and len(var_list) in [1, 2]:
