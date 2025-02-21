@@ -721,7 +721,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         # Compute the energy
         energy_density = const.epsilon_0/2.*(Ex**2 + Ey**2 + Ez**2) + 1./(2*const.mu_0)*(Bx**2 + By**2 + Bz**2)
         volume = info.dx*info.dy*info.dz # Cell volume
-        E = (energy_density*volume).sum()
+        E = energy_density.sum() * volume
         return E
 
 
