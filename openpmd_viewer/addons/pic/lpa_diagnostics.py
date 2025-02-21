@@ -871,9 +871,9 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         spectral_intensity = spectral_intensity[ : len(info.z)//2 ]
 
         # Create a FieldMetaInformation object
-        T = (info.zmax - info.zmin) / const.c
-        spect_info = FieldMetaInformation( {0: 'omega'}, spectral_intensity.shape,
-            grid_spacing=( 2 * np.pi / T, ), grid_unitSI=1,
+        L = (info.zmax - info.zmin)
+        spect_info = FieldMetaInformation( {0: 'k'}, spectral_intensity.shape,
+            grid_spacing=( 2 * np.pi / L, ), grid_unitSI=1,
             global_offset=(0,), position=(0,),
             t=self.current_t, iteration=self.current_iteration )
 
@@ -882,8 +882,8 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             check_matplotlib()
             iteration = self.iterations[ self._current_i ]
             time_s = self.t[ self._current_i ]
-            plt.plot( spect_info.omega, spectral_intensity, **kw )
-            plt.xlabel('$\omega \; (rad.s^{-1})$',
+            plt.plot( spect_info.k, spectral_intensity, **kw )
+            plt.xlabel('$k \; (m^{-1})$',
                        fontsize=self.plotter.fontsize )
             plt.ylabel('Spectral intensity', fontsize=self.plotter.fontsize )
             plt.title("Spectral intensity at %.2e s   (iteration %d)"
