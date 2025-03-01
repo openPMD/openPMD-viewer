@@ -864,7 +864,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
             spectral_intensity *= info.dx
         elif geometry == 'thetaMode':
             spectral_intensity = np.sum(spectral_intensity*abs(info.r),
-                axis=[inverted_axes_dict['r']])
+                axis=inverted_axes_dict['r'])
             spectral_intensity *= np.pi * info.dr
 
         # Take half of the data (positive frequencies only)
