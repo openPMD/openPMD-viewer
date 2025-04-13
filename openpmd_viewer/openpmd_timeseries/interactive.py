@@ -422,7 +422,7 @@ class InteractiveViewer(object):
             accord1.set_title(1, 'Slice selection')
             accord1.set_title(2, 'Plotting options')
             # Complete field container
-            container_fld = widgets.VBox( children=[accord1, widgets.HBox(
+            container_fld = widgets.VBox( children=[container_fields, widgets.HBox(
                 children=[fld_refresh_toggle, fld_refresh_button])])
             set_widget_dimensions( container_fld, width=370 )
 
@@ -512,7 +512,7 @@ class InteractiveViewer(object):
             accord2.set_title(1, 'Particle selection')
             accord2.set_title(2, 'Plotting options')
             # Complete particle container
-            container_ptcl = widgets.VBox( children=[accord2, widgets.HBox(
+            container_ptcl = widgets.VBox( children=[container_ptcl_quantities, widgets.HBox(
                 children=[ptcl_refresh_toggle, ptcl_refresh_button])])
             set_widget_dimensions( container_ptcl, width=370 )
 
@@ -528,7 +528,7 @@ class InteractiveViewer(object):
             display(container_ptcl)
 
         # When using %matplotlib widget, display the figures at the end
-        if matplotlib.get_backend() in ['ipympl', 'widget']:
+        if matplotlib.get_backend() in ['ipympl', 'widget', 'module://ipympl.backend_nbagg']:
             # Disable interactive mode
             # This prevents the notebook from showing the figure
             # when calling `plt.figure` (unreliable with `%matplotlib widget`)
