@@ -805,11 +805,12 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                                     plot=False, **kw ):
         """
         Calculate the spectral intensity of the laser pulse, defined as:
-        $$ I(k) = \epsilon_0 c \int d\boldsymbol{x}_\perp | \hat{E}(\boldsymbol{x}_\perp, k) |^2$$
+        $$ I(k) = \epsilon_0 \int d\boldsymbol{x}_\perp | \hat{E}(\boldsymbol{x}_\perp, k) |^2$$
         with
         $$ \hat{E}(\boldsymbol{x}_\perp, k) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{\infty} E(\boldsymbol{x}_\perp, z) \exp(-i k z) dz $$
 
-        TODO: discuss sum to get total laser energy
+        The electromagetic energy associated with the electric field can be obtained by:
+
 
         TODO: Add option to return as a function of lambda
 
@@ -841,7 +842,7 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
         Returns
         -------
         A tuple with:
-            - The 1D spectral intensity (TODO: dicuss units)
+            - The 1D spectral intensity (in J.m for 3D and thetaMode, in J for 2D)
             - A FieldMetaInformation object
         """
         # Extract electric field data
@@ -849,10 +850,10 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
 
         # Perform FFT along the 'z' axis
         inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
-        fft_field = np.fft.fft(field, axis=inverted_axes_dict['z'])
+        fft_field = np.fft.fft(field, axis=inverted_axes_dict['z']) * info.dz/np.sqrt(2*np.pi)
 
         # Compute spectral intensity by squaring the FFT and integrating over the transverse plane
-        spectral_intensity = const.epsilon_0 * const.c * np.abs(fft_field)**2
+        spectral_intensity = const.epsilon_0 * np.abs(fft_field)**2
         geometry = self.fields_metadata['E']['geometry']
         if geometry == '3dcartesian':
             spectral_intensity = np.sum(spectral_intensity,
