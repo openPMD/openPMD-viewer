@@ -800,6 +800,105 @@ class LpaDiagnostics( OpenPMDTimeSeries ):
                 % (time_s, iteration ), fontsize=self.plotter.fontsize)
         return( spectrum, spect_info )
 
+
+    def get_laser_spectral_intensity(self, t=None, iteration=None, pol=None, m='all',
+                                    plot=False, **kw ):
+        """
+        Calculate the spectral intensity of the laser pulse, defined as:
+        $$ I(k) = 2\epsilon_0 \int d\boldsymbol{x}_\perp | \hat{E}(\boldsymbol{x}_\perp, k) |^2$$
+        with
+        $$ \hat{E}(\boldsymbol{x}_\perp, k) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{\infty} E(\boldsymbol{x}_\perp, z) \exp(-i k z) dz $$
+
+        The electromagetic energy associated with the laser pulse can be obtained by:
+        $$ \mathcal{E}_E = \epsilon_0 \int_0^{\infty} I(k) dk$$
+        which corresponds to the folowing code:
+
+        .. code-block:: python
+
+            I, info = ts.get_laser_spectral_intensity(iteration=iteration, pol='y')
+            energy = I.sum() * info.dk
+
+        Parameters
+        ----------
+        t : float (in seconds), optional
+            Time at which to obtain the data (if this does not correspond to
+            an existing iteration, the closest existing iteration will be used)
+            Either `t` or `iteration` should be given by the user.
+
+        iteration : int
+            The iteration at which to obtain the data
+            Either `t` or `iteration` should be given by the user.
+
+        pol : string
+            Polarization of the field. Options are 'x', 'y'
+
+        m : int or str, optional
+           Only used for thetaMode geometry
+           Either 'all' (for the sum of all the modes)
+           or an integer (for the selection of a particular mode)
+
+        plot: bool, optional
+           Whether to plot the data
+
+        **kw : dict, optional
+           Additional options to be passed to matplotlib's `plot` method
+
+        Returns
+        -------
+        A tuple with:
+            - The 1D spectral intensity (in J.m for 3D and thetaMode, in J for 2D)
+            - A FieldMetaInformation object
+        """
+        # Extract electric field data
+        field, info = self.get_field(t=t, iteration=iteration, field='E', coord=pol, m=m)
+
+        # Perform FFT along the 'z' axis
+        inverted_axes_dict = {info.axes[key]: key for key in info.axes.keys()}
+        fft_field = np.fft.fft(field, axis=inverted_axes_dict['z']) * info.dz/np.sqrt(2*np.pi)
+
+        # Compute spectral intensity by squaring the FFT and integrating over the transverse plane
+        spectral_intensity = 2*const.epsilon_0 * np.abs(fft_field)**2
+        geometry = self.fields_metadata['E']['geometry']
+        if geometry == '3dcartesian':
+            spectral_intensity = np.sum(spectral_intensity,
+                axis=[inverted_axes_dict['x'], inverted_axes_dict['y']])
+            spectral_intensity *= info.dx * info.dy
+        elif geometry == '2dcartesian':
+            spectral_intensity = np.sum(spectral_intensity,
+                axis=inverted_axes_dict['x'])
+            spectral_intensity *= info.dx
+        elif geometry == 'thetaMode':
+            spectral_intensity = np.sum(spectral_intensity*abs(info.r),
+                axis=inverted_axes_dict['r'])
+            spectral_intensity *= np.pi * info.dr
+
+        # Take half of the data (positive frequencies only)
+        spectral_intensity = spectral_intensity[ : len(info.z)//2 ]
+
+        # Create a FieldMetaInformation object
+        L = (info.zmax - info.zmin)
+        spect_info = FieldMetaInformation( {0: 'k'}, spectral_intensity.shape,
+            grid_spacing=( 2 * np.pi / L, ), grid_unitSI=1,
+            global_offset=(0,), position=(0,),
+            t=self.current_t, iteration=self.current_iteration )
+
+        # Plot the field if required
+        if plot:
+            check_matplotlib()
+            iteration = self.iterations[ self._current_i ]
+            time_s = self.t[ self._current_i ]
+            plt.plot( spect_info.k, spectral_intensity, **kw )
+            plt.xlabel('$k \; (m^{-1})$',
+                       fontsize=self.plotter.fontsize )
+            plt.ylabel('Spectral intensity', fontsize=self.plotter.fontsize )
+            plt.title("Spectral intensity at %.2e s   (iteration %d)"
+                % (time_s, iteration ), fontsize=self.plotter.fontsize)
+
+        # Return the result
+        return( spectral_intensity, spect_info )
+
+
+
     def get_a0( self, t=None, iteration=None, pol=None ):
         """
         Gives the laser strength a0 given by a0 = Emax * e / (me * c * omega)
