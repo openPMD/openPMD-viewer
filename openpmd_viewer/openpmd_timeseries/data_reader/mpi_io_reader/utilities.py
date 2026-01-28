@@ -235,7 +235,6 @@ def _read_species_portion(series, component, start_idx, end_idx, output_type=np.
     """
     # Get full shape (1D array for particles)
     full_shape = component.shape
-    total_particles = full_shape[0] if len(full_shape) > 0 else 1
     
     # Get NaN value for masking
     NaN_value = np.nan if (np.issubdtype(output_type, np.floating) or 

@@ -6,6 +6,7 @@ License: 3-Clause-BSD-LBNL
 """
 import numpy as np
 from .utilities import _read_field_portion, _read_field_circ_portion
+from openpmd_viewer.openpmd_timeseries.data_reader.io_reader.utilities import get_data
 from ...data_order import RZorder, order_error_msg
 from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
@@ -283,12 +284,9 @@ def read_field_circ(series, iteration, field_name, component_name,
         
         # Divide workload: each rank reads portion of modes
         # For simplicity, divide along the first spatial dimension (r or z)
-        # Determine which dimension to divide along
         if coord_order is RZorder.mrz:
-            divide_dim = 1  # Divide along r dimension
             dim_size = Nr
         else:  # RZorder.mzr
-            divide_dim = 1  # Divide along z dimension  
             dim_size = Nz
         
         chunk_size = dim_size // size
@@ -324,10 +322,8 @@ def read_field_circ(series, iteration, field_name, component_name,
                 excess_r = int(np.round(Nr/(max_res_transv/2)))
                 if coord_order is RZorder.mrz:
                     Fcirc = Fcirc[:, ::excess_r, :]
-                    #Nr_local = Fcirc.shape[1]
                 else:  # RZorder.mzr
                     Fcirc = Fcirc[:, :, ::excess_r]
-                    #Nr_local = Fcirc.shape[2]
                 # Update info (only rank 0 needs to do this, then broadcast)
                 if rank == 0:
                     info.r = info.r[::excess_r]
@@ -402,10 +398,8 @@ def read_field_circ(series, iteration, field_name, component_name,
         # theta is not None - 2D projection
         # Divide workload along the first spatial dimension (r or z)
         if coord_order is RZorder.mrz:
-            divide_dim = 1  # Divide along r dimension
             dim_size = Nr
         else:  # RZorder.mzr
-            divide_dim = 1  # Divide along z dimension
             dim_size = Nz
         
         chunk_size = dim_size // size

@@ -4,7 +4,6 @@ MPI-enabled parallel versions of io_reader params_reader functions.
 Copyright 2020, openPMD-viewer contributors
 License: 3-Clause-BSD-LBNL
 """
-import numpy as np
 from ..io_reader.params_reader import read_openPMD_params as _read_openPMD_params
 
 
