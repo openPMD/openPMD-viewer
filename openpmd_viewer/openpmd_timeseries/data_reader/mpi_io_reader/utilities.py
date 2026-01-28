@@ -233,9 +233,6 @@ def _read_species_portion(series, component, start_idx, end_idx, output_type=np.
     -------
     numpy array with the portion of particle data for this rank
     """
-    # Get full shape (1D array for particles)
-    full_shape = component.shape
-    
     # Get NaN value for masking
     NaN_value = np.nan if (np.issubdtype(output_type, np.floating) or 
                            np.issubdtype(output_type, np.complexfloating)) else 0
