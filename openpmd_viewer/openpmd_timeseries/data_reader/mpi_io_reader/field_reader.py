@@ -6,7 +6,6 @@ License: 3-Clause-BSD-LBNL
 """
 import numpy as np
 from .utilities import _read_field_portion, _read_field_circ_portion
-from ..io_reader.utilities import get_data, chunk_to_slice
 from ...data_order import RZorder, order_error_msg
 from openpmd_viewer.openpmd_timeseries.field_metainfo import FieldMetaInformation
 from openpmd_viewer.openpmd_timeseries.utilities import construct_3d_from_circ
@@ -325,10 +324,10 @@ def read_field_circ(series, iteration, field_name, component_name,
                 excess_r = int(np.round(Nr/(max_res_transv/2)))
                 if coord_order is RZorder.mrz:
                     Fcirc = Fcirc[:, ::excess_r, :]
-                    Nr_local = Fcirc.shape[1]
+                    #Nr_local = Fcirc.shape[1]
                 else:  # RZorder.mzr
                     Fcirc = Fcirc[:, :, ::excess_r]
-                    Nr_local = Fcirc.shape[2]
+                    #Nr_local = Fcirc.shape[2]
                 # Update info (only rank 0 needs to do this, then broadcast)
                 if rank == 0:
                     info.r = info.r[::excess_r]

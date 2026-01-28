@@ -16,7 +16,6 @@ from .data_reader import DataReader
 # Import necessary modules
 try:
     import openpmd_api as io
-    from . import io_reader
     from . import mpi_io_reader
 except ImportError:
     io = None
