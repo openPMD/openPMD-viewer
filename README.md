@@ -35,6 +35,33 @@ save them to your local computer). In order to run the notebook on
 your local computer, please install `openPMD-viewer` first (see
 below), as well as `wget` (`pip install wget`).
 
+#### MPI Support
+
+`openPMD-viewer` includes support for parallel data reading using MPI, which
+depends on `mpi4py`. When running under MPI (detected automatically), the
+library will use distributed I/O to accelerate data reading for large datasets.
+
+**Important**: MPI support is only available for the `openpmd-api` backend.
+The `h5py` backend is serial-only and will always use the serial reader,
+even when running under MPI.
+
+**MPI Behavior**:
+- **Data distribution**: All ranks participate in distributed I/O, where each
+  rank reads a portion of the data in parallel. After reading, all ranks receive
+  the complete dataset (via MPI broadcast), ensuring all ranks have access to
+  the full data.
+- **Plotting**: Only rank 0 performs plotting operations to avoid duplicate
+  plots. All ranks participate in data reading, but visualization is restricted
+  to rank 0.
+
+Tutorial notebooks demonstrating MPI usage are available:
+- `6_mpi_2d.ipynb`: Example demonstrating MPI parallel reading for 2D data
+- `7_mpi_3d.ipynb`: Example demonstrating MPI parallel reading for 3D data
+
+To use MPI support, ensure `mpi4py` is installed and run your Python script
+with `mpirun` (e.g., `mpirun -n 4 python script.py`). Note that you must use
+the `openpmd-api` backend (not `h5py`) to benefit from MPI parallel I/O.
+
 ### Notebook quick-starter
 
 If you wish to use the **interactive GUI**, the installation of

@@ -10,3 +10,5 @@ Tutorials
    3_Introduction-to-the-GUI.ipynb
    4_Particle_selection.ipynb
    5_Laser-plasma_tools.ipynb
+   6_mpi_2d.ipynb
+   7_mpi_3d.ipynb
