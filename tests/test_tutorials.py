@@ -27,8 +27,22 @@ def test_tutorials():
     tutorial_notebooks = [filename for filename in os.listdir('./')
                           if filename[-6:] == '.ipynb']
 
+    # Check if mpi4py is available
+    mpi4py_available = False
+    try:
+        import mpi4py.MPI
+        mpi4py_available = True
+    except ImportError:
+        pass
+
     # Loop through the tutorials and test them
     for notebook_name in tutorial_notebooks:
+        
+        # Skip MPI notebooks if mpi4py is not available
+        if notebook_name in ['6_mpi_2d.ipynb', '7_mpi_3d.ipynb']:
+            if not mpi4py_available:
+                print(f"Skipping {notebook_name} - mpi4py not available")
+                continue
 
         # Do a first pass where only the non-IPython features are tested.
         # (This gives better debugging information.)
@@ -65,7 +79,7 @@ def clean_ipython_features(script_name):
     # Remove ipyparallel setup code (not needed when converting %%px to regular Python)
     # First, convert content to string for multi-line regex matching
     content = ''.join(lines)
-
+    
     # Remove the entire ipyparallel setup block (import through rc.activate())
     content = re.sub(
         r"import ipyparallel as ipp\s*\n\s*# Create and start.*?\n.*?rc\.activate\(\)\s*\n",
@@ -73,7 +87,7 @@ def clean_ipython_features(script_name):
         content,
         flags=re.DOTALL
     )
-
+    
     # Remove individual ipyparallel-related lines that might remain
     content = re.sub(r"^.*import ipyparallel.*$", "", content, flags=re.MULTILINE)
     content = re.sub(r"^.*cluster\s*=\s*ipp\.Cluster.*$", "", content, flags=re.MULTILINE)
