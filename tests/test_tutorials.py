@@ -66,6 +66,22 @@ def clean_ipython_features(script_name):
     # using regular expressions
     for i in range(len(lines)):
 
+        # Handle %%px magic commands: get_ipython().run_line_magic('px', '...')
+        # Convert to regular Python code (remove the magic wrapper)
+        # Match single or double quotes, handling escaped quotes inside
+        px_magic_match = re.search(r"get_ipython\(\)\.run_line_magic\((['\"]px['\"]),\s*(['\"])((?:[^\\]|\\.)*?)\2\s*\)", lines[i])
+        if px_magic_match:
+            # Extract the code inside the quotes (group 3)
+            code = px_magic_match.group(3)
+            # Unescape any escaped characters (quotes, newlines, etc.)
+            code = code.replace("\\'", "'").replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
+            # Get the indentation of the original line
+            indent_match = re.match(r"^(\s*)", lines[i])
+            indent = indent_match.group(1) if indent_match else ""
+            # Replace with just the code, preserving indentation
+            lines[i] = indent + code + "\n"
+            continue
+
         # Replace the lines that activate matplotlib in a notebook
         # by a line that selects the PS backend
         if re.search(r"get_ipython.*matplotlib", lines[i]) is not None:
@@ -85,6 +101,10 @@ def clean_ipython_features(script_name):
             spaces = matched.groups()[0]
             command_line = matched.groups()[1]
             lines[i] = '%simport os; os.system%s\n' % (spaces, command_line)
+
+        # Remove any remaining get_ipython() calls that weren't caught above
+        if re.search(r"get_ipython\(\)", lines[i]) is not None:
+            lines[i] = '# Skipped get_ipython() call\n'
 
     # Write the cleaned file
     with open(script_name, 'w') as script_file:
