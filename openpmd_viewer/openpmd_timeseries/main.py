@@ -17,6 +17,9 @@ from .particle_tracker import ParticleTracker
 from .data_reader import DataReader, available_backends
 from .interactive import InteractiveViewer
 
+# Don't import MPI at module level to avoid segfaults when not running under mpirun
+# We'll import it lazily only when we detect we're actually running under MPI
+
 
 # Define a custom Exception
 class OpenPMDException(Exception):
@@ -66,8 +69,38 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     .format(backend, available_backends) )
         self.backend = backend
 
-        # Initialize data reader
-        self.data_reader = DataReader(backend)
+        # Check if we're running under MPI by looking for MPI environment variables
+        # This avoids importing mpi4py at module level which causes segfaults
+        use_mpi = False
+        import os
+        mpi_env_vars = ['OMPI_COMM_WORLD_SIZE', 'PMI_SIZE', 'MPI_LOCALNRANKS', 'MPIRUN_RANK']
+        running_under_mpi = any(os.environ.get(var) is not None for var in mpi_env_vars)
+
+        if running_under_mpi:
+            try:
+                from mpi4py import MPI
+                comm = MPI.COMM_WORLD
+                if comm.Get_size() > 1:
+                    # Only use MPI reader for openpmd-api backend
+                    # h5py backend must be serial
+                    if backend == 'openpmd-api':
+                        from .data_reader import mpiDataReader
+                        if (comm.Get_rank() == 0):
+                            print ("..... use MPI reader (size={})".format(comm.Get_size()))
+                        self.data_reader = mpiDataReader(backend, comm)
+                        use_mpi = True
+                    else:
+                        if (comm.Get_rank() == 0):
+                            print ("..... use serial reader (h5py backend does not support MPI)")
+                        use_mpi = False
+                else:
+                    print ("..... use serial reader (MPI detected but size=1)")
+            except Exception as e:
+                print ("..... simple reader (MPI detected but failed: {})".format(e))
+                use_mpi = False
+
+        if not use_mpi:
+            self.data_reader = DataReader(backend)
 
         # Extract the iterations available in this timeseries
         self.iterations = self.data_reader.list_iterations(path_to_dir)
@@ -121,6 +154,22 @@ class OpenPMDTimeSeries(InteractiveViewer):
 
         # - Initialize a plotter object, which holds information about the time
         self.plotter = Plotter(self.t, self.iterations)
+
+        self._mpi_rank = 0
+        self._is_mpi = False
+        if hasattr(self.data_reader, 'comm'):
+            self._mpi_rank = self.data_reader.comm.Get_rank()
+            self._is_mpi = True
+
+        self._is_jupyter = False
+        try:
+            from IPython import get_ipython
+            ipython = get_ipython()
+            if ipython is not None:
+                if hasattr(ipython, 'kernel') or 'IPKernelApp' in str(type(ipython)):
+                    self._is_jupyter = True
+        except ImportError:
+            pass
 
     def get_particle(self, var_list=None, species=None, t=None, iteration=None,
             select=None, plot=False, nbins=150,
@@ -281,9 +330,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
             data_list = select.extract_tracked_particles( iteration,
                 self.data_reader, data_list, species, self.extensions )
 
-        # Plotting
         if plot and len(var_list) in [1, 2]:
-
             # Extract the weights, if they are available
             if 'w' in self.avail_record_components[species]:
                 w = self.data_reader.read_species_data(
@@ -343,19 +390,16 @@ class OpenPMDTimeSeries(InteractiveViewer):
                                 fit_bins_to_grid(hist_bins[i_var],
                                 grid_size_dict[var], grid_range_dict[var] )
 
-            # - In the case of only one quantity
-            if len(data_list) == 1:
-                # Do the plotting
-                self.plotter.hist1d(data_list[0], w, var_list[0], species,
-                        self._current_i, hist_bins[0], hist_range,
+            if not self._is_mpi or self._mpi_rank == 0:
+                if len(data_list) == 1:
+                    self.plotter.hist1d(data_list[0], w, var_list[0], species,
+                            self._current_i, hist_bins[0], hist_range,
+                            deposition=histogram_deposition, **kw)
+                elif len(data_list) == 2:
+                    self.plotter.hist2d(data_list[0], data_list[1], w,
+                        var_list[0], var_list[1], species,
+                        self._current_i, hist_bins, hist_range,
                         deposition=histogram_deposition, **kw)
-            # - In the case of two quantities
-            elif len(data_list) == 2:
-                # Do the plotting
-                self.plotter.hist2d(data_list[0], data_list[1], w,
-                    var_list[0], var_list[1], species,
-                    self._current_i, hist_bins, hist_range,
-                    deposition=histogram_deposition, **kw)
 
         # Output the data
         return(data_list)
@@ -521,9 +565,7 @@ class OpenPMDTimeSeries(InteractiveViewer):
                     field, coord, slice_relative_position,
                     slice_across, m, theta)
 
-        # Plot the resulting field
-        # Deactivate plotting when there is no slice selection
-        if plot:
+        if plot and self._mpi_rank == 0:
             if F.ndim == 1:
                 self.plotter.show_field_1d(F, info, field_label,
                 self._current_i, plot_range=plot_range, **kw)

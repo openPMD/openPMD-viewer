@@ -27,8 +27,22 @@ def test_tutorials():
     tutorial_notebooks = [filename for filename in os.listdir('./')
                           if filename[-6:] == '.ipynb']
 
+    # Check if mpi4py is available
+    mpi4py_available = False
+    try:
+        import mpi4py.MPI
+        mpi4py_available = True
+    except ImportError:
+        pass
+
     # Loop through the tutorials and test them
     for notebook_name in tutorial_notebooks:
+        
+        # Skip MPI notebooks if mpi4py is not available
+        if notebook_name in ['6_mpi_2d.ipynb', '7_mpi_3d.ipynb']:
+            if not mpi4py_available:
+                print(f"Skipping {notebook_name} - mpi4py not available")
+                continue
 
         # Do a first pass where only the non-IPython features are tested.
         # (This gives better debugging information.)
@@ -62,9 +76,48 @@ def clean_ipython_features(script_name):
     with open(script_name) as script_file:
         lines = script_file.readlines()
 
+    # Remove ipyparallel setup code (not needed when converting %%px to regular Python)
+    # First, convert content to string for multi-line regex matching
+    content = ''.join(lines)
+    
+    # Remove the entire ipyparallel setup block (import through rc.activate())
+    content = re.sub(
+        r"import ipyparallel as ipp\s*\n\s*# Create and start.*?\n.*?rc\.activate\(\)\s*\n",
+        "# Skipped ipyparallel setup (not needed for direct Python execution)\n",
+        content,
+        flags=re.DOTALL
+    )
+    
+    # Remove individual ipyparallel-related lines that might remain
+    content = re.sub(r"^.*import ipyparallel.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*cluster\s*=\s*ipp\.Cluster.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*rc\s*=\s*cluster\.start_and_connect_sync.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*rc\.activate\(\).*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*print\(.*Connected to.*engines.*\).*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*\brc\.\w+.*$", "", content, flags=re.MULTILINE)
+    
+    # Convert back to lines
+    lines = content.splitlines(True)
+
     # Go through the lines and replace the IPython-specific commands
     # using regular expressions
     for i in range(len(lines)):
+
+        # Handle %%px magic commands: get_ipython().run_line_magic('px', '...')
+        # Convert to regular Python code (remove the magic wrapper)
+        # Match single or double quotes, handling escaped quotes inside
+        px_magic_match = re.search(r"get_ipython\(\)\.run_line_magic\((['\"]px['\"]),\s*(['\"])((?:[^\\]|\\.)*?)\2\s*\)", lines[i])
+        if px_magic_match:
+            # Extract the code inside the quotes (group 3)
+            code = px_magic_match.group(3)
+            # Unescape any escaped characters (quotes, newlines, etc.)
+            code = code.replace("\\'", "'").replace('\\"', '"').replace("\\n", "\n").replace("\\\\", "\\")
+            # Get the indentation of the original line
+            indent_match = re.match(r"^(\s*)", lines[i])
+            indent = indent_match.group(1) if indent_match else ""
+            # Replace with just the code, preserving indentation
+            lines[i] = indent + code + "\n"
+            continue
 
         # Replace the lines that activate matplotlib in a notebook
         # by a line that selects the PS backend
@@ -85,6 +138,10 @@ def clean_ipython_features(script_name):
             spaces = matched.groups()[0]
             command_line = matched.groups()[1]
             lines[i] = '%simport os; os.system%s\n' % (spaces, command_line)
+
+        # Remove any remaining get_ipython() calls that weren't caught above
+        if re.search(r"get_ipython\(\)", lines[i]) is not None:
+            lines[i] = '# Skipped get_ipython() call\n'
 
     # Write the cleaned file
     with open(script_name, 'w') as script_file:
