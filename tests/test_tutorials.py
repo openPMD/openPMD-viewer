@@ -62,6 +62,29 @@ def clean_ipython_features(script_name):
     with open(script_name) as script_file:
         lines = script_file.readlines()
 
+    # Remove ipyparallel setup code (not needed when converting %%px to regular Python)
+    # First, convert content to string for multi-line regex matching
+    content = ''.join(lines)
+
+    # Remove the entire ipyparallel setup block (import through rc.activate())
+    content = re.sub(
+        r"import ipyparallel as ipp\s*\n\s*# Create and start.*?\n.*?rc\.activate\(\)\s*\n",
+        "# Skipped ipyparallel setup (not needed for direct Python execution)\n",
+        content,
+        flags=re.DOTALL
+    )
+
+    # Remove individual ipyparallel-related lines that might remain
+    content = re.sub(r"^.*import ipyparallel.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*cluster\s*=\s*ipp\.Cluster.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*rc\s*=\s*cluster\.start_and_connect_sync.*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*rc\.activate\(\).*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*print\(.*Connected to.*engines.*\).*$", "", content, flags=re.MULTILINE)
+    content = re.sub(r"^.*\brc\.\w+.*$", "", content, flags=re.MULTILINE)
+    
+    # Convert back to lines
+    lines = content.splitlines(True)
+
     # Go through the lines and replace the IPython-specific commands
     # using regular expressions
     for i in range(len(lines)):
